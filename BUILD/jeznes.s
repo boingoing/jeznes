@@ -12,14 +12,21 @@
 	.macpack	longbranch
 	.forceimport	__STARTUP__
 	.import		_pal_bg
+	.import		_pal_spr
+	.import		_ppu_wait_nmi
 	.import		_ppu_off
 	.import		_ppu_on_all
+	.import		_oam_clear
+	.import		_oam_spr
+	.import		_pad_poll
 	.import		_bank_spr
 	.import		_bank_bg
 	.import		_vram_adr
 	.import		_vram_unrle
 	.import		_set_vram_buffer
 	.import		_clear_vram_buffer
+	.import		_get_pad_new
+	.import		_gray_line
 	.export		_RoundSprL
 	.export		_RoundSprR
 	.export		_CoinSpr
@@ -30,84 +37,16 @@
 	.export		_EnemyBounceSpr2
 	.export		_pad1
 	.export		_pad1_new
-	.export		_collision
-	.export		_collision_L
-	.export		_collision_R
-	.export		_collision_U
-	.export		_collision_D
-	.export		_coordinates
-	.export		_temp1
-	.export		_temp2
-	.export		_temp3
-	.export		_temp4
-	.export		_temp5
-	.export		_temp6
-	.export		_eject_L
-	.export		_eject_R
-	.export		_eject_D
-	.export		_eject_U
-	.export		_direction
-	.export		_address
-	.export		_x
-	.export		_y
-	.export		_nt
-	.export		_index
-	.export		_index2
-	.export		_room
-	.export		_map
-	.export		_scroll_x
-	.export		_scroll_y
-	.export		_scroll_count
-	.export		_pseudo_scroll_x
-	.export		_L_R_switch
-	.export		_old_x
-	.export		_temp_x
-	.export		_temp_y
-	.export		_song
-	.export		_game_mode
-	.export		_coins
-	.export		_lives
-	.export		_pointer
-	.export		_level
-	.export		_offset
-	.export		_level_up
-	.export		_bright
-	.export		_bright_count
-	.export		_death
-	.export		_timer
-	.export		_enemy_frames
-	.export		_map_loaded
-	.export		_short_jump_count
-	.export		_c_map
-	.export		_c_map2
-	.export		_Generic
-	.export		_Generic2
-	.export		_BoxGuy1
-	.export		_coin_x
-	.export		_coin_y
-	.export		_coin_active
-	.export		_coin_room
-	.export		_coin_actual_x
-	.export		_coin_type
-	.export		_enemy_x
-	.export		_enemy_y
-	.export		_enemy_active
-	.export		_enemy_room
-	.export		_enemy_actual_x
-	.export		_enemy_type
-	.export		_enemy_anim
-	.export		_shuffle_array
-	.export		_palette_title
-	.export		_title_color_rotate
-	.export		_palette_bg
-	.export		_palette_sp
+	.export		_game_state
+	.export		_temp_byte_1
+	.export		_temp_byte_2
+	.export		_temp_byte_3
+	.export		_temp_byte_4
+	.export		_players
 	.export		_palette
 	.export		_playfield_screen
-	.export		_END_TEXT
-	.export		_END_TEXT2
-	.export		_END_TEXT3
-	.export		_DEAD_TEXT
-	.export		_title
+	.export		_move_player
+	.export		_draw_player
 	.export		_main
 
 .segment	"RODATA"
@@ -248,127 +187,6 @@ _EnemyBounceSpr2:
 	.byte	$15
 	.byte	$03
 	.byte	$80
-_shuffle_array:
-	.byte	$00
-	.byte	$01
-	.byte	$02
-	.byte	$03
-	.byte	$04
-	.byte	$05
-	.byte	$06
-	.byte	$07
-	.byte	$08
-	.byte	$09
-	.byte	$0A
-	.byte	$0B
-	.byte	$0C
-	.byte	$0D
-	.byte	$0E
-	.byte	$0F
-	.byte	$0F
-	.byte	$0E
-	.byte	$0D
-	.byte	$0C
-	.byte	$0B
-	.byte	$0A
-	.byte	$09
-	.byte	$08
-	.byte	$07
-	.byte	$06
-	.byte	$05
-	.byte	$04
-	.byte	$03
-	.byte	$02
-	.byte	$01
-	.byte	$00
-	.byte	$00
-	.byte	$02
-	.byte	$04
-	.byte	$06
-	.byte	$08
-	.byte	$0A
-	.byte	$0C
-	.byte	$0E
-	.byte	$01
-	.byte	$03
-	.byte	$05
-	.byte	$07
-	.byte	$09
-	.byte	$0B
-	.byte	$0D
-	.byte	$0F
-	.byte	$0F
-	.byte	$0D
-	.byte	$0B
-	.byte	$09
-	.byte	$07
-	.byte	$05
-	.byte	$03
-	.byte	$01
-	.byte	$0E
-	.byte	$0C
-	.byte	$0A
-	.byte	$08
-	.byte	$06
-	.byte	$04
-	.byte	$02
-	.byte	$00
-_palette_title:
-	.byte	$0F
-	.byte	$04
-	.byte	$15
-	.byte	$32
-	.byte	$00
-	.byte	$00
-	.byte	$00
-	.byte	$00
-	.byte	$00
-	.byte	$00
-	.byte	$00
-	.byte	$00
-	.byte	$00
-	.byte	$00
-	.byte	$00
-	.byte	$00
-_title_color_rotate:
-	.byte	$32
-	.byte	$22
-	.byte	$30
-	.byte	$37
-_palette_bg:
-	.byte	$22
-	.byte	$16
-	.byte	$36
-	.byte	$0F
-	.byte	$00
-	.byte	$08
-	.byte	$18
-	.byte	$39
-	.byte	$00
-	.byte	$00
-	.byte	$10
-	.byte	$20
-	.byte	$00
-	.byte	$0A
-	.byte	$1A
-	.byte	$2A
-_palette_sp:
-	.byte	$22
-	.byte	$01
-	.byte	$11
-	.byte	$10
-	.byte	$22
-	.byte	$17
-	.byte	$28
-	.byte	$38
-	.byte	$22
-	.byte	$06
-	.byte	$16
-	.byte	$37
-	.byte	$22
-	.byte	$03
-	.byte	$13
-	.byte	$33
 _palette:
 	.byte	$0F
 	.byte	$00
@@ -657,164 +475,6 @@ _playfield_screen:
 	.byte	$00
 	.byte	$01
 	.byte	$00
-_END_TEXT:
-	.byte	$54,$68,$65,$20,$65,$6E,$64,$20,$6F,$66,$20,$74,$68,$65,$20,$67
-	.byte	$61,$6D,$65,$2E,$00
-_END_TEXT2:
-	.byte	$49,$20,$67,$75,$65,$73,$73,$20,$79,$6F,$75,$20,$77,$6F,$6E,$3F
-	.byte	$00
-_END_TEXT3:
-	.byte	$43,$6F,$69,$6E,$73,$3A,$20,$00
-_DEAD_TEXT:
-	.byte	$59,$6F,$75,$20,$64,$69,$65,$64,$2E,$00
-_title:
-	.byte	$01
-	.byte	$00
-	.byte	$01
-	.byte	$FE
-	.byte	$00
-	.byte	$01
-	.byte	$0B
-	.byte	$80
-	.byte	$81
-	.byte	$82
-	.byte	$83
-	.byte	$84
-	.byte	$85
-	.byte	$86
-	.byte	$87
-	.byte	$88
-	.byte	$89
-	.byte	$8A
-	.byte	$00
-	.byte	$01
-	.byte	$14
-	.byte	$90
-	.byte	$91
-	.byte	$92
-	.byte	$93
-	.byte	$94
-	.byte	$95
-	.byte	$96
-	.byte	$97
-	.byte	$98
-	.byte	$99
-	.byte	$9A
-	.byte	$00
-	.byte	$01
-	.byte	$14
-	.byte	$A0
-	.byte	$A1
-	.byte	$A2
-	.byte	$A3
-	.byte	$A4
-	.byte	$A5
-	.byte	$A6
-	.byte	$A7
-	.byte	$A8
-	.byte	$A9
-	.byte	$AA
-	.byte	$00
-	.byte	$01
-	.byte	$32
-	.byte	$B0
-	.byte	$B1
-	.byte	$B2
-	.byte	$B3
-	.byte	$B4
-	.byte	$B5
-	.byte	$B6
-	.byte	$B7
-	.byte	$B8
-	.byte	$B9
-	.byte	$BA
-	.byte	$BB
-	.byte	$BC
-	.byte	$BD
-	.byte	$BE
-	.byte	$00
-	.byte	$01
-	.byte	$10
-	.byte	$C0
-	.byte	$C1
-	.byte	$C2
-	.byte	$C3
-	.byte	$C4
-	.byte	$C5
-	.byte	$C6
-	.byte	$C7
-	.byte	$C8
-	.byte	$C9
-	.byte	$CA
-	.byte	$CB
-	.byte	$CC
-	.byte	$CD
-	.byte	$CE
-	.byte	$00
-	.byte	$01
-	.byte	$10
-	.byte	$D0
-	.byte	$D1
-	.byte	$D2
-	.byte	$D3
-	.byte	$D4
-	.byte	$D5
-	.byte	$D6
-	.byte	$D7
-	.byte	$D8
-	.byte	$D9
-	.byte	$DA
-	.byte	$DB
-	.byte	$DC
-	.byte	$DD
-	.byte	$DE
-	.byte	$00
-	.byte	$01
-	.byte	$10
-	.byte	$E0
-	.byte	$E1
-	.byte	$E2
-	.byte	$E3
-	.byte	$E4
-	.byte	$E5
-	.byte	$E6
-	.byte	$E7
-	.byte	$E8
-	.byte	$E9
-	.byte	$EA
-	.byte	$EB
-	.byte	$EC
-	.byte	$ED
-	.byte	$EE
-	.byte	$00
-	.byte	$01
-	.byte	$AF
-	.byte	$32
-	.byte	$30
-	.byte	$31
-	.byte	$38
-	.byte	$00
-	.byte	$00
-	.byte	$44
-	.byte	$6F
-	.byte	$75
-	.byte	$67
-	.byte	$00
-	.byte	$46
-	.byte	$72
-	.byte	$61
-	.byte	$6B
-	.byte	$65
-	.byte	$72
-	.byte	$00
-	.byte	$01
-	.byte	$FE
-	.byte	$00
-	.byte	$01
-	.byte	$46
-	.byte	$00
-	.byte	$01
-	.byte	$00
 
 .segment	"BSS"
 
@@ -823,139 +483,192 @@ _pad1:
 	.res	1,$00
 _pad1_new:
 	.res	1,$00
-_collision:
+_game_state:
 	.res	1,$00
-_collision_L:
+_temp_byte_1:
 	.res	1,$00
-_collision_R:
+_temp_byte_2:
 	.res	1,$00
-_collision_U:
+_temp_byte_3:
 	.res	1,$00
-_collision_D:
-	.res	1,$00
-_coordinates:
-	.res	1,$00
-_temp1:
-	.res	1,$00
-_temp2:
-	.res	1,$00
-_temp3:
-	.res	1,$00
-_temp4:
-	.res	1,$00
-_temp5:
-	.res	2,$00
-_temp6:
-	.res	2,$00
-_eject_L:
-	.res	1,$00
-_eject_R:
-	.res	1,$00
-_eject_D:
-	.res	1,$00
-_eject_U:
-	.res	1,$00
-_direction:
-	.res	1,$00
-_address:
-	.res	2,$00
-_x:
-	.res	1,$00
-_y:
-	.res	1,$00
-_nt:
-	.res	1,$00
-_index:
-	.res	1,$00
-_index2:
-	.res	1,$00
-_room:
-	.res	1,$00
-_map:
-	.res	1,$00
-_scroll_x:
-	.res	2,$00
-_scroll_y:
-	.res	2,$00
-_scroll_count:
-	.res	1,$00
-_pseudo_scroll_x:
-	.res	2,$00
-_L_R_switch:
-	.res	1,$00
-_old_x:
-	.res	1,$00
-_temp_x:
-	.res	1,$00
-_temp_y:
-	.res	1,$00
-_song:
-	.res	1,$00
-_game_mode:
-	.res	1,$00
-_coins:
-	.res	1,$00
-_lives:
-	.res	1,$00
-_pointer:
-	.res	2,$00
-_level:
-	.res	1,$00
-_offset:
-	.res	1,$00
-_level_up:
-	.res	1,$00
-_bright:
-	.res	1,$00
-_bright_count:
-	.res	1,$00
-_death:
-	.res	1,$00
-_timer:
-	.res	1,$00
-_enemy_frames:
-	.res	1,$00
-_map_loaded:
-	.res	1,$00
-_short_jump_count:
+_temp_byte_4:
 	.res	1,$00
 .segment	"BSS"
-_c_map:
-	.res	240,$00
-_c_map2:
-	.res	240,$00
-_Generic:
+_players:
 	.res	4,$00
-_Generic2:
-	.res	4,$00
-_BoxGuy1:
-	.res	8,$00
-_coin_x:
-	.res	16,$00
-_coin_y:
-	.res	16,$00
-_coin_active:
-	.res	16,$00
-_coin_room:
-	.res	16,$00
-_coin_actual_x:
-	.res	16,$00
-_coin_type:
-	.res	16,$00
-_enemy_x:
-	.res	16,$00
-_enemy_y:
-	.res	16,$00
-_enemy_active:
-	.res	16,$00
-_enemy_room:
-	.res	16,$00
-_enemy_actual_x:
-	.res	16,$00
-_enemy_type:
-	.res	16,$00
-_enemy_anim:
-	.res	32,$00
+
+; ---------------------------------------------------------------
+; void __near__ move_player (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_move_player: near
+
+.segment	"CODE"
+
+;
+; temp_byte_1 = players[0].x;
+;
+	lda     _players
+	sta     _temp_byte_1
+;
+; if (pad1 & PAD_LEFT) {
+;
+	lda     _pad1
+	and     #$02
+	beq     L0013
+;
+; temp_byte_1 -= PLAYER_SPEED;
+;
+	lda     _temp_byte_1
+	sec
+	sbc     #$03
+	sta     _temp_byte_1
+;
+; if (temp_byte_1 <= PLAYFIELD_LEFT_WALL) {
+;
+	cmp     #$0F
+	bcs     L0014
+;
+; players[0].x = PLAYFIELD_LEFT_WALL;
+;
+	lda     #$0E
+;
+; } else {
+;
+	jmp     L0010
+;
+; } else if (pad1 & PAD_RIGHT) {
+;
+L0013:	lda     _pad1
+	and     #$01
+	beq     L0015
+;
+; temp_byte_1 += PLAYER_SPEED;
+;
+	lda     #$03
+	clc
+	adc     _temp_byte_1
+	sta     _temp_byte_1
+;
+; if (temp_byte_1 >= PLAYFIELD_RIGHT_WALL) {
+;
+	cmp     #$EA
+	bcc     L0014
+;
+; players[0].x = PLAYFIELD_RIGHT_WALL;
+;
+	lda     #$EA
+;
+; } else {
+;
+	jmp     L0010
+;
+; players[0].x = temp_byte_1;
+;
+L0014:	lda     _temp_byte_1
+L0010:	sta     _players
+;
+; temp_byte_1 = players[0].y;
+;
+L0015:	lda     _players+1
+	sta     _temp_byte_1
+;
+; if (pad1 & PAD_DOWN) {
+;
+	lda     _pad1
+	and     #$04
+	beq     L0017
+;
+; temp_byte_1 += PLAYER_SPEED;
+;
+	lda     #$03
+	clc
+	adc     _temp_byte_1
+	sta     _temp_byte_1
+;
+; if (temp_byte_1 >= PLAYFIELD_BOTTOM_WALL) {
+;
+	cmp     #$B1
+	bcc     L0018
+;
+; players[0].y = PLAYFIELD_BOTTOM_WALL;
+;
+	lda     #$B1
+;
+; } else {
+;
+	jmp     L0011
+;
+; } else if (pad1 & PAD_UP) {
+;
+L0017:	lda     _pad1
+	and     #$08
+	beq     L000F
+;
+; temp_byte_1 -= PLAYER_SPEED;
+;
+	lda     _temp_byte_1
+	sec
+	sbc     #$03
+	sta     _temp_byte_1
+;
+; if (temp_byte_1 <= PLAYFIELD_TOP_WALL) {
+;
+	cmp     #$16
+	bcs     L0018
+;
+; players[0].y = PLAYFIELD_TOP_WALL;
+;
+	lda     #$15
+;
+; } else {
+;
+	jmp     L0011
+;
+; players[0].y = temp_byte_1;
+;
+L0018:	lda     _temp_byte_1
+L0011:	sta     _players+1
+;
+; }
+;
+L000F:	rts
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ draw_player (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_draw_player: near
+
+.segment	"CODE"
+
+;
+; oam_clear();
+;
+	jsr     _oam_clear
+;
+; oam_spr(players[0].x, players[0].y, 0x14, 0);
+;
+	jsr     decsp3
+	lda     _players
+	ldy     #$02
+	sta     (sp),y
+	lda     _players+1
+	dey
+	sta     (sp),y
+	lda     #$14
+	dey
+	sta     (sp),y
+	tya
+	jmp     _oam_spr
+
+.endproc
 
 ; ---------------------------------------------------------------
 ; void __near__ main (void)
@@ -972,11 +685,31 @@ _enemy_anim:
 ;
 	jsr     _ppu_off
 ;
+; game_state = GAME_STATE_PLAYING;
+;
+	lda     #$01
+	sta     _game_state
+;
+; players[0].x = 0x66;
+;
+	lda     #$66
+	sta     _players
+;
+; players[0].y = 0x66;
+;
+	sta     _players+1
+;
 ; pal_bg(palette);
 ;
 	lda     #<(_palette)
 	ldx     #>(_palette)
 	jsr     _pal_bg
+;
+; pal_spr(palette);
+;
+	lda     #<(_palette)
+	ldx     #>(_palette)
+	jsr     _pal_spr
 ;
 ; vram_adr(NAMETABLE_A);
 ;
@@ -1008,13 +741,55 @@ _enemy_anim:
 ;
 	jsr     _clear_vram_buffer
 ;
-; ppu_on_all(); // turn on screen
+; ppu_on_all();
 ;
 	jsr     _ppu_on_all
 ;
+; while (game_state == GAME_STATE_PLAYING) {
+;
+	jmp     L0008
+;
+; ppu_wait_nmi();
+;
+L0005:	jsr     _ppu_wait_nmi
+;
+; pad1 = pad_poll(0);
+;
+	lda     #$00
+	jsr     _pad_poll
+	sta     _pad1
+;
+; pad1_new = get_pad_new(0);
+;
+	lda     #$00
+	jsr     _get_pad_new
+	sta     _pad1_new
+;
+; clear_vram_buffer();
+;
+	jsr     _clear_vram_buffer
+;
+; move_player();
+;
+	jsr     _move_player
+;
+; draw_player();
+;
+	jsr     _draw_player
+;
+; gray_line();
+;
+	jsr     _gray_line
+;
+; while (game_state == GAME_STATE_PLAYING) {
+;
+L0008:	lda     _game_state
+	cmp     #$01
+	beq     L0005
+;
 ; while (1) {
 ;
-L0005:	jmp     L0005
+	jmp     L0008
 
 .endproc
 
