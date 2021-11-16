@@ -21,11 +21,14 @@
 	.import		_pad_poll
 	.import		_bank_spr
 	.import		_bank_bg
+	.import		_rand8
+	.import		_set_rand
 	.import		_vram_adr
 	.import		_vram_unrle
 	.import		_set_vram_buffer
 	.import		_clear_vram_buffer
 	.import		_get_pad_new
+	.import		_get_frame_count
 	.import		_gray_line
 	.export		_RoundSprL
 	.export		_RoundSprR
@@ -38,15 +41,20 @@
 	.export		_pad1
 	.export		_pad1_new
 	.export		_game_state
+	.export		_current_level
 	.export		_temp_byte_1
 	.export		_temp_byte_2
 	.export		_temp_byte_3
 	.export		_temp_byte_4
 	.export		_players
+	.export		_balls
 	.export		_palette
 	.export		_playfield_screen
+	.export		_init_game
 	.export		_move_player
+	.export		_move_balls
 	.export		_draw_player
+	.export		_draw_balls
 	.export		_main
 
 .segment	"RODATA"
@@ -485,6 +493,8 @@ _pad1_new:
 	.res	1,$00
 _game_state:
 	.res	1,$00
+_current_level:
+	.res	1,$00
 _temp_byte_1:
 	.res	1,$00
 _temp_byte_2:
@@ -496,6 +506,178 @@ _temp_byte_4:
 .segment	"BSS"
 _players:
 	.res	4,$00
+_balls:
+	.res	40,$00
+
+; ---------------------------------------------------------------
+; void __near__ init_game (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_init_game: near
+
+.segment	"CODE"
+
+;
+; pal_bg(palette);
+;
+	lda     #<(_palette)
+	ldx     #>(_palette)
+	jsr     _pal_bg
+;
+; pal_spr(palette);
+;
+	lda     #<(_palette)
+	ldx     #>(_palette)
+	jsr     _pal_spr
+;
+; vram_adr(NAMETABLE_A);
+;
+	ldx     #$20
+	lda     #$00
+	jsr     _vram_adr
+;
+; vram_unrle(playfield_screen);
+;
+	lda     #<(_playfield_screen)
+	ldx     #>(_playfield_screen)
+	jsr     _vram_unrle
+;
+; set_rand(get_frame_count());
+;
+	jsr     _get_frame_count
+	jsr     _set_rand
+;
+; game_state = GAME_STATE_PLAYING;
+;
+	lda     #$01
+	sta     _game_state
+;
+; current_level = 1;
+;
+	sta     _current_level
+;
+; players[0].x = 0x86;
+;
+	lda     #$86
+	sta     _players
+;
+; players[0].y = 0x66;
+;
+	lda     #$66
+	sta     _players+1
+;
+; for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
+;
+	lda     #$00
+	sta     _temp_byte_1
+L000A:	lda     _temp_byte_1
+	cmp     _current_level
+	bcs     L000B
+;
+; balls[temp_byte_1].x = rand8();
+;
+	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	tay
+	txa
+	adc     #>(_balls)
+	tax
+	tya
+	jsr     pushax
+	jsr     _rand8
+	ldy     #$00
+	jsr     staspidx
+;
+; balls[temp_byte_1].y = rand8();
+;
+	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	tay
+	txa
+	adc     #>(_balls)
+	tax
+	tya
+	jsr     pushax
+	jsr     _rand8
+	ldy     #$01
+	jsr     staspidx
+;
+; balls[temp_byte_1].x_velocity = BALL_SPEED;
+;
+	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	sta     ptr1
+	txa
+	adc     #>(_balls)
+	sta     ptr1+1
+	lda     #$01
+	ldy     #$02
+	sta     (ptr1),y
+;
+; balls[temp_byte_1].y_velocity = BALL_SPEED;
+;
+	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	sta     ptr1
+	txa
+	adc     #>(_balls)
+	sta     ptr1+1
+	lda     #$01
+	iny
+	sta     (ptr1),y
+;
+; for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
+;
+	inc     _temp_byte_1
+	jmp     L000A
+;
+; for (temp_byte_1 = current_level; temp_byte_1 < MAX_BALLS; ++temp_byte_1) {
+;
+L000B:	lda     _current_level
+	sta     _temp_byte_1
+L000C:	lda     _temp_byte_1
+	cmp     #$0A
+	bcs     L0007
+;
+; balls[temp_byte_1].x = 0xff;
+;
+	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	sta     ptr1
+	txa
+	adc     #>(_balls)
+	sta     ptr1+1
+	lda     #$FF
+	ldy     #$00
+	sta     (ptr1),y
+;
+; for (temp_byte_1 = current_level; temp_byte_1 < MAX_BALLS; ++temp_byte_1) {
+;
+	inc     _temp_byte_1
+	jmp     L000C
+;
+; }
+;
+L0007:	rts
+
+.endproc
 
 ; ---------------------------------------------------------------
 ; void __near__ move_player (void)
@@ -639,6 +821,303 @@ L000F:	rts
 .endproc
 
 ; ---------------------------------------------------------------
+; void __near__ move_balls (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_move_balls: near
+
+.segment	"CODE"
+
+;
+; for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
+;
+	lda     #$00
+	sta     _temp_byte_1
+L000E:	lda     _temp_byte_1
+	cmp     _current_level
+	bcc     L0013
+;
+; }
+;
+	rts
+;
+; temp_byte_2 = balls[temp_byte_1].x;
+;
+L0013:	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	sta     ptr1
+	txa
+	clc
+	adc     #>(_balls)
+	sta     ptr1+1
+	ldy     #<(_balls)
+	lda     (ptr1),y
+	sta     _temp_byte_2
+;
+; temp_byte_2 += balls[temp_byte_1].x_velocity;
+;
+	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	tay
+	txa
+	adc     #>(_balls)
+	tax
+	tya
+	ldy     #$02
+	jsr     ldaidx
+	clc
+	adc     _temp_byte_2
+	sta     _temp_byte_2
+;
+; if (temp_byte_2 >= PLAYFIELD_RIGHT_WALL) {
+;
+	cmp     #$EA
+	ldx     #$00
+	bcc     L000F
+;
+; balls[temp_byte_1].x = PLAYFIELD_RIGHT_WALL;
+;
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	sta     ptr1
+	txa
+	adc     #>(_balls)
+	sta     ptr1+1
+	lda     #$EA
+	ldy     #$00
+	sta     (ptr1),y
+;
+; balls[temp_byte_1].x_velocity *= -1;
+;
+	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	tay
+	txa
+	adc     #>(_balls)
+	tax
+	tya
+	sta     sreg
+	stx     sreg+1
+	ldy     #$02
+	jsr     ldaidx
+	eor     #$FF
+	clc
+	adc     #$01
+	sta     (sreg),y
+;
+; } else if (temp_byte_2 <= PLAYFIELD_LEFT_WALL) {
+;
+	jmp     L0009
+L000F:	lda     _temp_byte_2
+	cmp     #$0F
+	bcs     L0010
+;
+; balls[temp_byte_1].x = PLAYFIELD_LEFT_WALL;
+;
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	sta     ptr1
+	txa
+	adc     #>(_balls)
+	sta     ptr1+1
+	lda     #$0E
+	ldy     #$00
+	sta     (ptr1),y
+;
+; balls[temp_byte_1].x_velocity *= -1;
+;
+	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	tay
+	txa
+	adc     #>(_balls)
+	tax
+	tya
+	sta     sreg
+	stx     sreg+1
+	ldy     #$02
+	jsr     ldaidx
+	eor     #$FF
+	clc
+	adc     #$01
+	sta     (sreg),y
+;
+; } else {
+;
+	jmp     L0009
+;
+; balls[temp_byte_1].x = temp_byte_2;
+;
+L0010:	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	sta     ptr1
+	txa
+	adc     #>(_balls)
+	sta     ptr1+1
+	lda     _temp_byte_2
+	ldy     #$00
+	sta     (ptr1),y
+;
+; temp_byte_2 = balls[temp_byte_1].y;
+;
+L0009:	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	sta     ptr1
+	txa
+	adc     #>(_balls)
+	sta     ptr1+1
+	ldy     #$01
+	lda     (ptr1),y
+	sta     _temp_byte_2
+;
+; temp_byte_2 += balls[temp_byte_1].y_velocity;
+;
+	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	tay
+	txa
+	adc     #>(_balls)
+	tax
+	tya
+	ldy     #$03
+	jsr     ldaidx
+	clc
+	adc     _temp_byte_2
+	sta     _temp_byte_2
+;
+; if (temp_byte_2 >= PLAYFIELD_BOTTOM_WALL) {
+;
+	cmp     #$B1
+	ldx     #$00
+	bcc     L0011
+;
+; balls[temp_byte_1].y = PLAYFIELD_BOTTOM_WALL;
+;
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	sta     ptr1
+	txa
+	adc     #>(_balls)
+	sta     ptr1+1
+	lda     #$B1
+	ldy     #$01
+	sta     (ptr1),y
+;
+; balls[temp_byte_1].y_velocity *= -1;
+;
+	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	tay
+	txa
+	adc     #>(_balls)
+	tax
+	tya
+	sta     sreg
+	stx     sreg+1
+	ldy     #$03
+	jsr     ldaidx
+	eor     #$FF
+	clc
+	adc     #$01
+	sta     (sreg),y
+;
+; } else if (temp_byte_2 <= PLAYFIELD_TOP_WALL) {
+;
+	jmp     L0004
+L0011:	lda     _temp_byte_2
+	cmp     #$16
+	bcs     L0012
+;
+; balls[temp_byte_1].y = PLAYFIELD_TOP_WALL;
+;
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	sta     ptr1
+	txa
+	adc     #>(_balls)
+	sta     ptr1+1
+	lda     #$15
+	ldy     #$01
+	sta     (ptr1),y
+;
+; balls[temp_byte_1].y_velocity *= -1;
+;
+	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	tay
+	txa
+	adc     #>(_balls)
+	tax
+	tya
+	sta     sreg
+	stx     sreg+1
+	ldy     #$03
+	jsr     ldaidx
+	eor     #$FF
+	clc
+	adc     #$01
+	sta     (sreg),y
+;
+; } else {
+;
+	jmp     L0004
+;
+; balls[temp_byte_1].y = temp_byte_2;
+;
+L0012:	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	sta     ptr1
+	txa
+	adc     #>(_balls)
+	sta     ptr1+1
+	lda     _temp_byte_2
+	ldy     #$01
+	sta     (ptr1),y
+;
+; for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
+;
+L0004:	inc     _temp_byte_1
+	jmp     L000E
+
+.endproc
+
+; ---------------------------------------------------------------
 ; void __near__ draw_player (void)
 ; ---------------------------------------------------------------
 
@@ -648,10 +1127,6 @@ L000F:	rts
 
 .segment	"CODE"
 
-;
-; oam_clear();
-;
-	jsr     _oam_clear
 ;
 ; oam_spr(players[0].x, players[0].y, 0x14, 0);
 ;
@@ -671,6 +1146,69 @@ L000F:	rts
 .endproc
 
 ; ---------------------------------------------------------------
+; void __near__ draw_balls (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_draw_balls: near
+
+.segment	"CODE"
+
+;
+; for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
+;
+	lda     #$00
+	sta     _temp_byte_1
+L0006:	lda     _temp_byte_1
+	cmp     _current_level
+	bcs     L0003
+;
+; oam_spr(balls[temp_byte_1].x, balls[temp_byte_1].y, 0x4, 0);
+;
+	jsr     decsp3
+	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	sta     ptr1
+	txa
+	clc
+	adc     #>(_balls)
+	sta     ptr1+1
+	ldy     #<(_balls)
+	lda     (ptr1),y
+	ldy     #$02
+	sta     (sp),y
+	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	sta     ptr1
+	txa
+	adc     #>(_balls)
+	sta     ptr1+1
+	dey
+	lda     (ptr1),y
+	sta     (sp),y
+	lda     #$04
+	dey
+	sta     (sp),y
+	tya
+	jsr     _oam_spr
+;
+; for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
+;
+	inc     _temp_byte_1
+	jmp     L0006
+;
+; }
+;
+L0003:	rts
+
+.endproc
+
+; ---------------------------------------------------------------
 ; void __near__ main (void)
 ; ---------------------------------------------------------------
 
@@ -685,44 +1223,6 @@ L000F:	rts
 ;
 	jsr     _ppu_off
 ;
-; game_state = GAME_STATE_PLAYING;
-;
-	lda     #$01
-	sta     _game_state
-;
-; players[0].x = 0x66;
-;
-	lda     #$66
-	sta     _players
-;
-; players[0].y = 0x66;
-;
-	sta     _players+1
-;
-; pal_bg(palette);
-;
-	lda     #<(_palette)
-	ldx     #>(_palette)
-	jsr     _pal_bg
-;
-; pal_spr(palette);
-;
-	lda     #<(_palette)
-	ldx     #>(_palette)
-	jsr     _pal_spr
-;
-; vram_adr(NAMETABLE_A);
-;
-	ldx     #$20
-	lda     #$00
-	jsr     _vram_adr
-;
-; vram_unrle(playfield_screen);
-;
-	lda     #<(_playfield_screen)
-	ldx     #>(_playfield_screen)
-	jsr     _vram_unrle
-;
 ; bank_spr(0);
 ;
 	lda     #$00
@@ -732,6 +1232,10 @@ L000F:	rts
 ;
 	lda     #$01
 	jsr     _bank_bg
+;
+; init_game();
+;
+	jsr     _init_game
 ;
 ; set_vram_buffer();
 ;
@@ -773,9 +1277,21 @@ L0005:	jsr     _ppu_wait_nmi
 ;
 	jsr     _move_player
 ;
+; move_balls();
+;
+	jsr     _move_balls
+;
+; oam_clear();
+;
+	jsr     _oam_clear
+;
 ; draw_player();
 ;
 	jsr     _draw_player
+;
+; draw_balls();
+;
+	jsr     _draw_balls
 ;
 ; gray_line();
 ;
