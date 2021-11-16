@@ -1,6 +1,6 @@
 @echo off
 
-set name="full_game"
+set name="jeznes"
 
 set CC65_HOME=..\cc65\bin\
 set path=%path%;%CC65_HOME%
