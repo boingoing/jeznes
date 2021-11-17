@@ -1,6 +1,7 @@
 #include "lib/neslib.h"
 #include "lib/nesdoug.h"
 #include "sprites.h"
+#include "playfield.h"
 #include "jeznes.h"
 
 void main(void) {
@@ -54,7 +55,7 @@ void init_game(void) {
     vram_adr(NAMETABLE_A);
     vram_unrle(playfield_screen);
 
-    set_rand(get_frame_count());
+    seed_rng();
 
     // Starting game state
     game_state = GAME_STATE_PLAYING;
@@ -64,6 +65,7 @@ void init_game(void) {
     players[0].x = 0x86;
     players[0].y = 0x66;
 
+    // Ball positions
     for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
         balls[temp_byte_1].x = rand8();
         balls[temp_byte_1].y = rand8();
@@ -72,10 +74,15 @@ void init_game(void) {
     }
 
     for (temp_byte_1 = current_level; temp_byte_1 < MAX_BALLS; ++temp_byte_1) {
-        balls[temp_byte_1].x = 0xff;
+        balls[temp_byte_1].y = 0xff;
     }
 
-    memfill(&playfield, 0x0, 30*22);
+    // Load playfield pattern
+    load_playfield();
+}
+
+void load_playfield(void) {
+    memcpy(&playfield, &playfield_pattern_1, PLAYFIELD_WIDTH*PLAYFIELD_HEIGHT);
 }
 
 void move_player(void) {
@@ -154,5 +161,12 @@ void draw_balls(void) {
 
 void start_line(void) {
     if (pad1 & PAD_A) {
+        temp_byte_1 = players[0].x - PLAYFIELD_LEFT_WALL + 0x3;
+        temp_byte_1 = temp_byte_1 >> 3;
+        temp_byte_2 = players[0].y - PLAYFIELD_TOP_WALL + 0x3;
+        temp_byte_2 = temp_byte_2 >> 3;
+
+        temp_int_1 = get_ppu_addr(0, players[0].x, players[0].y);
+        one_vram_buffer(0xff, temp_int_1);
     }
 }

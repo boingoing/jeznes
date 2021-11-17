@@ -1,5 +1,13 @@
 #define MAX_BALLS 10
 
+// playfield tile offsets
+#define PLAYFIELD_FIRST_TILE_X 1
+#define PLAYFIELD_FIRST_TILE_Y 2
+#define PLAYFIELD_FIRST_TILE_INDEX 64
+#define PLAYFIELD_WIDTH 32
+#define PLAYFIELD_HEIGHT 22
+
+// playfield bounds in pixel-coords
 #define PLAYFIELD_LEFT_WALL 0xe
 #define PLAYFIELD_RIGHT_WALL 0xea
 #define PLAYFIELD_TOP_WALL 0x15
@@ -7,6 +15,8 @@
 
 #define PLAYER_SPEED 0x3
 #define BALL_SPEED 0x1
+#define BALL_WIDTH 8
+#define BALL_HEIGHT 8
 
 #pragma bss-name(push, "ZEROPAGE")
 
@@ -22,6 +32,9 @@ unsigned char temp_byte_1;
 unsigned char temp_byte_2;
 unsigned char temp_byte_3;
 unsigned char temp_byte_4;
+unsigned char temp_byte_5;
+
+int temp_int_1;
 
 #pragma bss-name(push, "BSS")
 
@@ -48,12 +61,15 @@ struct Ball {
 
 struct Ball balls[MAX_BALLS];
 
-unsigned char playfield[30 * 22];
+enum {PLAYFIELD_UNCLEARED, PLAYFIELD_WALL, PLAYFIELD_CLEARED, PLAYFIELD_LINE};
+unsigned char playfield[PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT];
 
 #include "graphics.h"
 
 void init_game(void);
+void load_playfield(void);
 void move_player(void);
 void move_balls(void);
 void draw_player(void);
 void draw_balls(void);
+void start_line(void);
