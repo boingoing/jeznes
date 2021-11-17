@@ -32,6 +32,7 @@ void main(void) {
             // do at the beginning of each frame
             clear_vram_buffer();
 
+            flip_player_orientation();
             start_line();
 
             move_player();
@@ -65,6 +66,7 @@ void init_game(void) {
     // Player position
     players[0].x = 0x86;
     players[0].y = 0x66;
+    players[0].orientation = PLAYER_ORIENTATION_HORIZ;
 
     // Ball positions
     for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
@@ -90,8 +92,13 @@ void move_player(void) {
     temp_byte_1 = players[0].x;
     if (pad1 & PAD_LEFT) {
         temp_byte_1 -= PLAYER_SPEED;
-        if (temp_byte_1 <= PLAYFIELD_LEFT_WALL) {
-            players[0].x = PLAYFIELD_LEFT_WALL;
+        if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
+            temp_byte_2 = PLAYFIELD_LEFT_WALL;
+        } else {
+            temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
+        }
+        if (temp_byte_1 <= temp_byte_2) {
+            players[0].x = temp_byte_2;
         } else {
             players[0].x = temp_byte_1;
         }
@@ -114,8 +121,13 @@ void move_player(void) {
         }
     } else if (pad1 & PAD_UP) {
         temp_byte_1 -= PLAYER_SPEED;
-        if (temp_byte_1 <= PLAYFIELD_TOP_WALL) {
-            players[0].y = PLAYFIELD_TOP_WALL;
+        if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
+            temp_byte_2 = PLAYFIELD_TOP_WALL + 8;
+        } else {
+            temp_byte_2 = PLAYFIELD_TOP_WALL;
+        }
+        if (temp_byte_1 <= temp_byte_2) {
+            players[0].y = temp_byte_2;
         } else {
             players[0].y = temp_byte_1;
         }
@@ -175,7 +187,14 @@ void move_balls(void) {
 }
 
 void draw_player(void) {
-    oam_spr(players[0].x, players[0].y, 0x14, 0);
+    temp_byte_1 = get_frame_count();
+    temp_byte_1 = temp_byte_1 >> 3 & 1;
+    if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
+        temp_byte_2 = temp_byte_1;
+    } else {
+        temp_byte_2 = 2 + temp_byte_1;
+    }
+    oam_meta_spr(players[0].x, players[0].y, player_metasprite_list[temp_byte_2]);
 }
 
 void draw_balls(void) {
@@ -185,8 +204,15 @@ void draw_balls(void) {
 }
 
 void draw_tile_highlight(void) {
-    temp_byte_1 = (players[0].x + 4) >> 3 << 3;
-    temp_byte_2 = (players[0].y + 4) >> 3 << 3;
+    if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
+        temp_byte_3 = players[0].x + 4;
+        temp_byte_4 = players[0].y;
+    } else {
+        temp_byte_3 = players[0].x;
+        temp_byte_4 = players[0].y + 4;
+    }
+    temp_byte_1 = temp_byte_3 >> 3 << 3;
+    temp_byte_2 = temp_byte_4 >> 3 << 3;
     oam_spr(temp_byte_1, temp_byte_2, 0x22, 0);
 }
 
@@ -199,5 +225,11 @@ void start_line(void) {
 
         temp_int_1 = get_ppu_addr(0, players[0].x, players[0].y);
         one_vram_buffer(0xff, temp_int_1);
+    }
+}
+
+void flip_player_orientation(void) {
+    if (pad1 & PAD_B) {
+        players[0].orientation = players[0].orientation ^ 1;
     }
 }

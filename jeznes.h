@@ -47,9 +47,11 @@ struct ObjectBase {
     unsigned char height;
 };
 
+enum {PLAYER_ORIENTATION_HORIZ, PLAYER_ORIENTATION_VERT};
 struct Player {
     unsigned char x;
     unsigned char y;
+    unsigned char orientation;
 };
 
 struct Player players[2];
@@ -76,3 +78,4 @@ void draw_player(void);
 void draw_balls(void);
 void start_line(void);
 void draw_tile_highlight(void);
+void flip_player_orientation(void);

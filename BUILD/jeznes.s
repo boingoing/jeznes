@@ -18,6 +18,7 @@
 	.import		_ppu_on_all
 	.import		_oam_clear
 	.import		_oam_spr
+	.import		_oam_meta_spr
 	.import		_pad_poll
 	.import		_bank_spr
 	.import		_bank_bg
@@ -29,17 +30,15 @@
 	.import		_one_vram_buffer
 	.import		_clear_vram_buffer
 	.import		_get_pad_new
+	.import		_get_frame_count
 	.import		_get_ppu_addr
 	.import		_gray_line
 	.import		_seed_rng
-	.export		_RoundSprL
-	.export		_RoundSprR
-	.export		_CoinSpr
-	.export		_BigCoinSpr
-	.export		_CoinHud
-	.export		_EnemyChaseSpr
-	.export		_EnemyBounceSpr
-	.export		_EnemyBounceSpr2
+	.export		_player_metasprite_0_data
+	.export		_player_metasprite_1_data
+	.export		_player_metasprite_2_data
+	.export		_player_metasprite_3_data
+	.export		_player_metasprite_list
 	.export		_playfield_pattern_1
 	.export		_pad1
 	.export		_pad1_new
@@ -65,146 +64,56 @@
 	.export		_draw_balls
 	.export		_start_line
 	.export		_draw_tile_highlight
+	.export		_flip_player_orientation
 	.export		_main
 
 .segment	"RODATA"
 
-_RoundSprL:
-	.byte	$FF
-	.byte	$FC
-	.byte	$02
+_player_metasprite_0_data:
 	.byte	$00
-	.byte	$07
-	.byte	$FC
-	.byte	$03
 	.byte	$00
-	.byte	$FF
-	.byte	$04
-	.byte	$12
+	.byte	$19
+	.byte	$80
 	.byte	$00
-	.byte	$07
-	.byte	$04
-	.byte	$13
+	.byte	$F8
+	.byte	$19
 	.byte	$00
 	.byte	$80
-_RoundSprR:
-	.byte	$FF
-	.byte	$FC
+_player_metasprite_1_data:
 	.byte	$00
 	.byte	$00
-	.byte	$07
-	.byte	$FC
-	.byte	$01
+	.byte	$1A
+	.byte	$80
 	.byte	$00
-	.byte	$FF
-	.byte	$04
-	.byte	$10
-	.byte	$00
-	.byte	$07
-	.byte	$04
-	.byte	$11
+	.byte	$F8
+	.byte	$1A
 	.byte	$00
 	.byte	$80
-_CoinSpr:
-	.byte	$FF
-	.byte	$FF
-	.byte	$20
-	.byte	$01
-	.byte	$FF
-	.byte	$07
-	.byte	$30
-	.byte	$01
-	.byte	$80
-_BigCoinSpr:
-	.byte	$FF
-	.byte	$FF
-	.byte	$21
-	.byte	$01
-	.byte	$FF
-	.byte	$07
-	.byte	$31
-	.byte	$01
-	.byte	$07
-	.byte	$FF
-	.byte	$22
-	.byte	$01
-	.byte	$07
-	.byte	$07
-	.byte	$32
-	.byte	$01
-	.byte	$80
-_CoinHud:
+_player_metasprite_2_data:
 	.byte	$00
 	.byte	$00
-	.byte	$23
-	.byte	$01
-	.byte	$08
+	.byte	$09
+	.byte	$40
+	.byte	$F8
 	.byte	$00
-	.byte	$24
-	.byte	$01
+	.byte	$09
 	.byte	$00
-	.byte	$08
-	.byte	$33
-	.byte	$01
-	.byte	$08
-	.byte	$08
-	.byte	$34
-	.byte	$01
 	.byte	$80
-_EnemyChaseSpr:
-	.byte	$FF
-	.byte	$FF
-	.byte	$04
-	.byte	$02
-	.byte	$07
-	.byte	$FF
-	.byte	$05
-	.byte	$02
-	.byte	$FF
-	.byte	$07
-	.byte	$14
-	.byte	$02
-	.byte	$07
-	.byte	$07
-	.byte	$15
-	.byte	$02
+_player_metasprite_3_data:
+	.byte	$00
+	.byte	$00
+	.byte	$0A
+	.byte	$40
+	.byte	$F8
+	.byte	$00
+	.byte	$0A
+	.byte	$00
 	.byte	$80
-_EnemyBounceSpr:
-	.byte	$FF
-	.byte	$FF
-	.byte	$06
-	.byte	$03
-	.byte	$07
-	.byte	$FF
-	.byte	$07
-	.byte	$03
-	.byte	$FF
-	.byte	$07
-	.byte	$16
-	.byte	$03
-	.byte	$07
-	.byte	$07
-	.byte	$17
-	.byte	$03
-	.byte	$80
-_EnemyBounceSpr2:
-	.byte	$FF
-	.byte	$FF
-	.byte	$04
-	.byte	$03
-	.byte	$07
-	.byte	$FF
-	.byte	$05
-	.byte	$03
-	.byte	$FF
-	.byte	$07
-	.byte	$14
-	.byte	$03
-	.byte	$07
-	.byte	$07
-	.byte	$15
-	.byte	$03
-	.byte	$80
+_player_metasprite_list:
+	.addr	_player_metasprite_0_data
+	.addr	_player_metasprite_1_data
+	.addr	_player_metasprite_2_data
+	.addr	_player_metasprite_3_data
 _playfield_pattern_1:
 	.byte	$01
 	.byte	$01
@@ -1226,7 +1135,7 @@ _temp_int_1:
 	.res	2,$00
 .segment	"BSS"
 _players:
-	.res	4,$00
+	.res	6,$00
 _balls:
 	.res	80,$00
 _playfield:
@@ -1290,9 +1199,13 @@ _playfield:
 	lda     #$66
 	sta     _players+1
 ;
-; for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
+; players[0].orientation = PLAYER_ORIENTATION_HORIZ;
 ;
 	lda     #$00
+	sta     _players+2
+;
+; for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
+;
 	sta     _temp_byte_1
 L000A:	lda     _temp_byte_1
 	cmp     _current_level
@@ -1446,7 +1359,7 @@ L0007:	jmp     _load_playfield
 ;
 	lda     _pad1
 	and     #$02
-	beq     L0013
+	beq     L001D
 ;
 ; temp_byte_1 -= PLAYER_SPEED;
 ;
@@ -1455,24 +1368,45 @@ L0007:	jmp     _load_playfield
 	sbc     #$03
 	sta     _temp_byte_1
 ;
-; if (temp_byte_1 <= PLAYFIELD_LEFT_WALL) {
+; if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
 ;
-	cmp     #$0F
-	bcs     L0014
+	lda     _players+2
+	and     #$01
+	beq     L001A
 ;
-; players[0].x = PLAYFIELD_LEFT_WALL;
+; temp_byte_2 = PLAYFIELD_LEFT_WALL;
 ;
 	lda     #$0E
 ;
 ; } else {
 ;
-	jmp     L0010
+	jmp     L0016
+;
+; temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
+;
+L001A:	lda     #$16
+L0016:	sta     _temp_byte_2
+;
+; if (temp_byte_1 <= temp_byte_2) {
+;
+	lda     _temp_byte_1
+	cmp     _temp_byte_2
+	beq     L001B
+	bcs     L001E
+;
+; players[0].x = temp_byte_2;
+;
+L001B:	lda     _temp_byte_2
+;
+; } else {
+;
+	jmp     L0017
 ;
 ; } else if (pad1 & PAD_RIGHT) {
 ;
-L0013:	lda     _pad1
+L001D:	lda     _pad1
 	and     #$01
-	beq     L0015
+	beq     L001F
 ;
 ; temp_byte_1 += PLAYER_SPEED;
 ;
@@ -1484,7 +1418,7 @@ L0013:	lda     _pad1
 ; if (temp_byte_1 >= PLAYFIELD_RIGHT_WALL) {
 ;
 	cmp     #$EA
-	bcc     L0014
+	bcc     L001E
 ;
 ; players[0].x = PLAYFIELD_RIGHT_WALL;
 ;
@@ -1492,23 +1426,23 @@ L0013:	lda     _pad1
 ;
 ; } else {
 ;
-	jmp     L0010
+	jmp     L0017
 ;
 ; players[0].x = temp_byte_1;
 ;
-L0014:	lda     _temp_byte_1
-L0010:	sta     _players
+L001E:	lda     _temp_byte_1
+L0017:	sta     _players
 ;
 ; temp_byte_1 = players[0].y;
 ;
-L0015:	lda     _players+1
+L001F:	lda     _players+1
 	sta     _temp_byte_1
 ;
 ; if (pad1 & PAD_DOWN) {
 ;
 	lda     _pad1
 	and     #$04
-	beq     L0017
+	beq     L0021
 ;
 ; temp_byte_1 += PLAYER_SPEED;
 ;
@@ -1520,7 +1454,7 @@ L0015:	lda     _players+1
 ; if (temp_byte_1 >= PLAYFIELD_BOTTOM_WALL) {
 ;
 	cmp     #$B1
-	bcc     L0018
+	bcc     L0024
 ;
 ; players[0].y = PLAYFIELD_BOTTOM_WALL;
 ;
@@ -1528,13 +1462,13 @@ L0015:	lda     _players+1
 ;
 ; } else {
 ;
-	jmp     L0011
+	jmp     L0018
 ;
 ; } else if (pad1 & PAD_UP) {
 ;
-L0017:	lda     _pad1
+L0021:	lda     _pad1
 	and     #$08
-	beq     L000F
+	beq     L0013
 ;
 ; temp_byte_1 -= PLAYER_SPEED;
 ;
@@ -1543,27 +1477,48 @@ L0017:	lda     _pad1
 	sbc     #$03
 	sta     _temp_byte_1
 ;
-; if (temp_byte_1 <= PLAYFIELD_TOP_WALL) {
+; if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
 ;
-	cmp     #$16
-	bcs     L0018
+	lda     _players+2
+	and     #$01
+	beq     L0022
 ;
-; players[0].y = PLAYFIELD_TOP_WALL;
+; temp_byte_2 = PLAYFIELD_TOP_WALL + 8;
 ;
-	lda     #$15
+	lda     #$1D
 ;
 ; } else {
 ;
-	jmp     L0011
+	jmp     L0019
+;
+; temp_byte_2 = PLAYFIELD_TOP_WALL;
+;
+L0022:	lda     #$15
+L0019:	sta     _temp_byte_2
+;
+; if (temp_byte_1 <= temp_byte_2) {
+;
+	lda     _temp_byte_1
+	cmp     _temp_byte_2
+	beq     L0023
+	bcs     L0024
+;
+; players[0].y = temp_byte_2;
+;
+L0023:	lda     _temp_byte_2
+;
+; } else {
+;
+	jmp     L0018
 ;
 ; players[0].y = temp_byte_1;
 ;
-L0018:	lda     _temp_byte_1
-L0011:	sta     _players+1
+L0024:	lda     _temp_byte_1
+L0018:	sta     _players+1
 ;
 ; }
 ;
-L000F:	rts
+L0013:	rts
 
 .endproc
 
@@ -2018,20 +1973,66 @@ L002A:	lda     _temp_byte_1
 .segment	"CODE"
 
 ;
-; oam_spr(players[0].x, players[0].y, 0x14, 0);
+; temp_byte_1 = get_frame_count();
 ;
-	jsr     decsp3
+	jsr     _get_frame_count
+	sta     _temp_byte_1
+;
+; temp_byte_1 = temp_byte_1 >> 3 & 1;
+;
+	lsr     a
+	lsr     a
+	lsr     a
+	and     #$01
+	sta     _temp_byte_1
+;
+; if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
+;
+	lda     _players+2
+	and     #$01
+	beq     L0008
+;
+; temp_byte_2 = temp_byte_1;
+;
+	lda     _temp_byte_1
+;
+; } else {
+;
+	jmp     L0006
+;
+; temp_byte_2 = 2 + temp_byte_1;
+;
+L0008:	lda     _temp_byte_1
+	clc
+	adc     #$02
+L0006:	sta     _temp_byte_2
+;
+; oam_meta_spr(players[0].x, players[0].y, player_metasprite_list[temp_byte_2]);
+;
+	jsr     decsp2
 	lda     _players
-	ldy     #$02
+	ldy     #$01
 	sta     (sp),y
 	lda     _players+1
 	dey
 	sta     (sp),y
-	lda     #$14
+	ldx     #$00
+	lda     _temp_byte_2
+	asl     a
+	bcc     L0007
+	inx
+	clc
+L0007:	adc     #<(_player_metasprite_list)
+	sta     ptr1
+	txa
+	adc     #>(_player_metasprite_list)
+	sta     ptr1+1
+	iny
+	lda     (ptr1),y
+	tax
 	dey
-	sta     (sp),y
-	tya
-	jmp     _oam_spr
+	lda     (ptr1),y
+	jmp     _oam_meta_spr
 
 .endproc
 
@@ -2186,29 +2187,56 @@ L0002:	rts
 .segment	"CODE"
 
 ;
-; temp_byte_1 = (players[0].x + 4) >> 3 << 3;
+; if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
 ;
-	ldx     #$00
+	lda     _players+2
+	and     #$01
+	beq     L0007
+;
+; temp_byte_3 = players[0].x + 4;
+;
 	lda     _players
 	clc
 	adc     #$04
-	bcc     L0002
-	inx
-L0002:	jsr     asrax3
+	sta     _temp_byte_3
+;
+; temp_byte_4 = players[0].y;
+;
+	lda     _players+1
+;
+; } else {
+;
+	jmp     L0006
+;
+; temp_byte_3 = players[0].x;
+;
+L0007:	lda     _players
+	sta     _temp_byte_3
+;
+; temp_byte_4 = players[0].y + 4;
+;
+	lda     _players+1
+	clc
+	adc     #$04
+L0006:	sta     _temp_byte_4
+;
+; temp_byte_1 = temp_byte_3 >> 3 << 3;
+;
+	lda     _temp_byte_3
+	lsr     a
+	lsr     a
+	lsr     a
 	asl     a
 	asl     a
 	asl     a
 	sta     _temp_byte_1
 ;
-; temp_byte_2 = (players[0].y + 4) >> 3 << 3;
+; temp_byte_2 = temp_byte_4 >> 3 << 3;
 ;
-	ldx     #$00
-	lda     _players+1
-	clc
-	adc     #$04
-	bcc     L0003
-	inx
-L0003:	jsr     asrax3
+	lda     _temp_byte_4
+	lsr     a
+	lsr     a
+	lsr     a
 	asl     a
 	asl     a
 	asl     a
@@ -2228,6 +2256,35 @@ L0003:	jsr     asrax3
 	sta     (sp),y
 	tya
 	jmp     _oam_spr
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ flip_player_orientation (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_flip_player_orientation: near
+
+.segment	"CODE"
+
+;
+; if (pad1 & PAD_B) {
+;
+	lda     _pad1
+	and     #$40
+	beq     L0002
+;
+; players[0].orientation = players[0].orientation ^ 1;
+;
+	lda     _players+2
+	eor     #$01
+	sta     _players+2
+;
+; }
+;
+L0002:	rts
 
 .endproc
 
@@ -2295,6 +2352,10 @@ L0005:	jsr     _ppu_wait_nmi
 ; clear_vram_buffer();
 ;
 	jsr     _clear_vram_buffer
+;
+; flip_player_orientation();
+;
+	jsr     _flip_player_orientation
 ;
 ; start_line();
 ;
