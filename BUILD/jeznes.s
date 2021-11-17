@@ -50,6 +50,7 @@
 	.export		_temp_byte_3
 	.export		_temp_byte_4
 	.export		_temp_byte_5
+	.export		_temp_signed_byte_1
 	.export		_temp_int_1
 	.export		_players
 	.export		_balls
@@ -63,6 +64,7 @@
 	.export		_draw_player
 	.export		_draw_balls
 	.export		_start_line
+	.export		_draw_tile_highlight
 	.export		_main
 
 .segment	"RODATA"
@@ -1218,13 +1220,15 @@ _temp_byte_4:
 	.res	1,$00
 _temp_byte_5:
 	.res	1,$00
+_temp_signed_byte_1:
+	.res	1,$00
 _temp_int_1:
 	.res	2,$00
 .segment	"BSS"
 _players:
 	.res	4,$00
 _balls:
-	.res	40,$00
+	.res	80,$00
 _playfield:
 	.res	704,$00
 
@@ -1368,7 +1372,7 @@ L000A:	lda     _temp_byte_1
 L000B:	lda     _current_level
 	sta     _temp_byte_1
 L000C:	lda     _temp_byte_1
-	cmp     #$0A
+	cmp     #$14
 	bcs     L0007
 ;
 ; balls[temp_byte_1].y = 0xff;
@@ -1578,17 +1582,33 @@ L000F:	rts
 ;
 	lda     #$00
 	sta     _temp_byte_1
-L000E:	lda     _temp_byte_1
+L0022:	lda     _temp_byte_1
 	cmp     _current_level
-	bcc     L0013
+	bcc     L002B
 ;
 ; }
 ;
 	rts
 ;
+; temp_signed_byte_1 = balls[temp_byte_1].x_velocity;
+;
+L002B:	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	tay
+	txa
+	adc     #>(_balls)
+	tax
+	tya
+	ldy     #$02
+	jsr     ldaidx
+	sta     _temp_signed_byte_1
+;
 ; temp_byte_2 = balls[temp_byte_1].x;
 ;
-L0013:	ldx     #$00
+	ldx     #$00
 	lda     _temp_byte_1
 	jsr     aslax2
 	sta     ptr1
@@ -1600,32 +1620,16 @@ L0013:	ldx     #$00
 	lda     (ptr1),y
 	sta     _temp_byte_2
 ;
-; temp_byte_2 += balls[temp_byte_1].x_velocity;
+; temp_byte_2 += temp_signed_byte_1;
 ;
-	ldx     #$00
-	lda     _temp_byte_1
-	jsr     aslax2
-	clc
-	adc     #<(_balls)
-	tay
-	txa
-	adc     #>(_balls)
-	tax
-	tya
-	ldy     #$02
-	jsr     ldaidx
+	lda     _temp_signed_byte_1
 	clc
 	adc     _temp_byte_2
 	sta     _temp_byte_2
 ;
-; if (temp_byte_2 >= PLAYFIELD_RIGHT_WALL) {
+; temp_byte_5 = balls[temp_byte_1].y >> 3;
 ;
-	cmp     #$EA
 	ldx     #$00
-	bcc     L000F
-;
-; balls[temp_byte_1].x = PLAYFIELD_RIGHT_WALL;
-;
 	lda     _temp_byte_1
 	jsr     aslax2
 	clc
@@ -1634,80 +1638,152 @@ L0013:	ldx     #$00
 	txa
 	adc     #>(_balls)
 	sta     ptr1+1
-	lda     #$EA
-	ldy     #$00
-	sta     (ptr1),y
+	ldy     #$01
+	lda     (ptr1),y
+	lsr     a
+	lsr     a
+	lsr     a
+	sta     _temp_byte_5
 ;
-; balls[temp_byte_1].x_velocity *= -1;
+; if (temp_signed_byte_1 > 0) {
 ;
-	ldx     #$00
-	lda     _temp_byte_1
-	jsr     aslax2
-	clc
-	adc     #<(_balls)
-	tay
-	txa
-	adc     #>(_balls)
-	tax
-	tya
-	sta     sreg
-	stx     sreg+1
-	ldy     #$02
-	jsr     ldaidx
-	eor     #$FF
-	clc
-	adc     #$01
-	sta     (sreg),y
+	lda     _temp_signed_byte_1
+	sec
+	sbc     #$01
+	bvs     L0009
+	eor     #$80
+L0009:	bpl     L0025
 ;
-; } else if (temp_byte_2 <= PLAYFIELD_LEFT_WALL) {
-;
-	jmp     L0009
-L000F:	lda     _temp_byte_2
-	cmp     #$0F
-	bcs     L0010
-;
-; balls[temp_byte_1].x = PLAYFIELD_LEFT_WALL;
-;
-	lda     _temp_byte_1
-	jsr     aslax2
-	clc
-	adc     #<(_balls)
-	sta     ptr1
-	txa
-	adc     #>(_balls)
-	sta     ptr1+1
-	lda     #$0E
-	ldy     #$00
-	sta     (ptr1),y
-;
-; balls[temp_byte_1].x_velocity *= -1;
+; temp_byte_4 = (temp_byte_2 + 7) >> 3;
 ;
 	ldx     #$00
-	lda     _temp_byte_1
-	jsr     aslax2
+	lda     _temp_byte_2
 	clc
-	adc     #<(_balls)
-	tay
-	txa
-	adc     #>(_balls)
-	tax
-	tya
-	sta     sreg
-	stx     sreg+1
-	ldy     #$02
-	jsr     ldaidx
-	eor     #$FF
+	adc     #$07
+	bcc     L000A
+	inx
+L000A:	jsr     asrax3
+	sta     _temp_byte_4
+;
+; temp_int_1 = temp_byte_4 + 32 * temp_byte_5 - PLAYFIELD_FIRST_TILE_INDEX;
+;
+	ldx     #$00
+	lda     _temp_byte_5
+	jsr     shlax4
+	stx     tmp1
+	asl     a
+	rol     tmp1
+	ldx     tmp1
 	clc
-	adc     #$01
-	sta     (sreg),y
+	adc     _temp_byte_4
+	bcc     L001C
+	inx
+L001C:	sec
+	sbc     #$40
+	bcs     L000B
+	dex
+L000B:	sta     _temp_int_1
+	stx     _temp_int_1+1
+;
+; temp_byte_4 = (temp_byte_4 << 3) - 8;
+;
+	lda     _temp_byte_4
+	asl     a
+	asl     a
+	asl     a
+	sec
+	sbc     #$08
 ;
 ; } else {
 ;
-	jmp     L0009
+	jmp     L0020
+;
+; temp_byte_4 = temp_byte_2 >> 3;
+;
+L0025:	lda     _temp_byte_2
+	lsr     a
+	lsr     a
+	lsr     a
+	sta     _temp_byte_4
+;
+; temp_int_1 = temp_byte_4 + 32 * temp_byte_5 - PLAYFIELD_FIRST_TILE_INDEX;
+;
+	ldx     #$00
+	lda     _temp_byte_5
+	jsr     shlax4
+	stx     tmp1
+	asl     a
+	rol     tmp1
+	ldx     tmp1
+	clc
+	adc     _temp_byte_4
+	bcc     L001D
+	inx
+L001D:	sec
+	sbc     #$40
+	bcs     L000E
+	dex
+L000E:	sta     _temp_int_1
+	stx     _temp_int_1+1
+;
+; temp_byte_4 = (temp_byte_4 << 3) + 8;
+;
+	lda     _temp_byte_4
+	asl     a
+	asl     a
+	asl     a
+	clc
+	adc     #$08
+L0020:	sta     _temp_byte_4
+;
+; temp_byte_3 = playfield[temp_int_1];
+;
+	lda     _temp_int_1
+	sta     ptr1
+	lda     _temp_int_1+1
+	clc
+	adc     #>(_playfield)
+	sta     ptr1+1
+	ldy     #<(_playfield)
+	lda     (ptr1),y
+	sta     _temp_byte_3
+;
+; if (temp_byte_3 == PLAYFIELD_WALL) {
+;
+	ldx     #$00
+	lda     _temp_byte_3
+	cmp     #$01
+	bne     L0026
+;
+; balls[temp_byte_1].x_velocity *= -1;
+;
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	tay
+	txa
+	adc     #>(_balls)
+	tax
+	tya
+	sta     sreg
+	stx     sreg+1
+	ldy     #$02
+	jsr     ldaidx
+	eor     #$FF
+	clc
+	adc     #$01
+	sta     (sreg),y
+;
+; temp_byte_2 = temp_byte_4;
+;
+	lda     _temp_byte_4
+	sta     _temp_byte_2
 ;
 ; balls[temp_byte_1].x = temp_byte_2;
 ;
-L0010:	lda     _temp_byte_1
+	ldx     #$00
+L0026:	lda     _temp_byte_1
 	jsr     aslax2
 	clc
 	adc     #<(_balls)
@@ -1719,9 +1795,25 @@ L0010:	lda     _temp_byte_1
 	ldy     #$00
 	sta     (ptr1),y
 ;
+; temp_signed_byte_1 = balls[temp_byte_1].y_velocity;
+;
+	ldx     #$00
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	tay
+	txa
+	adc     #>(_balls)
+	tax
+	tya
+	ldy     #$03
+	jsr     ldaidx
+	sta     _temp_signed_byte_1
+;
 ; temp_byte_2 = balls[temp_byte_1].y;
 ;
-L0009:	ldx     #$00
+	ldx     #$00
 	lda     _temp_byte_1
 	jsr     aslax2
 	clc
@@ -1734,114 +1826,169 @@ L0009:	ldx     #$00
 	lda     (ptr1),y
 	sta     _temp_byte_2
 ;
-; temp_byte_2 += balls[temp_byte_1].y_velocity;
+; temp_byte_2 += temp_signed_byte_1;
 ;
-	ldx     #$00
-	lda     _temp_byte_1
-	jsr     aslax2
-	clc
-	adc     #<(_balls)
-	tay
-	txa
-	adc     #>(_balls)
-	tax
-	tya
-	ldy     #$03
-	jsr     ldaidx
+	lda     _temp_signed_byte_1
 	clc
 	adc     _temp_byte_2
 	sta     _temp_byte_2
 ;
-; if (temp_byte_2 >= PLAYFIELD_BOTTOM_WALL) {
+; temp_byte_5 = balls[temp_byte_1].x >> 3;
 ;
-	cmp     #$B1
 	ldx     #$00
-	bcc     L0011
-;
-; balls[temp_byte_1].y = PLAYFIELD_BOTTOM_WALL;
-;
 	lda     _temp_byte_1
 	jsr     aslax2
-	clc
-	adc     #<(_balls)
 	sta     ptr1
 	txa
+	clc
 	adc     #>(_balls)
 	sta     ptr1+1
-	lda     #$B1
-	ldy     #$01
-	sta     (ptr1),y
+	ldy     #<(_balls)
+	lda     (ptr1),y
+	lsr     a
+	lsr     a
+	lsr     a
+	sta     _temp_byte_5
 ;
-; balls[temp_byte_1].y_velocity *= -1;
+; if (temp_signed_byte_1 > 0) {
 ;
-	ldx     #$00
-	lda     _temp_byte_1
-	jsr     aslax2
-	clc
-	adc     #<(_balls)
-	tay
-	txa
-	adc     #>(_balls)
-	tax
-	tya
-	sta     sreg
-	stx     sreg+1
-	ldy     #$03
-	jsr     ldaidx
-	eor     #$FF
-	clc
-	adc     #$01
-	sta     (sreg),y
+	lda     _temp_signed_byte_1
+	sec
+	sbc     #$01
+	bvs     L0014
+	eor     #$80
+L0014:	bpl     L0029
 ;
-; } else if (temp_byte_2 <= PLAYFIELD_TOP_WALL) {
-;
-	jmp     L0004
-L0011:	lda     _temp_byte_2
-	cmp     #$16
-	bcs     L0012
-;
-; balls[temp_byte_1].y = PLAYFIELD_TOP_WALL;
-;
-	lda     _temp_byte_1
-	jsr     aslax2
-	clc
-	adc     #<(_balls)
-	sta     ptr1
-	txa
-	adc     #>(_balls)
-	sta     ptr1+1
-	lda     #$15
-	ldy     #$01
-	sta     (ptr1),y
-;
-; balls[temp_byte_1].y_velocity *= -1;
+; temp_byte_4 = (temp_byte_2 + 7) >> 3;
 ;
 	ldx     #$00
-	lda     _temp_byte_1
-	jsr     aslax2
+	lda     _temp_byte_2
 	clc
-	adc     #<(_balls)
-	tay
-	txa
-	adc     #>(_balls)
-	tax
-	tya
-	sta     sreg
-	stx     sreg+1
-	ldy     #$03
-	jsr     ldaidx
-	eor     #$FF
+	adc     #$07
+	bcc     L0015
+	inx
+L0015:	jsr     asrax3
+	sta     _temp_byte_4
+;
+; temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
+;
+	ldx     #$00
+	lda     _temp_byte_4
+	jsr     shlax4
+	stx     tmp1
+	asl     a
+	rol     tmp1
+	ldx     tmp1
 	clc
-	adc     #$01
-	sta     (sreg),y
+	adc     _temp_byte_5
+	bcc     L001E
+	inx
+L001E:	sec
+	sbc     #$40
+	bcs     L0016
+	dex
+L0016:	sta     _temp_int_1
+	stx     _temp_int_1+1
+;
+; temp_byte_4 = (temp_byte_4 << 3) - 8;
+;
+	lda     _temp_byte_4
+	asl     a
+	asl     a
+	asl     a
+	sec
+	sbc     #$08
 ;
 ; } else {
 ;
-	jmp     L0004
+	jmp     L0021
+;
+; temp_byte_4 = temp_byte_2 >> 3;
+;
+L0029:	lda     _temp_byte_2
+	lsr     a
+	lsr     a
+	lsr     a
+	sta     _temp_byte_4
+;
+; temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
+;
+	ldx     #$00
+	lda     _temp_byte_4
+	jsr     shlax4
+	stx     tmp1
+	asl     a
+	rol     tmp1
+	ldx     tmp1
+	clc
+	adc     _temp_byte_5
+	bcc     L001F
+	inx
+L001F:	sec
+	sbc     #$40
+	bcs     L0019
+	dex
+L0019:	sta     _temp_int_1
+	stx     _temp_int_1+1
+;
+; temp_byte_4 = (temp_byte_4 << 3) + 8;
+;
+	lda     _temp_byte_4
+	asl     a
+	asl     a
+	asl     a
+	clc
+	adc     #$08
+L0021:	sta     _temp_byte_4
+;
+; temp_byte_3 = playfield[temp_int_1];
+;
+	lda     _temp_int_1
+	sta     ptr1
+	lda     _temp_int_1+1
+	clc
+	adc     #>(_playfield)
+	sta     ptr1+1
+	ldy     #<(_playfield)
+	lda     (ptr1),y
+	sta     _temp_byte_3
+;
+; if (temp_byte_3 == PLAYFIELD_WALL) {
+;
+	ldx     #$00
+	lda     _temp_byte_3
+	cmp     #$01
+	bne     L002A
+;
+; balls[temp_byte_1].y_velocity *= -1;
+;
+	lda     _temp_byte_1
+	jsr     aslax2
+	clc
+	adc     #<(_balls)
+	tay
+	txa
+	adc     #>(_balls)
+	tax
+	tya
+	sta     sreg
+	stx     sreg+1
+	ldy     #$03
+	jsr     ldaidx
+	eor     #$FF
+	clc
+	adc     #$01
+	sta     (sreg),y
+;
+; temp_byte_2 = temp_byte_4;
+;
+	lda     _temp_byte_4
+	sta     _temp_byte_2
 ;
 ; balls[temp_byte_1].y = temp_byte_2;
 ;
-L0012:	lda     _temp_byte_1
+	ldx     #$00
+L002A:	lda     _temp_byte_1
 	jsr     aslax2
 	clc
 	adc     #<(_balls)
@@ -1855,8 +2002,8 @@ L0012:	lda     _temp_byte_1
 ;
 ; for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
 ;
-L0004:	inc     _temp_byte_1
-	jmp     L000E
+	inc     _temp_byte_1
+	jmp     L0022
 
 .endproc
 
@@ -2029,6 +2176,62 @@ L0002:	rts
 .endproc
 
 ; ---------------------------------------------------------------
+; void __near__ draw_tile_highlight (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_draw_tile_highlight: near
+
+.segment	"CODE"
+
+;
+; temp_byte_1 = (players[0].x + 4) >> 3 << 3;
+;
+	ldx     #$00
+	lda     _players
+	clc
+	adc     #$04
+	bcc     L0002
+	inx
+L0002:	jsr     asrax3
+	asl     a
+	asl     a
+	asl     a
+	sta     _temp_byte_1
+;
+; temp_byte_2 = (players[0].y + 4) >> 3 << 3;
+;
+	ldx     #$00
+	lda     _players+1
+	clc
+	adc     #$04
+	bcc     L0003
+	inx
+L0003:	jsr     asrax3
+	asl     a
+	asl     a
+	asl     a
+	sta     _temp_byte_2
+;
+; oam_spr(temp_byte_1, temp_byte_2, 0x22, 0);
+;
+	jsr     decsp3
+	lda     _temp_byte_1
+	ldy     #$02
+	sta     (sp),y
+	lda     _temp_byte_2
+	dey
+	sta     (sp),y
+	lda     #$22
+	dey
+	sta     (sp),y
+	tya
+	jmp     _oam_spr
+
+.endproc
+
+; ---------------------------------------------------------------
 ; void __near__ main (void)
 ; ---------------------------------------------------------------
 
@@ -2116,6 +2319,10 @@ L0005:	jsr     _ppu_wait_nmi
 ; draw_balls();
 ;
 	jsr     _draw_balls
+;
+; draw_tile_highlight();
+;
+	jsr     _draw_tile_highlight
 ;
 ; gray_line();
 ;

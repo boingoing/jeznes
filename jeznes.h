@@ -1,4 +1,4 @@
-#define MAX_BALLS 10
+#define MAX_BALLS 20
 
 // playfield tile offsets
 #define PLAYFIELD_FIRST_TILE_X 1
@@ -33,6 +33,8 @@ unsigned char temp_byte_2;
 unsigned char temp_byte_3;
 unsigned char temp_byte_4;
 unsigned char temp_byte_5;
+
+signed char temp_signed_byte_1;
 
 int temp_int_1;
 
@@ -73,3 +75,4 @@ void move_balls(void);
 void draw_player(void);
 void draw_balls(void);
 void start_line(void);
+void draw_tile_highlight(void);

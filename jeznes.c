@@ -41,6 +41,7 @@ void main(void) {
             oam_clear();
             draw_player();
             draw_balls();
+            draw_tile_highlight();
 
             // For debugging, render a line indicating how much CPU is used.
             gray_line();
@@ -123,29 +124,53 @@ void move_player(void) {
 
 void move_balls(void) {
     for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
+        temp_signed_byte_1 = balls[temp_byte_1].x_velocity;
         temp_byte_2 = balls[temp_byte_1].x;
-        temp_byte_2 += balls[temp_byte_1].x_velocity;
-        if (temp_byte_2 >= PLAYFIELD_RIGHT_WALL) {
-            balls[temp_byte_1].x = PLAYFIELD_RIGHT_WALL;
-            balls[temp_byte_1].x_velocity *= -1;
-        } else if (temp_byte_2 <= PLAYFIELD_LEFT_WALL) {
-            balls[temp_byte_1].x = PLAYFIELD_LEFT_WALL;
-            balls[temp_byte_1].x_velocity *= -1;
-        } else {
-            balls[temp_byte_1].x = temp_byte_2;
-        }
+        temp_byte_2 += temp_signed_byte_1;
 
-        temp_byte_2 = balls[temp_byte_1].y;
-        temp_byte_2 += balls[temp_byte_1].y_velocity;
-        if (temp_byte_2 >= PLAYFIELD_BOTTOM_WALL) {
-            balls[temp_byte_1].y = PLAYFIELD_BOTTOM_WALL;
-            balls[temp_byte_1].y_velocity *= -1;
-        } else if (temp_byte_2 <= PLAYFIELD_TOP_WALL) {
-            balls[temp_byte_1].y = PLAYFIELD_TOP_WALL;
-            balls[temp_byte_1].y_velocity *= -1;
+        // y tile coord
+        temp_byte_5 = balls[temp_byte_1].y >> 3;
+        if (temp_signed_byte_1 > 0) {
+            // Moving right
+            temp_byte_4 = (temp_byte_2 + 7) >> 3;
+            temp_int_1 = temp_byte_4 + 32 * temp_byte_5 - PLAYFIELD_FIRST_TILE_INDEX;
+            temp_byte_4 = (temp_byte_4 << 3) - 8;
         } else {
-            balls[temp_byte_1].y = temp_byte_2;
+            // Moving left
+            temp_byte_4 = temp_byte_2 >> 3;
+            temp_int_1 = temp_byte_4 + 32 * temp_byte_5 - PLAYFIELD_FIRST_TILE_INDEX;
+            temp_byte_4 = (temp_byte_4 << 3) + 8;
         }
+        temp_byte_3 = playfield[temp_int_1];
+        if (temp_byte_3 == PLAYFIELD_WALL) {
+            balls[temp_byte_1].x_velocity *= -1;
+            temp_byte_2 = temp_byte_4;
+        }
+        balls[temp_byte_1].x = temp_byte_2;
+
+        temp_signed_byte_1 = balls[temp_byte_1].y_velocity;
+        temp_byte_2 = balls[temp_byte_1].y;
+        temp_byte_2 += temp_signed_byte_1;
+
+        // x tile coord
+        temp_byte_5 = balls[temp_byte_1].x >> 3;
+        if (temp_signed_byte_1 > 0) {
+            // Moving down
+            temp_byte_4 = (temp_byte_2 + 7) >> 3;
+            temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
+            temp_byte_4 = (temp_byte_4 << 3) - 8;
+        } else {
+            // Moving up
+            temp_byte_4 = temp_byte_2 >> 3;
+            temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
+            temp_byte_4 = (temp_byte_4 << 3) + 8;
+        }
+        temp_byte_3 = playfield[temp_int_1];
+        if (temp_byte_3 == PLAYFIELD_WALL) {
+            balls[temp_byte_1].y_velocity *= -1;
+            temp_byte_2 = temp_byte_4;
+        }
+        balls[temp_byte_1].y = temp_byte_2;
     }
 }
 
@@ -157,6 +182,12 @@ void draw_balls(void) {
     for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
         oam_spr(balls[temp_byte_1].x, balls[temp_byte_1].y, 0x4, 0);
     }
+}
+
+void draw_tile_highlight(void) {
+    temp_byte_1 = (players[0].x + 4) >> 3 << 3;
+    temp_byte_2 = (players[0].y + 4) >> 3 << 3;
+    oam_spr(temp_byte_1, temp_byte_2, 0x22, 0);
 }
 
 void start_line(void) {
