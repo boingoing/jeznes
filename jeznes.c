@@ -103,6 +103,7 @@ void move_player(void) {
         } else {
             players[0].x = temp_byte_1;
         }
+        update_nearest_tile();
     } else if (pad1 & PAD_RIGHT) {
         temp_byte_1 = players[0].x;
         temp_byte_1 += PLAYER_SPEED;
@@ -111,6 +112,7 @@ void move_player(void) {
         } else {
             players[0].x = temp_byte_1;
         }
+        update_nearest_tile();
     }
 
     if (pad1 & PAD_DOWN) {
@@ -121,6 +123,7 @@ void move_player(void) {
         } else {
             players[0].y = temp_byte_1;
         }
+        update_nearest_tile();
     } else if (pad1 & PAD_UP) {
         temp_byte_1 = players[0].y;
         temp_byte_1 -= PLAYER_SPEED;
@@ -134,6 +137,7 @@ void move_player(void) {
         } else {
             players[0].y = temp_byte_1;
         }
+        update_nearest_tile();
     }
 }
 
@@ -207,16 +211,7 @@ void draw_balls(void) {
 }
 
 void draw_tile_highlight(void) {
-    if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
-        temp_byte_3 = players[0].x + 4;
-        temp_byte_4 = players[0].y;
-    } else {
-        temp_byte_3 = players[0].x;
-        temp_byte_4 = players[0].y + 4;
-    }
-    temp_byte_1 = temp_byte_3 >> 3 << 3;
-    temp_byte_2 = temp_byte_4 >> 3 << 3;
-    oam_spr(temp_byte_1, temp_byte_2, 0x18, 0);
+    oam_spr(players[0].nearest_tile_x, players[0].nearest_tile_y, 0x18, 0);
 }
 
 void start_line(void) {
@@ -252,4 +247,16 @@ void flip_player_orientation(void) {
     } else {
         players[0].rotate_pressed = 0;
     }
+}
+
+void update_nearest_tile(void) {
+    if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
+        temp_byte_3 = players[0].x + 4;
+        temp_byte_4 = players[0].y;
+    } else {
+        temp_byte_3 = players[0].x;
+        temp_byte_4 = players[0].y + 4;
+    }
+    players[0].nearest_tile_x = temp_byte_3 >> 3 << 3;
+    players[0].nearest_tile_y = temp_byte_4 >> 3 << 3;
 }

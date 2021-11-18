@@ -13,6 +13,7 @@
 #define PLAYFIELD_TOP_WALL 0x15
 #define PLAYFIELD_BOTTOM_WALL 0xb1
 
+#define MAX_PLAYERS 2
 #define PLAYER_SPEED 0x3
 #define BALL_SPEED 0x1
 #define BALL_WIDTH 8
@@ -44,9 +45,11 @@ struct Player {
     unsigned char y;
     unsigned char orientation;
     unsigned char rotate_pressed;
+    unsigned char nearest_tile_x;
+    unsigned char nearest_tile_y;
 };
 
-struct Player players[2];
+struct Player players[MAX_PLAYERS];
 
 struct Ball {
     unsigned char x;
@@ -56,6 +59,18 @@ struct Ball {
 };
 
 struct Ball balls[MAX_BALLS];
+
+enum {LINE_ORIENTATION_HORIZ, LINE_ORIENTATION_VERT};
+struct Line {
+    unsigned char origin_x;
+    unsigned char origin_y;
+    unsigned char orientation;
+    unsigned char current_neg;
+    unsigned char current_pos;
+    unsigned char current_block_completion;
+};
+
+struct Line lines[MAX_PLAYERS];
 
 #pragma bss-name(push, "BSS")
 
@@ -80,3 +95,4 @@ void draw_balls(void);
 void start_line(void);
 void draw_tile_highlight(void);
 void flip_player_orientation(void);
+void update_nearest_tile(void);

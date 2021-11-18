@@ -53,6 +53,7 @@
 	.export		_temp_int_1
 	.export		_players
 	.export		_balls
+	.export		_lines
 	.export		_playfield
 	.export		_palette
 	.export		_playfield_screen
@@ -65,6 +66,7 @@
 	.export		_start_line
 	.export		_draw_tile_highlight
 	.export		_flip_player_orientation
+	.export		_update_nearest_tile
 	.export		_main
 
 .segment	"RODATA"
@@ -1134,9 +1136,11 @@ _temp_signed_byte_1:
 _temp_int_1:
 	.res	2,$00
 _players:
-	.res	8,$00
+	.res	12,$00
 _balls:
 	.res	80,$00
+_lines:
+	.res	12,$00
 .segment	"BSS"
 _playfield:
 	.res	704,$00
@@ -1358,7 +1362,7 @@ L0007:	jmp     _load_playfield
 ;
 	lda     _pad1
 	and     #$02
-	beq     L001D
+	beq     L001F
 ;
 ; temp_byte_1 = players[0].x;
 ;
@@ -1375,7 +1379,7 @@ L0007:	jmp     _load_playfield
 ;
 	lda     _players+2
 	and     #$01
-	beq     L001A
+	beq     L001C
 ;
 ; temp_byte_2 = PLAYFIELD_LEFT_WALL;
 ;
@@ -1387,29 +1391,29 @@ L0007:	jmp     _load_playfield
 ;
 ; temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
 ;
-L001A:	lda     #$16
+L001C:	lda     #$16
 L0016:	sta     _temp_byte_2
 ;
 ; if (temp_byte_1 <= temp_byte_2) {
 ;
 	lda     _temp_byte_1
 	cmp     _temp_byte_2
-	beq     L001B
-	bcs     L001E
+	beq     L001D
+	bcs     L0020
 ;
 ; players[0].x = temp_byte_2;
 ;
-L001B:	lda     _temp_byte_2
+L001D:	lda     _temp_byte_2
 ;
 ; } else {
 ;
-	jmp     L0017
+	jmp     L0018
 ;
 ; } else if (pad1 & PAD_RIGHT) {
 ;
-L001D:	lda     _pad1
+L001F:	lda     _pad1
 	and     #$01
-	beq     L001F
+	beq     L0021
 ;
 ; temp_byte_1 = players[0].x;
 ;
@@ -1426,7 +1430,7 @@ L001D:	lda     _pad1
 ; if (temp_byte_1 >= PLAYFIELD_RIGHT_WALL) {
 ;
 	cmp     #$EA
-	bcc     L001E
+	bcc     L0020
 ;
 ; players[0].x = PLAYFIELD_RIGHT_WALL;
 ;
@@ -1434,18 +1438,22 @@ L001D:	lda     _pad1
 ;
 ; } else {
 ;
-	jmp     L0017
+	jmp     L0018
 ;
 ; players[0].x = temp_byte_1;
 ;
-L001E:	lda     _temp_byte_1
-L0017:	sta     _players
+L0020:	lda     _temp_byte_1
+L0018:	sta     _players
+;
+; update_nearest_tile();
+;
+	jsr     _update_nearest_tile
 ;
 ; if (pad1 & PAD_DOWN) {
 ;
-L001F:	lda     _pad1
+L0021:	lda     _pad1
 	and     #$04
-	beq     L0021
+	beq     L0023
 ;
 ; temp_byte_1 = players[0].y;
 ;
@@ -1462,7 +1470,7 @@ L001F:	lda     _pad1
 ; if (temp_byte_1 >= PLAYFIELD_BOTTOM_WALL) {
 ;
 	cmp     #$B1
-	bcc     L0024
+	bcc     L0026
 ;
 ; players[0].y = PLAYFIELD_BOTTOM_WALL;
 ;
@@ -1470,13 +1478,13 @@ L001F:	lda     _pad1
 ;
 ; } else {
 ;
-	jmp     L0018
+	jmp     L001B
 ;
 ; } else if (pad1 & PAD_UP) {
 ;
-L0021:	lda     _pad1
+L0023:	lda     _pad1
 	and     #$08
-	beq     L0013
+	beq     L000F
 ;
 ; temp_byte_1 = players[0].y;
 ;
@@ -1493,7 +1501,7 @@ L0021:	lda     _pad1
 ;
 	lda     _players+2
 	and     #$01
-	beq     L0022
+	beq     L0024
 ;
 ; temp_byte_2 = PLAYFIELD_TOP_WALL + 8;
 ;
@@ -1501,36 +1509,40 @@ L0021:	lda     _pad1
 ;
 ; } else {
 ;
-	jmp     L0019
+	jmp     L001A
 ;
 ; temp_byte_2 = PLAYFIELD_TOP_WALL;
 ;
-L0022:	lda     #$15
-L0019:	sta     _temp_byte_2
+L0024:	lda     #$15
+L001A:	sta     _temp_byte_2
 ;
 ; if (temp_byte_1 <= temp_byte_2) {
 ;
 	lda     _temp_byte_1
 	cmp     _temp_byte_2
-	beq     L0023
-	bcs     L0024
+	beq     L0025
+	bcs     L0026
 ;
 ; players[0].y = temp_byte_2;
 ;
-L0023:	lda     _temp_byte_2
+L0025:	lda     _temp_byte_2
 ;
 ; } else {
 ;
-	jmp     L0018
+	jmp     L001B
 ;
 ; players[0].y = temp_byte_1;
 ;
-L0024:	lda     _temp_byte_1
-L0018:	sta     _players+1
+L0026:	lda     _temp_byte_1
+L001B:	sta     _players+1
+;
+; update_nearest_tile();
+;
+	jmp     _update_nearest_tile
 ;
 ; }
 ;
-L0013:	rts
+L000F:	rts
 
 .endproc
 
@@ -2199,68 +2211,13 @@ L0002:	rts
 .segment	"CODE"
 
 ;
-; if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
-;
-	lda     _players+2
-	and     #$01
-	beq     L0007
-;
-; temp_byte_3 = players[0].x + 4;
-;
-	lda     _players
-	clc
-	adc     #$04
-	sta     _temp_byte_3
-;
-; temp_byte_4 = players[0].y;
-;
-	lda     _players+1
-;
-; } else {
-;
-	jmp     L0006
-;
-; temp_byte_3 = players[0].x;
-;
-L0007:	lda     _players
-	sta     _temp_byte_3
-;
-; temp_byte_4 = players[0].y + 4;
-;
-	lda     _players+1
-	clc
-	adc     #$04
-L0006:	sta     _temp_byte_4
-;
-; temp_byte_1 = temp_byte_3 >> 3 << 3;
-;
-	lda     _temp_byte_3
-	lsr     a
-	lsr     a
-	lsr     a
-	asl     a
-	asl     a
-	asl     a
-	sta     _temp_byte_1
-;
-; temp_byte_2 = temp_byte_4 >> 3 << 3;
-;
-	lda     _temp_byte_4
-	lsr     a
-	lsr     a
-	lsr     a
-	asl     a
-	asl     a
-	asl     a
-	sta     _temp_byte_2
-;
-; oam_spr(temp_byte_1, temp_byte_2, 0x18, 0);
+; oam_spr(players[0].nearest_tile_x, players[0].nearest_tile_y, 0x18, 0);
 ;
 	jsr     decsp3
-	lda     _temp_byte_1
+	lda     _players+4
 	ldy     #$02
 	sta     (sp),y
-	lda     _temp_byte_2
+	lda     _players+5
 	dey
 	sta     (sp),y
 	lda     #$18
@@ -2358,6 +2315,78 @@ L000F:	sta     _players+3
 ; }
 ;
 L0008:	rts
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ update_nearest_tile (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_update_nearest_tile: near
+
+.segment	"CODE"
+
+;
+; if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
+;
+	lda     _players+2
+	and     #$01
+	beq     L0007
+;
+; temp_byte_3 = players[0].x + 4;
+;
+	lda     _players
+	clc
+	adc     #$04
+	sta     _temp_byte_3
+;
+; temp_byte_4 = players[0].y;
+;
+	lda     _players+1
+;
+; } else {
+;
+	jmp     L0006
+;
+; temp_byte_3 = players[0].x;
+;
+L0007:	lda     _players
+	sta     _temp_byte_3
+;
+; temp_byte_4 = players[0].y + 4;
+;
+	lda     _players+1
+	clc
+	adc     #$04
+L0006:	sta     _temp_byte_4
+;
+; players[0].nearest_tile_x = temp_byte_3 >> 3 << 3;
+;
+	lda     _temp_byte_3
+	lsr     a
+	lsr     a
+	lsr     a
+	asl     a
+	asl     a
+	asl     a
+	sta     _players+4
+;
+; players[0].nearest_tile_y = temp_byte_4 >> 3 << 3;
+;
+	lda     _temp_byte_4
+	lsr     a
+	lsr     a
+	lsr     a
+	asl     a
+	asl     a
+	asl     a
+	sta     _players+5
+;
+; }
+;
+	rts
 
 .endproc
 
