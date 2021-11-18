@@ -38,20 +38,12 @@ signed char temp_signed_byte_1;
 
 int temp_int_1;
 
-#pragma bss-name(push, "BSS")
-
-struct ObjectBase {
-    unsigned char x;
-    unsigned char y;
-    unsigned char width;
-    unsigned char height;
-};
-
 enum {PLAYER_ORIENTATION_HORIZ, PLAYER_ORIENTATION_VERT};
 struct Player {
     unsigned char x;
     unsigned char y;
     unsigned char orientation;
+    unsigned char rotate_pressed;
 };
 
 struct Player players[2];
@@ -64,6 +56,15 @@ struct Ball {
 };
 
 struct Ball balls[MAX_BALLS];
+
+#pragma bss-name(push, "BSS")
+
+struct ObjectBase {
+    unsigned char x;
+    unsigned char y;
+    unsigned char width;
+    unsigned char height;
+};
 
 enum {PLAYFIELD_UNCLEARED, PLAYFIELD_WALL, PLAYFIELD_CLEARED, PLAYFIELD_LINE};
 unsigned char playfield[PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT];

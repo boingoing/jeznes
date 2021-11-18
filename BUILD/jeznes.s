@@ -1133,11 +1133,11 @@ _temp_signed_byte_1:
 	.res	1,$00
 _temp_int_1:
 	.res	2,$00
-.segment	"BSS"
 _players:
-	.res	6,$00
+	.res	8,$00
 _balls:
 	.res	80,$00
+.segment	"BSS"
 _playfield:
 	.res	704,$00
 
@@ -1203,6 +1203,10 @@ _playfield:
 ;
 	lda     #$00
 	sta     _players+2
+;
+; players[0].rotate_pressed = 0;
+;
+	sta     _players+3
 ;
 ; for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
 ;
@@ -2242,7 +2246,7 @@ L0006:	sta     _temp_byte_4
 	asl     a
 	sta     _temp_byte_2
 ;
-; oam_spr(temp_byte_1, temp_byte_2, 0x22, 0);
+; oam_spr(temp_byte_1, temp_byte_2, 0x18, 0);
 ;
 	jsr     decsp3
 	lda     _temp_byte_1
@@ -2251,7 +2255,7 @@ L0006:	sta     _temp_byte_4
 	lda     _temp_byte_2
 	dey
 	sta     (sp),y
-	lda     #$22
+	lda     #$18
 	dey
 	sta     (sp),y
 	tya
@@ -2274,7 +2278,17 @@ L0006:	sta     _temp_byte_4
 ;
 	lda     _pad1
 	and     #$40
-	beq     L0002
+	beq     L000F
+;
+; if (players[0].rotate_pressed == 0) {
+;
+	lda     _players+3
+	bne     L0008
+;
+; players[0].rotate_pressed = 1;
+;
+	lda     #$01
+	sta     _players+3
 ;
 ; players[0].orientation = players[0].orientation ^ 1;
 ;
@@ -2282,9 +2296,60 @@ L0006:	sta     _temp_byte_4
 	eor     #$01
 	sta     _players+2
 ;
+; if (players[0].orientation == PLAYER_ORIENTATION_HORIZ) {
+;
+	lda     _players+2
+	bne     L000C
+;
+; temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
+;
+	lda     #$16
+	sta     _temp_byte_2
+;
+; if (players[0].x <= temp_byte_2) {
+;
+	lda     _players
+	cmp     _temp_byte_2
+	beq     L000B
+	bcs     L0007
+;
+; players[0].x = temp_byte_2;
+;
+L000B:	lda     _temp_byte_2
+	sta     _players
+;
+; } else {
+;
+	rts
+;
+; temp_byte_2 = PLAYFIELD_TOP_WALL + 8;
+;
+L000C:	lda     #$1D
+	sta     _temp_byte_2
+;
+; if (players[0].y <= temp_byte_2) {
+;
+	lda     _players+1
+	cmp     _temp_byte_2
+	beq     L000D
+	bcs     L0008
+;
+; players[0].y = temp_byte_2;
+;
+L000D:	lda     _temp_byte_2
+	sta     _players+1
+;
+; } else {
+;
+L0007:	rts
+;
+; players[0].rotate_pressed = 0;
+;
+L000F:	sta     _players+3
+;
 ; }
 ;
-L0002:	rts
+L0008:	rts
 
 .endproc
 

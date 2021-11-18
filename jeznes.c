@@ -67,6 +67,7 @@ void init_game(void) {
     players[0].x = 0x86;
     players[0].y = 0x66;
     players[0].orientation = PLAYER_ORIENTATION_HORIZ;
+    players[0].rotate_pressed = 0;
 
     // Ball positions
     for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
@@ -213,7 +214,7 @@ void draw_tile_highlight(void) {
     }
     temp_byte_1 = temp_byte_3 >> 3 << 3;
     temp_byte_2 = temp_byte_4 >> 3 << 3;
-    oam_spr(temp_byte_1, temp_byte_2, 0x22, 0);
+    oam_spr(temp_byte_1, temp_byte_2, 0x18, 0);
 }
 
 void start_line(void) {
@@ -230,6 +231,23 @@ void start_line(void) {
 
 void flip_player_orientation(void) {
     if (pad1 & PAD_B) {
-        players[0].orientation = players[0].orientation ^ 1;
+        if (players[0].rotate_pressed == 0) {
+            players[0].rotate_pressed = 1;
+            players[0].orientation = players[0].orientation ^ 1;
+
+            if (players[0].orientation == PLAYER_ORIENTATION_HORIZ) {
+                temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
+                if (players[0].x <= temp_byte_2) {
+                    players[0].x = temp_byte_2;
+                }
+            } else {
+                temp_byte_2 = PLAYFIELD_TOP_WALL + 8;
+                if (players[0].y <= temp_byte_2) {
+                    players[0].y = temp_byte_2;
+                }
+            }
+        }
+    } else {
+        players[0].rotate_pressed = 0;
     }
 }
