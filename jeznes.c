@@ -90,8 +90,8 @@ void load_playfield(void) {
 }
 
 void move_player(void) {
-    temp_byte_1 = players[0].x;
     if (pad1 & PAD_LEFT) {
+        temp_byte_1 = players[0].x;
         temp_byte_1 -= PLAYER_SPEED;
         if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
             temp_byte_2 = PLAYFIELD_LEFT_WALL;
@@ -104,6 +104,7 @@ void move_player(void) {
             players[0].x = temp_byte_1;
         }
     } else if (pad1 & PAD_RIGHT) {
+        temp_byte_1 = players[0].x;
         temp_byte_1 += PLAYER_SPEED;
         if (temp_byte_1 >= PLAYFIELD_RIGHT_WALL) {
             players[0].x = PLAYFIELD_RIGHT_WALL;
@@ -112,8 +113,8 @@ void move_player(void) {
         }
     }
 
-    temp_byte_1 = players[0].y;
     if (pad1 & PAD_DOWN) {
+        temp_byte_1 = players[0].y;
         temp_byte_1 += PLAYER_SPEED;
         if (temp_byte_1 >= PLAYFIELD_BOTTOM_WALL) {
             players[0].y = PLAYFIELD_BOTTOM_WALL;
@@ -121,6 +122,7 @@ void move_player(void) {
             players[0].y = temp_byte_1;
         }
     } else if (pad1 & PAD_UP) {
+        temp_byte_1 = players[0].y;
         temp_byte_1 -= PLAYER_SPEED;
         if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
             temp_byte_2 = PLAYFIELD_TOP_WALL + 8;

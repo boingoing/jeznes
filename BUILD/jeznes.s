@@ -1354,20 +1354,19 @@ L0007:	jmp     _load_playfield
 .segment	"CODE"
 
 ;
-; temp_byte_1 = players[0].x;
-;
-	lda     _players
-	sta     _temp_byte_1
-;
 ; if (pad1 & PAD_LEFT) {
 ;
 	lda     _pad1
 	and     #$02
 	beq     L001D
 ;
+; temp_byte_1 = players[0].x;
+;
+	lda     _players
+	sta     _temp_byte_1
+;
 ; temp_byte_1 -= PLAYER_SPEED;
 ;
-	lda     _temp_byte_1
 	sec
 	sbc     #$03
 	sta     _temp_byte_1
@@ -1412,6 +1411,11 @@ L001D:	lda     _pad1
 	and     #$01
 	beq     L001F
 ;
+; temp_byte_1 = players[0].x;
+;
+	lda     _players
+	sta     _temp_byte_1
+;
 ; temp_byte_1 += PLAYER_SPEED;
 ;
 	lda     #$03
@@ -1437,16 +1441,16 @@ L001D:	lda     _pad1
 L001E:	lda     _temp_byte_1
 L0017:	sta     _players
 ;
-; temp_byte_1 = players[0].y;
-;
-L001F:	lda     _players+1
-	sta     _temp_byte_1
-;
 ; if (pad1 & PAD_DOWN) {
 ;
-	lda     _pad1
+L001F:	lda     _pad1
 	and     #$04
 	beq     L0021
+;
+; temp_byte_1 = players[0].y;
+;
+	lda     _players+1
+	sta     _temp_byte_1
 ;
 ; temp_byte_1 += PLAYER_SPEED;
 ;
@@ -1474,9 +1478,13 @@ L0021:	lda     _pad1
 	and     #$08
 	beq     L0013
 ;
+; temp_byte_1 = players[0].y;
+;
+	lda     _players+1
+	sta     _temp_byte_1
+;
 ; temp_byte_1 -= PLAYER_SPEED;
 ;
-	lda     _temp_byte_1
 	sec
 	sbc     #$03
 	sta     _temp_byte_1
