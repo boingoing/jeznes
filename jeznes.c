@@ -68,6 +68,7 @@ void init_game(void) {
     players[0].y = 0x66;
     players[0].orientation = PLAYER_ORIENTATION_HORIZ;
     players[0].rotate_pressed = 0;
+    players[0].place_pressed = 0;
     update_nearest_tile();
 
     // Ball positions
@@ -217,13 +218,14 @@ void draw_tile_highlight(void) {
 
 void start_line(void) {
     if (pad1 & PAD_A) {
-        temp_byte_1 = players[0].x - PLAYFIELD_LEFT_WALL + 0x3;
-        temp_byte_1 = temp_byte_1 >> 3;
-        temp_byte_2 = players[0].y - PLAYFIELD_TOP_WALL + 0x3;
-        temp_byte_2 = temp_byte_2 >> 3;
+        if (players[0].place_pressed == 0) {
+            players[0].place_pressed = 1;
 
-        temp_int_1 = get_ppu_addr(0, players[0].x, players[0].y);
-        one_vram_buffer(0xff, temp_int_1);
+            temp_int_1 = get_ppu_addr(0, players[0].nearest_tile_x, players[0].nearest_tile_y);
+            one_vram_buffer(0x32, temp_int_1);
+        }
+    } else {
+        players[0].place_pressed = 0;
     }
 }
 

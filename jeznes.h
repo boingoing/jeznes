@@ -3,15 +3,15 @@
 // playfield tile offsets
 #define PLAYFIELD_FIRST_TILE_X 1
 #define PLAYFIELD_FIRST_TILE_Y 2
-#define PLAYFIELD_FIRST_TILE_INDEX 64
+#define PLAYFIELD_FIRST_TILE_INDEX 32
 #define PLAYFIELD_WIDTH 32
 #define PLAYFIELD_HEIGHT 22
 
 // playfield bounds in pixel-coords
 #define PLAYFIELD_LEFT_WALL 0xe
 #define PLAYFIELD_RIGHT_WALL 0xea
-#define PLAYFIELD_TOP_WALL 0x15
-#define PLAYFIELD_BOTTOM_WALL 0xb1
+#define PLAYFIELD_TOP_WALL 0xd
+#define PLAYFIELD_BOTTOM_WALL 0xa9
 
 #define MAX_PLAYERS 2
 #define PLAYER_SPEED 0x3
@@ -45,6 +45,7 @@ struct Player {
     unsigned char y;
     unsigned char orientation;
     unsigned char rotate_pressed;
+    unsigned char place_pressed;
     unsigned char nearest_tile_x;
     unsigned char nearest_tile_y;
 };
