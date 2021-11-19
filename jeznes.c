@@ -68,6 +68,7 @@ void init_game(void) {
     players[0].y = 0x66;
     players[0].orientation = PLAYER_ORIENTATION_HORIZ;
     players[0].rotate_pressed = 0;
+    update_nearest_tile();
 
     // Ball positions
     for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
