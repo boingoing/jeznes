@@ -45,13 +45,21 @@ int temp_int_1;
 
 enum {PLAYER_ORIENTATION_HORIZ, PLAYER_ORIENTATION_VERT};
 struct Player {
+    // Player metasprite location in pixel-coords
     unsigned char x;
     unsigned char y;
-    unsigned char orientation;
-    unsigned char rotate_pressed;
-    unsigned char place_pressed;
+
+    // Pixel-coords of nearest bg tile under the player
     unsigned char nearest_tile_x;
     unsigned char nearest_tile_y;
+
+    // Horiz or Vert orientation
+    unsigned char orientation;
+
+    // Rotate button pressed (B)
+    unsigned char rotate_pressed;
+    // Place button pressed (A)
+    unsigned char place_pressed;
 };
 
 struct Player players[MAX_PLAYERS];

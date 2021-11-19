@@ -73,8 +73,8 @@ void init_game(void) {
 
     // Ball positions
     for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
-        balls[temp_byte_1].x = rand8();
-        balls[temp_byte_1].y = rand8();
+        balls[temp_byte_1].x = rand8() % (0xff - 0x30) + 0x18;
+        balls[temp_byte_1].y = rand8() % (0xff - 0x70) + 0x20;
         balls[temp_byte_1].x_velocity = BALL_SPEED;
         balls[temp_byte_1].y_velocity = BALL_SPEED;
     }
@@ -223,8 +223,14 @@ void start_line(void) {
         if (players[0].place_pressed == 0) {
             players[0].place_pressed = 1;
 
-            temp_int_1 = get_ppu_addr(0, players[0].nearest_tile_x, players[0].nearest_tile_y);
+            temp_byte_1 = players[0].nearest_tile_x;
+            temp_byte_2 = players[0].nearest_tile_y;
+            temp_int_1 = get_ppu_addr(0, temp_byte_1, temp_byte_2);
             one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, temp_int_1);
+
+            temp_byte_1 = temp_byte_1 >> 3;
+            temp_int_1 = temp_byte_1 + (temp_byte_2 >> 3 << 5) - PLAYFIELD_FIRST_TILE_INDEX;
+            playfield[temp_int_1] = PLAYFIELD_WALL;
         }
     } else {
         players[0].place_pressed = 0;
