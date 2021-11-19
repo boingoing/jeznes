@@ -52,8 +52,8 @@ void main(void) {
 
 void init_game(void) {
     // Load graphics
-    pal_bg(palette);
-    pal_spr(palette);
+    pal_bg(bg_palette);
+    pal_spr(sprite_palette);
     vram_adr(NAMETABLE_A);
     vram_unrle(playfield_screen);
 
@@ -207,8 +207,10 @@ void draw_player(void) {
 }
 
 void draw_balls(void) {
+    temp_byte_2 = get_frame_count();
+    temp_byte_2 = (temp_byte_2 >> 2) % 18 + 0x30;
     for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
-        oam_spr(balls[temp_byte_1].x, balls[temp_byte_1].y, 0x4, 0);
+        oam_spr(balls[temp_byte_1].x, balls[temp_byte_1].y, temp_byte_2, 0);
     }
 }
 
@@ -222,7 +224,7 @@ void start_line(void) {
             players[0].place_pressed = 1;
 
             temp_int_1 = get_ppu_addr(0, players[0].nearest_tile_x, players[0].nearest_tile_y);
-            one_vram_buffer(0x32, temp_int_1);
+            one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, temp_int_1);
         }
     } else {
         players[0].place_pressed = 0;

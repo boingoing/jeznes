@@ -19,6 +19,10 @@
 #define BALL_WIDTH 8
 #define BALL_HEIGHT 8
 
+#define TILE_INDEX_PLAYFIELD_UNCLEARED 0x0
+#define TILE_INDEX_PLAYFIELD_CLEARED 0x2
+#define TILE_INDEX_PLAYFIELD_LINE 0x1
+
 #pragma bss-name(push, "ZEROPAGE")
 
 unsigned char pad1;

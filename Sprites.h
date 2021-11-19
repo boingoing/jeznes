@@ -11,14 +11,14 @@ const unsigned char player_metasprite_1_data[] = {
 };
 
 const unsigned char player_metasprite_2_data[] = {
-    0,0,0x09,0|OAM_FLIP_H,
-    -8,0,0x09,0,
+    0,0,0x1b,0|OAM_FLIP_H,
+    -8,0,0x1b,0,
     128
 };
 
 const unsigned char player_metasprite_3_data[] = {
-    0,0,0x0a,0|OAM_FLIP_H,
-    -8,0,0x0a,0,
+    0,0,0x1c,0|OAM_FLIP_H,
+    -8,0,0x1c,0,
     128
 };
 
