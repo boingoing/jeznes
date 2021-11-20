@@ -62,11 +62,12 @@ void init_game(void) {
     // Starting game state
     game_state = GAME_STATE_PLAYING;
     current_level = 1;
+    current_player = 0;
 
     // Player position
     players[0].x = 0x86;
     players[0].y = 0x66;
-    players[0].orientation = PLAYER_ORIENTATION_HORIZ;
+    players[0].orientation = ORIENTATION_HORIZ;
     players[0].rotate_pressed = 0;
     players[0].place_pressed = 0;
     update_nearest_tile();
@@ -88,14 +89,14 @@ void init_game(void) {
 }
 
 void load_playfield(void) {
-    memcpy(&playfield, &playfield_pattern_1, PLAYFIELD_WIDTH*PLAYFIELD_HEIGHT);
+    memcpy(&playfield, playfield_patterns[0], PLAYFIELD_WIDTH*PLAYFIELD_HEIGHT);
 }
 
 void move_player(void) {
     if (pad1 & PAD_LEFT) {
         temp_byte_1 = players[0].x;
         temp_byte_1 -= PLAYER_SPEED;
-        if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
+        if (players[0].orientation & ORIENTATION_VERT) {
             temp_byte_2 = PLAYFIELD_LEFT_WALL;
         } else {
             temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
@@ -129,7 +130,7 @@ void move_player(void) {
     } else if (pad1 & PAD_UP) {
         temp_byte_1 = players[0].y;
         temp_byte_1 -= PLAYER_SPEED;
-        if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
+        if (players[0].orientation & ORIENTATION_VERT) {
             temp_byte_2 = PLAYFIELD_TOP_WALL + 8;
         } else {
             temp_byte_2 = PLAYFIELD_TOP_WALL;
@@ -198,7 +199,7 @@ void move_balls(void) {
 void draw_player(void) {
     temp_byte_1 = get_frame_count();
     temp_byte_1 = temp_byte_1 >> 3 & 1;
-    if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
+    if (players[0].orientation & ORIENTATION_VERT) {
         temp_byte_2 = temp_byte_1;
     } else {
         temp_byte_2 = 2 + temp_byte_1;
@@ -208,14 +209,19 @@ void draw_player(void) {
 
 void draw_balls(void) {
     temp_byte_2 = get_frame_count();
-    temp_byte_2 = (temp_byte_2 >> 2) % 18 + 0x30;
+    temp_byte_2 = (temp_byte_2 >> 2) % 18 + TILE_INDEX_BALL_BASE;
     for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
         oam_spr(balls[temp_byte_1].x, balls[temp_byte_1].y, temp_byte_2, 0);
     }
 }
 
 void draw_tile_highlight(void) {
-    oam_spr(players[0].nearest_tile_x, players[0].nearest_tile_y, 0x18, 0);
+    if (playfield[players[0].nearest_playfield_tile] == PLAYFIELD_UNCLEARED) {
+        oam_spr(players[0].nearest_tile_x, players[0].nearest_tile_y, TILE_INDEX_TILE_HIGHLIGHT, 1);
+    }
+}
+
+void update_line(void) {
 }
 
 void start_line(void) {
@@ -223,14 +229,58 @@ void start_line(void) {
         if (players[0].place_pressed == 0) {
             players[0].place_pressed = 1;
 
+            temp_int_1 = players[0].nearest_playfield_tile;
+            // We only want to start a line if the origin tile is not already cleared
+            if (playfield[temp_int_1] != PLAYFIELD_UNCLEARED) {
+                return;
+            }
+            playfield[temp_int_1] = PLAYFIELD_WALL;
+
             temp_byte_1 = players[0].nearest_tile_x;
             temp_byte_2 = players[0].nearest_tile_y;
+            temp_byte_3 = temp_byte_1 >> 3;
+            temp_byte_4 = temp_byte_2 >> 3;
+            // Set the bg tile to cleared
             temp_int_1 = get_ppu_addr(0, temp_byte_1, temp_byte_2);
             one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, temp_int_1);
 
-            temp_byte_1 = temp_byte_1 >> 3;
-            temp_int_1 = temp_byte_1 + (temp_byte_2 >> 3 << 5) - PLAYFIELD_FIRST_TILE_INDEX;
-            playfield[temp_int_1] = PLAYFIELD_WALL;
+            temp_byte_5 = players[0].orientation;
+            lines[0].origin_x = temp_byte_1;
+            lines[0].origin_y = temp_byte_2;
+            lines[0].current_block_completion = 0;
+            lines[0].orientation = temp_byte_5;
+
+            if (temp_byte_5 & ORIENTATION_VERT) {
+                temp_byte_5 = temp_byte_4 - 1;
+                // If we're already at the edge, set the next block to 0xff which indicates that side of the line is done
+                if (temp_byte_5 < 2) {
+                    lines[0].current_neg = 0xff;
+                } else {
+                    lines[0].current_neg = temp_byte_5;
+                }
+
+                temp_byte_5 = temp_byte_4 + 1;
+                if (temp_byte_5 > 21) {
+                    lines[0].current_pos = 0xff;
+                } else {
+                    lines[0].current_pos = temp_byte_5;
+                }
+            } else {
+                temp_byte_5 = temp_byte_3 - 1;
+                // If we're already at the edge, set the next block to 0xff which indicates that side of the line is done
+                if (temp_byte_5 < 2) {
+                    lines[0].current_neg = 0xff;
+                } else {
+                    lines[0].current_neg = temp_byte_5;
+                }
+
+                temp_byte_5 = temp_byte_3 + 1;
+                if (temp_byte_5 > 29) {
+                    lines[0].current_pos = 0xff;
+                } else {
+                    lines[0].current_pos = temp_byte_5;
+                }
+            }
         }
     } else {
         players[0].place_pressed = 0;
@@ -243,7 +293,7 @@ void flip_player_orientation(void) {
             players[0].rotate_pressed = 1;
             players[0].orientation = players[0].orientation ^ 1;
 
-            if (players[0].orientation == PLAYER_ORIENTATION_HORIZ) {
+            if (players[0].orientation == ORIENTATION_HORIZ) {
                 temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
                 if (players[0].x <= temp_byte_2) {
                     players[0].x = temp_byte_2;
@@ -260,14 +310,19 @@ void flip_player_orientation(void) {
     }
 }
 
+// Don't modify temp_byte_1, temp_byte_2
 void update_nearest_tile(void) {
-    if (players[0].orientation & PLAYER_ORIENTATION_VERT) {
+    if (players[0].orientation & ORIENTATION_VERT) {
         temp_byte_3 = players[0].x + 4;
         temp_byte_4 = players[0].y;
     } else {
         temp_byte_3 = players[0].x;
         temp_byte_4 = players[0].y + 4;
     }
-    players[0].nearest_tile_x = temp_byte_3 >> 3 << 3;
-    players[0].nearest_tile_y = temp_byte_4 >> 3 << 3;
+    temp_byte_3 = temp_byte_3 >> 3;
+    temp_byte_4 = temp_byte_4 >> 3;
+
+    players[0].nearest_tile_x = temp_byte_3 << 3;
+    players[0].nearest_tile_y = temp_byte_4 << 3;
+    players[0].nearest_playfield_tile = temp_byte_3 + (temp_byte_4 << 5) - PLAYFIELD_FIRST_TILE_INDEX;
 }

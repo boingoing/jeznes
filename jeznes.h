@@ -14,24 +14,37 @@
 #define PLAYFIELD_BOTTOM_WALL 0xa9
 
 #define MAX_PLAYERS 2
-#define PLAYER_SPEED 0x3
+#define PLAYER_SPEED 0x2
 #define BALL_SPEED 0x1
 #define BALL_WIDTH 8
 #define BALL_HEIGHT 8
 
 #define TILE_INDEX_PLAYFIELD_UNCLEARED 0x0
-#define TILE_INDEX_PLAYFIELD_CLEARED 0x2
-#define TILE_INDEX_PLAYFIELD_LINE 0x1
+#define TILE_INDEX_PLAYFIELD_CLEARED 0x3
+#define TILE_INDEX_PLAYFIELD_LINE_HORIZ 0x1
+#define TILE_INDEX_PLAYFIELD_LINE_VERT 0x2
+
+#define TILE_INDEX_BALL_BASE 0x30
+#define TILE_INDEX_TILE_HIGHLIGHT 0x18
+
+enum {
+    ORIENTATION_HORIZ,
+    ORIENTATION_VERT
+};
 
 #pragma bss-name(push, "ZEROPAGE")
 
 unsigned char pad1;
 unsigned char pad1_new;
 
-enum {GAME_STATE_TITLE, GAME_STATE_PLAYING};
+enum {
+    GAME_STATE_TITLE,
+    GAME_STATE_PLAYING
+};
 unsigned char game_state;
 
 unsigned char current_level;
+unsigned char current_player;
 
 unsigned char temp_byte_1;
 unsigned char temp_byte_2;
@@ -43,7 +56,6 @@ signed char temp_signed_byte_1;
 
 int temp_int_1;
 
-enum {PLAYER_ORIENTATION_HORIZ, PLAYER_ORIENTATION_VERT};
 struct Player {
     // Player metasprite location in pixel-coords
     unsigned char x;
@@ -52,6 +64,9 @@ struct Player {
     // Pixel-coords of nearest bg tile under the player
     unsigned char nearest_tile_x;
     unsigned char nearest_tile_y;
+
+    // Playfield tile index for nearest tile
+    int nearest_playfield_tile;
 
     // Horiz or Vert orientation
     unsigned char orientation;
@@ -73,13 +88,19 @@ struct Ball {
 
 struct Ball balls[MAX_BALLS];
 
-enum {LINE_ORIENTATION_HORIZ, LINE_ORIENTATION_VERT};
 struct Line {
+    // Origin playfield tile for the line
     unsigned char origin_x;
     unsigned char origin_y;
+
+    // Horiz or Vert orientation
     unsigned char orientation;
+
+    // Current tile for line in both directions
     unsigned char current_neg;
     unsigned char current_pos;
+
+    // Completion of the current block [0-7]
     unsigned char current_block_completion;
 };
 
@@ -94,7 +115,11 @@ struct ObjectBase {
     unsigned char height;
 };
 
-enum {PLAYFIELD_UNCLEARED, PLAYFIELD_WALL, PLAYFIELD_CLEARED, PLAYFIELD_LINE};
+enum {
+    PLAYFIELD_UNCLEARED,
+    PLAYFIELD_WALL,
+    PLAYFIELD_LINE
+};
 unsigned char playfield[PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT];
 
 #include "graphics.h"
@@ -109,3 +134,4 @@ void start_line(void);
 void draw_tile_highlight(void);
 void flip_player_orientation(void);
 void update_nearest_tile(void);
+void update_line(void);
