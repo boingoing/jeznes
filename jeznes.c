@@ -257,7 +257,7 @@ void update_line(void) {
         // There are 8 pixels in the block and we draw them one by one.
         // When we've reached completion of the 8 pixels, move the current head of the lines forward in either direction.
         if (lines[0].current_block_completion == 8) {
-            temp_byte_4 = players[0].orientation;
+            temp_byte_4 = lines[0].orientation;
             if (temp_byte_4 & ORIENTATION_VERT) {
                 temp_byte_5 = 32;
             } else {
