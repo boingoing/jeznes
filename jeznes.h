@@ -44,7 +44,6 @@ enum {
 unsigned char game_state;
 
 unsigned char current_level;
-unsigned char current_player;
 
 unsigned char temp_byte_1;
 unsigned char temp_byte_2;
@@ -89,19 +88,23 @@ struct Ball {
 struct Ball balls[MAX_BALLS];
 
 struct Line {
-    // Origin playfield tile for the line
-    unsigned char origin_x;
-    unsigned char origin_y;
+    // Origin playfield tile index for the line
+    int origin;
 
     // Horiz or Vert orientation
     unsigned char orientation;
 
-    // Current tile for line in both directions
-    unsigned char current_neg;
-    unsigned char current_pos;
+    // Current playfield tile index for line in both directions
+    int current_neg;
+    int current_pos;
 
     // Completion of the current block [0-7]
     unsigned char current_block_completion;
+
+    // Is the line active
+    unsigned char is_started;
+    unsigned char is_neg_complete;
+    unsigned char is_pos_complete;
 };
 
 struct Line lines[MAX_PLAYERS];
@@ -114,6 +117,11 @@ struct ObjectBase {
     unsigned char width;
     unsigned char height;
 };
+
+#define PLAYFIELD_LINE_BIT_ORIENTATION 7
+#define PLAYFIELD_LINE_BITMASK_ORIENTATION (2 << PLAYFIELD_LINE_BIT_ORIENTATION)
+#define PLAYFIELD_LINE_BIT_INDEX 6
+#define PLAYFIELD_LINE_BITMASK_INDEX (2 << PLAYFIELD_LINE_BIT_INDEX)
 
 enum {
     PLAYFIELD_UNCLEARED,

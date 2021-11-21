@@ -32,6 +32,8 @@ void main(void) {
             // do at the beginning of each frame
             clear_vram_buffer();
 
+            update_line();
+
             flip_player_orientation();
             start_line();
 
@@ -62,15 +64,16 @@ void init_game(void) {
     // Starting game state
     game_state = GAME_STATE_PLAYING;
     current_level = 1;
-    current_player = 0;
 
     // Player position
     players[0].x = 0x86;
     players[0].y = 0x66;
     players[0].orientation = ORIENTATION_HORIZ;
-    players[0].rotate_pressed = 0;
-    players[0].place_pressed = 0;
+    players[0].rotate_pressed = FALSE;
+    players[0].place_pressed = FALSE;
     update_nearest_tile();
+
+    lines[0].is_started = FALSE;
 
     // Ball positions
     for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
@@ -222,75 +225,120 @@ void draw_tile_highlight(void) {
 }
 
 void update_line(void) {
+    if (lines[0].is_started == TRUE) {
+        // There are 8 pixels in teh block and we draw them one by one.
+        // When we've reached completion of the 8 pixels, move the current head of the lines forward in either direction.
+        if (lines[0].current_block_completion == 8) {
+            temp_byte_4 = players[0].orientation;
+            if (temp_byte_4 & ORIENTATION_VERT) {
+                temp_byte_5 = 32;
+            } else {
+                temp_byte_5 = 1;
+            }
+
+            // If the current block is not an uncleared tile, that means we hit the end for that line.
+            // Walk back over the blocks until we reach origin and update them to cleared.
+            if (lines[0].is_neg_complete == FALSE) {
+                lines[0].current_neg -= temp_byte_5;
+                temp_int_1 = lines[0].current_neg;
+                if (playfield[temp_int_1] != PLAYFIELD_UNCLEARED) {
+                    while (1) {
+                        temp_int_1 += temp_byte_5;
+                        if (temp_int_1 == lines[0].origin) {
+                            break;
+                        }
+                        // Update the playfield in-memory structure
+                        playfield[temp_int_1] = PLAYFIELD_WALL;
+
+                        temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
+                        temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
+                        // Set the bg tile
+                        one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+                    }
+                    lines[0].is_neg_complete = TRUE;
+                }
+            } else {
+                // When both directions are complete the line is done
+                if (lines[0].is_pos_complete == TRUE) {
+                    lines[0].is_started = FALSE;
+                }
+            }
+
+            // Now do the positive direction.
+            if (lines[0].is_pos_complete == FALSE) {
+                lines[0].current_pos += temp_byte_5;
+                temp_int_1 = lines[0].current_pos;
+                if (playfield[temp_int_1] != PLAYFIELD_UNCLEARED) {
+                    while (1) {
+                        temp_int_1 -= temp_byte_5;
+                        if (temp_int_1 == lines[0].origin) {
+                            break;
+                        }
+                        // Update the playfield in-memory structure
+                        playfield[temp_int_1] = PLAYFIELD_WALL;
+                        temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
+                        temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
+                        // Set the bg tile
+                        one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+                    }
+                    lines[0].is_pos_complete = TRUE;
+                }
+            } else {
+                // When both directions are complete the line is done
+                if (lines[0].is_neg_complete == TRUE) {
+                    lines[0].is_started = FALSE;
+                }
+            }
+
+            lines[0].current_block_completion = 0;
+        } else {
+            ++lines[0].current_block_completion;
+        }
+    }
 }
 
 void start_line(void) {
     if (pad1 & PAD_A) {
-        if (players[0].place_pressed == 0) {
-            players[0].place_pressed = 1;
+        if (players[0].place_pressed == FALSE) {
+            players[0].place_pressed = TRUE;
+
+            // Do nothing if a line is already active
+            if (lines[0].is_started == TRUE) {
+                return;
+            }
 
             temp_int_1 = players[0].nearest_playfield_tile;
             // We only want to start a line if the origin tile is not already cleared
             if (playfield[temp_int_1] != PLAYFIELD_UNCLEARED) {
                 return;
             }
-            playfield[temp_int_1] = PLAYFIELD_WALL;
 
-            temp_byte_1 = players[0].nearest_tile_x;
-            temp_byte_2 = players[0].nearest_tile_y;
-            temp_byte_3 = temp_byte_1 >> 3;
-            temp_byte_4 = temp_byte_2 >> 3;
-            // Set the bg tile to cleared
-            temp_int_1 = get_ppu_addr(0, temp_byte_1, temp_byte_2);
-            one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, temp_int_1);
-
+            // Update the playfield in-memory structure
             temp_byte_5 = players[0].orientation;
-            lines[0].origin_x = temp_byte_1;
-            lines[0].origin_y = temp_byte_2;
-            lines[0].current_block_completion = 0;
+            playfield[temp_int_1] = PLAYFIELD_LINE & (temp_byte_5 << PLAYFIELD_LINE_BIT_ORIENTATION) & (0 << PLAYFIELD_LINE_BIT_INDEX);
+
+            // Set the bg tile
+            one_vram_buffer(TILE_INDEX_PLAYFIELD_LINE_HORIZ + temp_byte_5, get_ppu_addr(0, players[0].nearest_tile_x, players[0].nearest_tile_y));
+
+            // Update the line data
+            lines[0].current_block_completion = 8;
             lines[0].orientation = temp_byte_5;
-
-            if (temp_byte_5 & ORIENTATION_VERT) {
-                temp_byte_5 = temp_byte_4 - 1;
-                // If we're already at the edge, set the next block to 0xff which indicates that side of the line is done
-                if (temp_byte_5 < 2) {
-                    lines[0].current_neg = 0xff;
-                } else {
-                    lines[0].current_neg = temp_byte_5;
-                }
-
-                temp_byte_5 = temp_byte_4 + 1;
-                if (temp_byte_5 > 21) {
-                    lines[0].current_pos = 0xff;
-                } else {
-                    lines[0].current_pos = temp_byte_5;
-                }
-            } else {
-                temp_byte_5 = temp_byte_3 - 1;
-                // If we're already at the edge, set the next block to 0xff which indicates that side of the line is done
-                if (temp_byte_5 < 2) {
-                    lines[0].current_neg = 0xff;
-                } else {
-                    lines[0].current_neg = temp_byte_5;
-                }
-
-                temp_byte_5 = temp_byte_3 + 1;
-                if (temp_byte_5 > 29) {
-                    lines[0].current_pos = 0xff;
-                } else {
-                    lines[0].current_pos = temp_byte_5;
-                }
-            }
+            lines[0].is_started = TRUE;
+            lines[0].origin = temp_int_1;
+            lines[0].current_neg = temp_int_1;
+            lines[0].current_pos = temp_int_1;
+            lines[0].is_neg_complete = FALSE;
+            lines[0].is_pos_complete = FALSE;
         }
     } else {
-        players[0].place_pressed = 0;
+        players[0].place_pressed = FALSE;
     }
 }
 
 void flip_player_orientation(void) {
     if (pad1 & PAD_B) {
-        if (players[0].rotate_pressed == 0) {
-            players[0].rotate_pressed = 1;
+        if (players[0].rotate_pressed == FALSE) {
+            players[0].rotate_pressed = TRUE;
             players[0].orientation = players[0].orientation ^ 1;
 
             if (players[0].orientation == ORIENTATION_HORIZ) {
@@ -306,7 +354,7 @@ void flip_player_orientation(void) {
             }
         }
     } else {
-        players[0].rotate_pressed = 0;
+        players[0].rotate_pressed = FALSE;
     }
 }
 
