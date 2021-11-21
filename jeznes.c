@@ -226,7 +226,7 @@ void draw_tile_highlight(void) {
 
 void update_line(void) {
     if (lines[0].is_started == TRUE) {
-        // There are 8 pixels in teh block and we draw them one by one.
+        // There are 8 pixels in the block and we draw them one by one.
         // When we've reached completion of the 8 pixels, move the current head of the lines forward in either direction.
         if (lines[0].current_block_completion == 8) {
             temp_byte_4 = players[0].orientation;
@@ -260,6 +260,16 @@ void update_line(void) {
             } else {
                 // When both directions are complete the line is done
                 if (lines[0].is_pos_complete == TRUE) {
+                    temp_int_1 = lines[0].origin;
+
+                    // Update the playfield in-memory structure
+                    playfield[temp_int_1] = PLAYFIELD_WALL;
+
+                    temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
+                    temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
+                    // Set the bg tile
+                    one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+
                     lines[0].is_started = FALSE;
                 }
             }
@@ -286,6 +296,16 @@ void update_line(void) {
             } else {
                 // When both directions are complete the line is done
                 if (lines[0].is_neg_complete == TRUE) {
+                    temp_int_1 = lines[0].origin;
+
+                    // Update the playfield in-memory structure
+                    playfield[temp_int_1] = PLAYFIELD_WALL;
+
+                    temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
+                    temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
+                    // Set the bg tile
+                    one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+
                     lines[0].is_started = FALSE;
                 }
             }
