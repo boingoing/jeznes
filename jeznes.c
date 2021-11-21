@@ -45,6 +45,7 @@ void main(void) {
             draw_player();
             draw_balls();
             draw_tile_highlight();
+            draw_line();
 
             // For debugging, render a line indicating how much CPU is used.
             gray_line();
@@ -220,8 +221,35 @@ void draw_balls(void) {
 
 void draw_tile_highlight(void) {
     if (playfield[players[0].nearest_playfield_tile] == PLAYFIELD_UNCLEARED) {
-        oam_spr(players[0].nearest_tile_x, players[0].nearest_tile_y, TILE_INDEX_TILE_HIGHLIGHT, 1);
+        oam_spr(players[0].nearest_tile_x, players[0].nearest_tile_y - 1, TILE_INDEX_TILE_HIGHLIGHT, 1);
     }
+}
+
+void draw_line(void) {
+    if (lines[0].is_started == TRUE) {
+        if (lines[0].orientation & ORIENTATION_VERT) {
+            temp_byte_3 = SPRITE_INDEX_PLAYFIELD_LINE_VERT_BASE + lines[0].current_block_completion;
+            temp_byte_4 = OAM_FLIP_V;
+        } else {
+            temp_byte_3 = SPRITE_INDEX_PLAYFIELD_LINE_HORIZ_BASE + lines[0].current_block_completion;
+            temp_byte_4 = OAM_FLIP_H;
+        }
+
+        if (lines[0].is_neg_complete == FALSE) {
+            temp_int_1 = lines[0].current_neg;
+            temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
+            temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
+            oam_spr(temp_byte_1, temp_byte_2 - 1, temp_byte_3, 1 | temp_byte_4);
+        }
+
+        if (lines[0].is_pos_complete == FALSE) {
+            temp_int_1 = lines[0].current_pos;
+            temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
+            temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
+            oam_spr(temp_byte_1, temp_byte_2 - 1, temp_byte_3, 1);
+        }
+    }
+
 }
 
 void update_line(void) {
@@ -236,11 +264,22 @@ void update_line(void) {
                 temp_byte_5 = 1;
             }
 
-            // If the current block is not an uncleared tile, that means we hit the end for that line.
-            // Walk back over the blocks until we reach origin and update them to cleared.
             if (lines[0].is_neg_complete == FALSE) {
+                // Before moving the current line head, update the metadata for the tile we're moving from
+                // Update the playfield in-memory structure
+                temp_int_1 = lines[0].current_neg;
+                playfield[temp_int_1] = PLAYFIELD_LINE & (temp_byte_4 << PLAYFIELD_LINE_BIT_ORIENTATION) & (0 << PLAYFIELD_LINE_BIT_INDEX);
+                temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
+                temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
+                // Set the bg tile
+                temp_byte_3 = TILE_INDEX_PLAYFIELD_LINE_HORIZ + temp_byte_4;
+                one_vram_buffer(temp_byte_3, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+
                 lines[0].current_neg -= temp_byte_5;
                 temp_int_1 = lines[0].current_neg;
+
+                // If the current block is not an uncleared tile, that means we hit the end for that line.
+                // Walk back over the blocks until we reach origin and update them to cleared.
                 if (playfield[temp_int_1] != PLAYFIELD_UNCLEARED) {
                     while (1) {
                         temp_int_1 += temp_byte_5;
@@ -276,6 +315,16 @@ void update_line(void) {
 
             // Now do the positive direction.
             if (lines[0].is_pos_complete == FALSE) {
+                // Before moving the current line head, update the metadata for the tile we're moving from
+                // Update the playfield in-memory structure
+                temp_int_1 = lines[0].current_pos;
+                playfield[temp_int_1] = PLAYFIELD_LINE & (temp_byte_4 << PLAYFIELD_LINE_BIT_ORIENTATION) & (0 << PLAYFIELD_LINE_BIT_INDEX);
+                temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
+                temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
+                // Set the bg tile
+                temp_byte_3 = TILE_INDEX_PLAYFIELD_LINE_HORIZ + temp_byte_4;
+                one_vram_buffer(temp_byte_3, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+
                 lines[0].current_pos += temp_byte_5;
                 temp_int_1 = lines[0].current_pos;
                 if (playfield[temp_int_1] != PLAYFIELD_UNCLEARED) {
@@ -312,7 +361,9 @@ void update_line(void) {
 
             lines[0].current_block_completion = 0;
         } else {
-            ++lines[0].current_block_completion;
+            if (get_frame_count() % 3 == 0) {
+                ++lines[0].current_block_completion;
+            }
         }
     }
 }

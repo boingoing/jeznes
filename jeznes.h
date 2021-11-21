@@ -19,6 +19,9 @@
 #define BALL_WIDTH 8
 #define BALL_HEIGHT 8
 
+#define SPRITE_INDEX_PLAYFIELD_LINE_HORIZ_BASE 0x80
+#define SPRITE_INDEX_PLAYFIELD_LINE_VERT_BASE 0x90
+
 #define TILE_INDEX_PLAYFIELD_UNCLEARED 0x0
 #define TILE_INDEX_PLAYFIELD_CLEARED 0x3
 #define TILE_INDEX_PLAYFIELD_LINE_HORIZ 0x1
@@ -143,3 +146,4 @@ void draw_tile_highlight(void);
 void flip_player_orientation(void);
 void update_nearest_tile(void);
 void update_line(void);
+void draw_line(void);
