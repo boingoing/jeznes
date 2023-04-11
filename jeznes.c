@@ -167,36 +167,39 @@ void move_balls(void) {
             temp_int_1 = temp_byte_4 + 32 * temp_byte_5 - PLAYFIELD_FIRST_TILE_INDEX;
             temp_byte_4 = (temp_byte_4 << 3) + 8;
         }
-        temp_byte_3 = playfield[temp_int_1];
-        if (temp_byte_3 == PLAYFIELD_WALL) {
+        if (playfield[temp_int_1] == PLAYFIELD_WALL) {
             balls[temp_byte_1].x_velocity *= -1;
             temp_byte_2 = temp_byte_4;
         }
         balls[temp_byte_1].x = temp_byte_2;
 
         temp_signed_byte_1 = balls[temp_byte_1].y_velocity;
-        temp_byte_2 = balls[temp_byte_1].y;
-        temp_byte_2 += temp_signed_byte_1;
+        temp_byte_3 = balls[temp_byte_1].y;
+        temp_byte_3 += temp_signed_byte_1;
 
         // x tile coord
         temp_byte_5 = balls[temp_byte_1].x >> 3;
         if (temp_signed_byte_1 > 0) {
             // Moving down
-            temp_byte_4 = (temp_byte_2 + 7) >> 3;
+            temp_byte_4 = (temp_byte_3 + 7) >> 3;
             temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
             temp_byte_4 = (temp_byte_4 << 3) - 8;
         } else {
             // Moving up
-            temp_byte_4 = temp_byte_2 >> 3;
+            temp_byte_4 = temp_byte_3 >> 3;
             temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
             temp_byte_4 = (temp_byte_4 << 3) + 8;
         }
-        temp_byte_3 = playfield[temp_int_1];
-        if (temp_byte_3 == PLAYFIELD_WALL) {
+        if (playfield[temp_int_1] == PLAYFIELD_WALL) {
             balls[temp_byte_1].y_velocity *= -1;
-            temp_byte_2 = temp_byte_4;
+            temp_byte_3 = temp_byte_4;
         }
-        balls[temp_byte_1].y = temp_byte_2;
+        balls[temp_byte_1].y = temp_byte_3;
+
+        // Update nearest playfield tile
+        temp_byte_2 = (temp_byte_2 + 4) >> 3;
+        temp_byte_3 = (temp_byte_3 + 4) >> 3;
+        balls[temp_byte_1].nearest_playfield_tile = temp_byte_2 + (temp_byte_3 << 5) - PLAYFIELD_FIRST_TILE_INDEX;
     }
 }
 
@@ -216,6 +219,13 @@ void draw_balls(void) {
     temp_byte_2 = (temp_byte_2 >> 2) % 18 + TILE_INDEX_BALL_BASE;
     for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
         oam_spr(balls[temp_byte_1].x, balls[temp_byte_1].y, temp_byte_2, 0);
+
+#if DRAW_BALL_NEAREST_TILE_HIGHLIGHT
+        temp_int_1 = balls[temp_byte_1].nearest_playfield_tile;
+        temp_byte_3 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
+        temp_byte_4 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
+        oam_spr(temp_byte_3, temp_byte_4 - 1, TILE_INDEX_TILE_HIGHLIGHT, 1);
+#endif
     }
 }
 
@@ -249,7 +259,6 @@ void draw_line(void) {
             oam_spr(temp_byte_1, temp_byte_2 - 1, temp_byte_3, 1);
         }
     }
-
 }
 
 void update_line(void) {
@@ -268,7 +277,7 @@ void update_line(void) {
                 // Before moving the current line head, update the metadata for the tile we're moving from
                 // Update the playfield in-memory structure
                 temp_int_1 = lines[0].current_neg;
-                playfield[temp_int_1] = PLAYFIELD_LINE & (temp_byte_4 << PLAYFIELD_LINE_BIT_ORIENTATION) & (0 << PLAYFIELD_LINE_BIT_INDEX);
+                playfield[temp_int_1] = PLAYFIELD_LINE & (temp_byte_4 << PLAYFIELD_BIT_LINE_ORIENTATION) & (0 << PLAYFIELD_BIT_LINE_INDEX);
                 temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
                 temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
                 // Set the bg tile
@@ -295,6 +304,8 @@ void update_line(void) {
                         one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_2));
                     }
                     lines[0].is_neg_complete = TRUE;
+
+                    line_completed();
                 }
             } else {
                 // When both directions are complete the line is done
@@ -318,7 +329,7 @@ void update_line(void) {
                 // Before moving the current line head, update the metadata for the tile we're moving from
                 // Update the playfield in-memory structure
                 temp_int_1 = lines[0].current_pos;
-                playfield[temp_int_1] = PLAYFIELD_LINE & (temp_byte_4 << PLAYFIELD_LINE_BIT_ORIENTATION) & (0 << PLAYFIELD_LINE_BIT_INDEX);
+                playfield[temp_int_1] = PLAYFIELD_LINE & (temp_byte_4 << PLAYFIELD_BIT_LINE_ORIENTATION) & (0 << PLAYFIELD_BIT_LINE_INDEX);
                 temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
                 temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
                 // Set the bg tile
@@ -341,6 +352,8 @@ void update_line(void) {
                         one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_2));
                     }
                     lines[0].is_pos_complete = TRUE;
+
+                    line_completed();
                 }
             } else {
                 // When both directions are complete the line is done
@@ -386,7 +399,7 @@ void start_line(void) {
 
             // Update the playfield in-memory structure
             temp_byte_5 = players[0].orientation;
-            playfield[temp_int_1] = PLAYFIELD_LINE & (temp_byte_5 << PLAYFIELD_LINE_BIT_ORIENTATION) & (0 << PLAYFIELD_LINE_BIT_INDEX);
+            playfield[temp_int_1] = PLAYFIELD_LINE & (temp_byte_5 << PLAYFIELD_BIT_LINE_ORIENTATION) & (0 << PLAYFIELD_BIT_LINE_INDEX);
 
             // Set the bg tile
             one_vram_buffer(TILE_INDEX_PLAYFIELD_LINE_HORIZ + temp_byte_5, get_ppu_addr(0, players[0].nearest_tile_x, players[0].nearest_tile_y));
@@ -444,4 +457,215 @@ void update_nearest_tile(void) {
     players[0].nearest_tile_x = temp_byte_3 << 3;
     players[0].nearest_tile_y = temp_byte_4 << 3;
     players[0].nearest_playfield_tile = temp_byte_3 + (temp_byte_4 << 5) - PLAYFIELD_FIRST_TILE_INDEX;
+}
+
+void line_completed(void) {
+    reset_playfield_mark_bit();
+    temp_byte_1 = 0;
+    compute_playfield_mark_bit_one_ball();
+    update_cleared_playfield_tiles();
+}
+
+void update_cleared_playfield_tiles(void) {
+    // Look over all tiles in the playfield and for each uncleared, unmarked tile change it to cleared
+    for (temp_int_1 = 0; temp_int_1 < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT; ++temp_int_1) {
+        // Skip tiles which are not uncleared (this includes marked tiles)
+        if (playfield[temp_int_1] != PLAYFIELD_UNCLEARED) {
+            continue;
+        }
+
+        // Change tile to cleared
+        playfield[temp_int_1] = PLAYFIELD_WALL;
+        temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
+        temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
+        // Set the bg tile
+        one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+    }
+}
+
+void reset_playfield_mark_bit(void) {
+    for (temp_int_1 = 0; temp_int_1 < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT; ++temp_int_1) {
+        playfield[temp_int_1] &= ~PLAYFIELD_BITMASK_MARK;
+    }
+}
+
+// temp_byte_1 is the ball index
+void compute_playfield_mark_bit_one_ball(void) {
+    temp_int_1 = balls[temp_byte_1].nearest_playfield_tile;
+
+    // Simple flood fill scan-and-fill implementation.
+    // Mark all the uncleared playfield tiles inside the region enclosing this ball.
+
+    // if not Inside(x, y) then return
+    temp_byte_2 = playfield[temp_int_1];
+    if ((temp_byte_2 & PLAYFIELD_BITMASK_MARK) == PLAYFIELD_BITMASK_MARK) {
+        return;
+    }
+
+    // let s = new empty queue or stack
+    stack_init();
+
+    // Add (x, x, y, 1) to s
+    // (x,y)
+    stack_temp = temp_int_1;
+    stack_push();
+    // (x,1)
+    stack_temp = (temp_int_1 % 32) | (0x1 << 8);
+    stack_push();
+
+    // Add (x, x, y - 1, -1) to s
+    // (x,y-1)
+    stack_temp = temp_int_1 - 32;
+    stack_push();
+    // (x,-1)
+    stack_temp = (temp_int_1 % 32) | (0xff << 8);
+    stack_push();
+
+    // while s is not empty:
+    while (1) {
+        stack_empty();
+        if (temp_byte_2 & TRUE) {
+            break;
+        }
+
+        // Remove an (x1, x2, y, dy) from s
+        stack_pop();
+        // x2
+        temp_byte_2 = low_byte(stack_temp);
+        // dy
+        temp_signed_byte_1 = high_byte(stack_temp);
+        stack_pop();
+        // (x1,y)
+        temp_int_2 = stack_temp;
+        // let x = x1
+        temp_int_1 = stack_temp;
+        // x1
+        temp_byte_3 = stack_temp % 32;
+
+        // if Inside(x, y):
+        if (playfield[temp_int_1] == PLAYFIELD_UNCLEARED) {
+            // while Inside(x - 1, y):
+            while (1) {
+                // (x-1,y)
+                stack_temp = temp_int_1 - 1;
+                if (playfield[stack_temp] != PLAYFIELD_UNCLEARED) {
+                    break;
+                }
+                // Set(x - 1, y)
+                playfield[stack_temp] |= PLAYFIELD_BITMASK_MARK;
+                // x = x - 1
+                temp_int_1 = stack_temp;
+
+#if DEBUG
+                temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
+                temp_byte_4 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
+                // Set the bg tile
+                one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_4));
+#endif
+            }
+        }
+
+        // if x < x1:
+        if ((temp_int_1 % 32) < temp_byte_3) {
+            // Add (x, x1-1, y-dy, -dy) to s
+            // (x,y-dy)
+            stack_temp = temp_int_1 - temp_signed_byte_1 * 32;
+            stack_push();
+            // (x1-1,-dy)
+            stack_temp = (temp_byte_3 - 1) | ((-1 * temp_signed_byte_1) << 8);
+            stack_push();
+        }
+
+        // while x1 < x2:
+        while (1) {
+            if (temp_byte_3 >= temp_byte_2) {
+                break;
+            }
+            // while Inside(x1, y):
+            while (1) {
+                if (playfield[temp_int_2] != PLAYFIELD_UNCLEARED) {
+                    break;
+                }
+                // Set(x1, y)
+                playfield[temp_int_2] |= PLAYFIELD_BITMASK_MARK;
+
+#if DEBUG
+                temp_byte_1 = ((temp_int_2 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
+                temp_byte_4 = ((temp_int_2 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
+                // Set the bg tile
+                one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_4));
+#endif
+
+                // x1 = x1 + 1
+                ++temp_int_2;
+            }
+
+            // Update x1
+            temp_byte_3 = temp_int_2 % 32;
+
+#if DEBUG
+            if (stack_top > 0x40) {
+                return;
+            }
+#endif
+
+            // Add (x, x1 - 1, y+dy, dy) to s
+            // (x,y+dy)
+            stack_temp = temp_int_1 + temp_signed_byte_1 * 32;
+            stack_push();
+            // (x1-1,dy)
+            stack_temp = (temp_byte_3 - 1) | (temp_signed_byte_1 << 8);
+            stack_push();
+
+            // if x1 - 1 > x2:
+            if ((temp_byte_3 - 1) > temp_byte_2) {
+                // Add (x2 + 1, x1 - 1, y-dy, -dy)
+                // (x2+1,y-dy)
+                stack_temp = (temp_byte_2 + 1) + (((temp_int_2 >> 5) - temp_signed_byte_1) << 5);
+                stack_push();
+                // (x1-1,-dy)
+                stack_temp = (temp_byte_3 - 1) | ((-1 * temp_signed_byte_1) << 8);
+                stack_push();
+            }
+
+            // while x1 < x2 and not Inside(x1, y):
+            while (1) {
+                if (temp_byte_3 >= temp_byte_2 || playfield[temp_int_2] == PLAYFIELD_UNCLEARED) {
+                    break;
+                }
+                // x1 = x1 + 1
+                ++temp_int_2;
+                temp_byte_3 = temp_int_2 % 32;
+            }
+
+            // x = x1
+            temp_int_1 = temp_int_2;
+        }
+    }
+}
+
+// Empties the stack
+void stack_init(void) {
+    stack_top = 0;
+}
+
+// Pushes stack_temp onto the top of stack
+void stack_push(void) {
+    stack[stack_top] = stack_temp;
+    ++stack_top;
+}
+
+// Pops top of stack and stores in stack_temp
+void stack_pop(void) {
+    --stack_top;
+    stack_temp = stack[stack_top];
+}
+
+// Sets temp_byte_2 to TRUE when the stack is empty
+void stack_empty(void) {
+    if (stack_top == 0) {
+        temp_byte_2 = TRUE;
+    } else {
+        temp_byte_2 = FALSE;
+    }
 }

@@ -30,6 +30,10 @@
 #define TILE_INDEX_BALL_BASE 0x30
 #define TILE_INDEX_TILE_HIGHLIGHT 0x18
 
+// These macros enable various debugging features and should probably be turned off before release
+#define DRAW_BALL_NEAREST_TILE_HIGHLIGHT 1
+#define DEBUG 1
+
 enum {
     ORIENTATION_HORIZ,
     ORIENTATION_VERT
@@ -57,6 +61,7 @@ unsigned char temp_byte_5;
 signed char temp_signed_byte_1;
 
 int temp_int_1;
+int temp_int_2;
 
 struct Player {
     // Player metasprite location in pixel-coords
@@ -82,10 +87,15 @@ struct Player {
 struct Player players[MAX_PLAYERS];
 
 struct Ball {
+    // Ball sprite location in pixel-coords
     unsigned char x;
     unsigned char y;
+
     signed char x_velocity;
     signed char y_velocity;
+
+    // Playfield tile index for nearest tile
+    int nearest_playfield_tile;
 };
 
 struct Ball balls[MAX_BALLS];
@@ -121,10 +131,12 @@ struct ObjectBase {
     unsigned char height;
 };
 
-#define PLAYFIELD_LINE_BIT_ORIENTATION 7
-#define PLAYFIELD_LINE_BITMASK_ORIENTATION (2 << PLAYFIELD_LINE_BIT_ORIENTATION)
-#define PLAYFIELD_LINE_BIT_INDEX 6
-#define PLAYFIELD_LINE_BITMASK_INDEX (2 << PLAYFIELD_LINE_BIT_INDEX)
+#define PLAYFIELD_BIT_LINE_ORIENTATION 7
+#define PLAYFIELD_BITMASK_LINE_ORIENTATION (1 << PLAYFIELD_BIT_LINE_ORIENTATION)
+#define PLAYFIELD_BIT_LINE_INDEX 6
+#define PLAYFIELD_BITMASK_LINE_INDEX (1 << PLAYFIELD_BIT_LINE_INDEX)
+#define PLAYFIELD_BIT_MARK 5
+#define PLAYFIELD_BITMASK_MARK (1 << PLAYFIELD_BIT_MARK)
 
 enum {
     PLAYFIELD_UNCLEARED,
@@ -132,6 +144,10 @@ enum {
     PLAYFIELD_LINE
 };
 unsigned char playfield[PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT];
+
+unsigned int stack[0x66];
+unsigned char stack_top;
+unsigned int stack_temp;
 
 #include "graphics.h"
 
@@ -147,3 +163,13 @@ void flip_player_orientation(void);
 void update_nearest_tile(void);
 void update_line(void);
 void draw_line(void);
+
+void stack_init(void);
+void stack_empty(void);
+void stack_push(void);
+void stack_pop(void);
+
+void reset_playfield_mark_bit(void);
+void compute_playfield_mark_bit_one_ball(void);
+void update_cleared_playfield_tiles(void);
+void line_completed(void);
