@@ -9,8 +9,8 @@ void main(void) {
     ppu_off();
 
     // sprites are in the 0th CHR bank.
-    // tiles are in the 1st CHR bank.
     bank_spr(0);
+    // tiles are in the 1st CHR bank.
     bank_bg(1);
 
     init_game();
@@ -22,16 +22,16 @@ void main(void) {
     ppu_on_all();
 
     while (1) {
-        while (game_state == GAME_STATE_PLAYING) {
-            ppu_wait_nmi();
+        ppu_wait_nmi();
 
-            // read the first controller
-            pad1 = pad_poll(0);
-            pad1_new = get_pad_new(0);
+        // read the first controller
+        pad1 = pad_poll(0);
+        pad1_new = get_pad_new(0);
 
-            // do at the beginning of each frame
-            clear_vram_buffer();
+        // do at the beginning of each frame
+        clear_vram_buffer();
 
+        if (game_state == GAME_STATE_PLAYING) {
             update_line();
 
             flip_player_orientation();
@@ -46,10 +46,20 @@ void main(void) {
             draw_balls();
             draw_tile_highlight();
             draw_line();
+        } else if (game_state == GAME_STATE_UPDATING_PLAYFIELD) {
+            // Restart the update of cleared playfield tiles.
+            update_cleared_playfield_tiles();
 
-            // For debugging, render a line indicating how much CPU is used.
-            gray_line();
+            // If we finished updating the playfield tiles, let's remove the mark bits.
+            if (game_state == GAME_STATE_PLAYING) {
+                reset_playfield_mark_bit();
+            }
         }
+
+#if DEBUG
+        // For debugging, render a line indicating how much CPU is used.
+        gray_line();
+#endif
     }
 }
 
@@ -275,14 +285,10 @@ void update_line(void) {
 
             if (lines[0].is_neg_complete == FALSE) {
                 // Before moving the current line head, update the metadata for the tile we're moving from
-                // Update the playfield in-memory structure
                 temp_int_1 = lines[0].current_neg;
-                playfield[temp_int_1] = PLAYFIELD_LINE & (temp_byte_4 << PLAYFIELD_BIT_LINE_ORIENTATION) & (0 << PLAYFIELD_BIT_LINE_INDEX);
-                temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
-                temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
-                // Set the bg tile
+                temp_byte_1 = PLAYFIELD_LINE & (temp_byte_4 << PLAYFIELD_BIT_LINE_ORIENTATION) & (0 << PLAYFIELD_BIT_LINE_INDEX);
                 temp_byte_3 = TILE_INDEX_PLAYFIELD_LINE_HORIZ + temp_byte_4;
-                one_vram_buffer(temp_byte_3, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+                set_playfield_tile(temp_int_1, temp_byte_1, temp_byte_3);
 
                 lines[0].current_neg -= temp_byte_5;
                 temp_int_1 = lines[0].current_neg;
@@ -295,13 +301,7 @@ void update_line(void) {
                         if (temp_int_1 == lines[0].origin) {
                             break;
                         }
-                        // Update the playfield in-memory structure
-                        playfield[temp_int_1] = PLAYFIELD_WALL;
-
-                        temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
-                        temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
-                        // Set the bg tile
-                        one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+                        set_playfield_tile(temp_int_1, PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
                     }
                     lines[0].is_neg_complete = TRUE;
 
@@ -311,14 +311,7 @@ void update_line(void) {
                 // When both directions are complete the line is done
                 if (lines[0].is_pos_complete == TRUE) {
                     temp_int_1 = lines[0].origin;
-
-                    // Update the playfield in-memory structure
-                    playfield[temp_int_1] = PLAYFIELD_WALL;
-
-                    temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
-                    temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
-                    // Set the bg tile
-                    one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+                    set_playfield_tile(temp_int_1, PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
 
                     lines[0].is_started = FALSE;
                 }
@@ -327,46 +320,29 @@ void update_line(void) {
             // Now do the positive direction.
             if (lines[0].is_pos_complete == FALSE) {
                 // Before moving the current line head, update the metadata for the tile we're moving from
-                // Update the playfield in-memory structure
                 temp_int_1 = lines[0].current_pos;
-                playfield[temp_int_1] = PLAYFIELD_LINE & (temp_byte_4 << PLAYFIELD_BIT_LINE_ORIENTATION) & (0 << PLAYFIELD_BIT_LINE_INDEX);
-                temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
-                temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
-                // Set the bg tile
+                temp_byte_1 = PLAYFIELD_LINE & (temp_byte_4 << PLAYFIELD_BIT_LINE_ORIENTATION) & (0 << PLAYFIELD_BIT_LINE_INDEX);
                 temp_byte_3 = TILE_INDEX_PLAYFIELD_LINE_HORIZ + temp_byte_4;
-                one_vram_buffer(temp_byte_3, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+                set_playfield_tile(temp_int_1, temp_byte_1, temp_byte_3);
 
-                lines[0].current_pos += temp_byte_5;
-                temp_int_1 = lines[0].current_pos;
+                temp_int_1 += temp_byte_5;
+                lines[0].current_pos = temp_int_1;
                 if (playfield[temp_int_1] != PLAYFIELD_UNCLEARED) {
                     while (1) {
                         temp_int_1 -= temp_byte_5;
                         if (temp_int_1 == lines[0].origin) {
                             break;
                         }
-                        // Update the playfield in-memory structure
-                        playfield[temp_int_1] = PLAYFIELD_WALL;
-                        temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
-                        temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
-                        // Set the bg tile
-                        one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+                        set_playfield_tile(temp_int_1, PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
                     }
                     lines[0].is_pos_complete = TRUE;
-
                     line_completed();
                 }
             } else {
                 // When both directions are complete the line is done
                 if (lines[0].is_neg_complete == TRUE) {
                     temp_int_1 = lines[0].origin;
-
-                    // Update the playfield in-memory structure
-                    playfield[temp_int_1] = PLAYFIELD_WALL;
-
-                    temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
-                    temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
-                    // Set the bg tile
-                    one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+                    set_playfield_tile(temp_int_1, PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
 
                     lines[0].is_started = FALSE;
                 }
@@ -461,40 +437,88 @@ void update_nearest_tile(void) {
 
 void line_completed(void) {
     reset_playfield_mark_bit();
-    temp_byte_1 = 0;
-    compute_playfield_mark_bit_one_ball();
-    update_cleared_playfield_tiles();
+    compute_playfield_mark_bit_one_ball(0);
+
+    // Reset |playfield_index|, set the game state to updating the playfield, which will cause us to call
+    // update_cleared_playfield_tiles() from the beginning next frame.
+    // If we need to call it again after that, we will call it in restartable mode.
+    playfield_index = 0;
+    game_state = GAME_STATE_UPDATING_PLAYFIELD;
 }
 
+// input:
+// temp_int_1 has the playfield tile index
+// playfield_tile_type has the new playfield tile type (ie: PLAYFIELD_WALL)
+// playfield_bg_tile has the new bg tile graphic index (ie: TILE_INDEX_PLAYFIELD_CLEARED)
+//
+// scratch:
+// temp_byte_1
+// temp_byte_2
+void set_playfield_tile(unsigned int tile_index, unsigned char playfield_tile_type, unsigned char playfield_bg_tile) {
+    // Update the playfield in-memory structure.
+    playfield[tile_index] = playfield_tile_type;
+    // Calculate the bg tile index in pixel coords of the playfield tile
+    temp_byte_1 = ((tile_index + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
+    temp_byte_2 = ((tile_index + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
+    // Set the bg tile graphic
+    one_vram_buffer(playfield_bg_tile, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+}
+
+// Update uncleared, unmarked playfield tiles to be cleared.
+// Note: This function can potentially queue more vram updates than are allowed during the next v-blank.
+//       For that reason, it is restartable.
+//       The current playfield_index needs to be reset to zero once at the beginning of the operation.
+//       Otherwise, calling this function will continue from where it left off last time.
+//       It returns TRUE when all vram updates are queued and FALSE if there are additonal vram updates pending.
+//
+// scratch:
+// temp_int_1
+// temp_byte_3
+// temp_byte_4
 void update_cleared_playfield_tiles(void) {
+    temp_byte_3 = 0;
     // Look over all tiles in the playfield and for each uncleared, unmarked tile change it to cleared
-    for (temp_int_1 = 0; temp_int_1 < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT; ++temp_int_1) {
+    for (; playfield_index < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT; ++playfield_index) {
         // Skip tiles which are not uncleared (this includes marked tiles)
-        if (playfield[temp_int_1] != PLAYFIELD_UNCLEARED) {
+        if (playfield[playfield_index] != PLAYFIELD_UNCLEARED) {
             continue;
         }
 
-        // Change tile to cleared
-        playfield[temp_int_1] = PLAYFIELD_WALL;
-        temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
-        temp_byte_2 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
-        // Set the bg tile
-        one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_2));
+        temp_byte_3++;
+        set_playfield_tile(playfield_index, PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
+
+        // We can only queue about 40 tile updates per v-blank.
+        if (temp_byte_3 >= 40) {
+            return;
+        }
     }
+
+    // Reset the game state to playing.
+    game_state = GAME_STATE_PLAYING;
 }
 
+// Reset the mark bit in all playfield tiles.
+//
+// scratch:
+// temp_int_1
 void reset_playfield_mark_bit(void) {
     for (temp_int_1 = 0; temp_int_1 < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT; ++temp_int_1) {
         playfield[temp_int_1] &= ~PLAYFIELD_BITMASK_MARK;
     }
 }
 
-// temp_byte_1 is the ball index
-void compute_playfield_mark_bit_one_ball(void) {
-    temp_int_1 = balls[temp_byte_1].nearest_playfield_tile;
+#define make_word(lo,hi) ((lo)|(hi << 8))
+#define playfield_index_x(i) ((i)%32)
+#define playfield_index_y(i) ((i)>>5)
 
-    // Simple flood fill scan-and-fill implementation.
-    // Mark all the uncleared playfield tiles inside the region enclosing this ball.
+// Simple flood fill scan-and-fill implementation.
+// Mark all the uncleared playfield tiles inside the region enclosing |ball_index|.
+//
+// scratch:
+// temp_int_1
+// temp_byte_2
+void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
+    temp_int_1 = balls[ball_index].nearest_playfield_tile;
 
     // if not Inside(x, y) then return
     temp_byte_2 = playfield[temp_int_1];
@@ -502,15 +526,17 @@ void compute_playfield_mark_bit_one_ball(void) {
         return;
     }
 
-    // let s = new empty queue or stack
+    // let s = new empty stack
     stack_init();
 
     // Add (x, x, y, 1) to s
     // (x,y)
     stack_temp = temp_int_1;
     stack_push();
+    // x
+    temp_byte_1 = playfield_index_x(temp_int_1);
     // (x,1)
-    stack_temp = (temp_int_1 % 32) | (0x1 << 8);
+    stack_temp = make_word(temp_byte_1, 1);
     stack_push();
 
     // Add (x, x, y - 1, -1) to s
@@ -518,7 +544,7 @@ void compute_playfield_mark_bit_one_ball(void) {
     stack_temp = temp_int_1 - 32;
     stack_push();
     // (x,-1)
-    stack_temp = (temp_int_1 % 32) | (0xff << 8);
+    stack_temp = make_word(temp_byte_1, -1);
     stack_push();
 
     // while s is not empty:
@@ -540,7 +566,7 @@ void compute_playfield_mark_bit_one_ball(void) {
         // let x = x1
         temp_int_1 = stack_temp;
         // x1
-        temp_byte_3 = stack_temp % 32;
+        temp_byte_3 = playfield_index_x(stack_temp);
 
         // if Inside(x, y):
         if (playfield[temp_int_1] == PLAYFIELD_UNCLEARED) {
@@ -555,24 +581,19 @@ void compute_playfield_mark_bit_one_ball(void) {
                 playfield[stack_temp] |= PLAYFIELD_BITMASK_MARK;
                 // x = x - 1
                 temp_int_1 = stack_temp;
-
-#if DEBUG
-                temp_byte_1 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
-                temp_byte_4 = ((temp_int_1 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
-                // Set the bg tile
-                one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_4));
-#endif
             }
         }
 
         // if x < x1:
-        if ((temp_int_1 % 32) < temp_byte_3) {
+        if (playfield_index_x(temp_int_1) < temp_byte_3) {
+            // -dy
+            temp_signed_byte_2 = temp_signed_byte_1 * -1;
             // Add (x, x1-1, y-dy, -dy) to s
             // (x,y-dy)
-            stack_temp = temp_int_1 - temp_signed_byte_1 * 32;
+            stack_temp = temp_int_1 + temp_signed_byte_2 * 32;
             stack_push();
             // (x1-1,-dy)
-            stack_temp = (temp_byte_3 - 1) | ((-1 * temp_signed_byte_1) << 8);
+            stack_temp = make_word(temp_byte_3 - 1, temp_signed_byte_2);
             stack_push();
         }
 
@@ -588,43 +609,33 @@ void compute_playfield_mark_bit_one_ball(void) {
                 }
                 // Set(x1, y)
                 playfield[temp_int_2] |= PLAYFIELD_BITMASK_MARK;
-
-#if DEBUG
-                temp_byte_1 = ((temp_int_2 + PLAYFIELD_FIRST_TILE_INDEX) % 32) << 3;
-                temp_byte_4 = ((temp_int_2 + PLAYFIELD_FIRST_TILE_INDEX) >> 5) << 3;
-                // Set the bg tile
-                one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, temp_byte_1, temp_byte_4));
-#endif
-
                 // x1 = x1 + 1
                 ++temp_int_2;
             }
 
             // Update x1
-            temp_byte_3 = temp_int_2 % 32;
-
-#if DEBUG
-            if (stack_top > 0x40) {
-                return;
-            }
-#endif
+            temp_byte_3 = playfield_index_x(temp_int_2);
 
             // Add (x, x1 - 1, y+dy, dy) to s
+            // x1 - 1
+            temp_byte_4 = temp_byte_3 - 1;
             // (x,y+dy)
             stack_temp = temp_int_1 + temp_signed_byte_1 * 32;
             stack_push();
             // (x1-1,dy)
-            stack_temp = (temp_byte_3 - 1) | (temp_signed_byte_1 << 8);
+            stack_temp = make_word(temp_byte_4, temp_signed_byte_1);
             stack_push();
 
             // if x1 - 1 > x2:
-            if ((temp_byte_3 - 1) > temp_byte_2) {
+            if (temp_byte_4 > temp_byte_2) {
+                // -dy
+                temp_signed_byte_2 = temp_signed_byte_1 * -1;
                 // Add (x2 + 1, x1 - 1, y-dy, -dy)
                 // (x2+1,y-dy)
-                stack_temp = (temp_byte_2 + 1) + (((temp_int_2 >> 5) - temp_signed_byte_1) << 5);
+                stack_temp = (temp_byte_2 + 1) + ((playfield_index_y(temp_int_2) + temp_signed_byte_2) << 5);
                 stack_push();
                 // (x1-1,-dy)
-                stack_temp = (temp_byte_3 - 1) | ((-1 * temp_signed_byte_1) << 8);
+                stack_temp = make_word(temp_byte_4, temp_signed_byte_2);
                 stack_push();
             }
 
@@ -635,7 +646,8 @@ void compute_playfield_mark_bit_one_ball(void) {
                 }
                 // x1 = x1 + 1
                 ++temp_int_2;
-                temp_byte_3 = temp_int_2 % 32;
+                // update x1
+                temp_byte_3 = playfield_index_x(temp_int_2);
             }
 
             // x = x1

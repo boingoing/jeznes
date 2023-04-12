@@ -46,7 +46,8 @@ unsigned char pad1_new;
 
 enum {
     GAME_STATE_TITLE,
-    GAME_STATE_PLAYING
+    GAME_STATE_PLAYING,
+    GAME_STATE_UPDATING_PLAYFIELD
 };
 unsigned char game_state;
 
@@ -59,9 +60,12 @@ unsigned char temp_byte_4;
 unsigned char temp_byte_5;
 
 signed char temp_signed_byte_1;
+signed char temp_signed_byte_2;
 
 int temp_int_1;
 int temp_int_2;
+
+int playfield_index;
 
 struct Player {
     // Player metasprite location in pixel-coords
@@ -170,6 +174,8 @@ void stack_push(void);
 void stack_pop(void);
 
 void reset_playfield_mark_bit(void);
-void compute_playfield_mark_bit_one_ball(void);
+void __fastcall__ compute_playfield_mark_bit_one_ball(unsigned char ball_index);
 void update_cleared_playfield_tiles(void);
 void line_completed(void);
+
+void __fastcall__ set_playfield_tile(unsigned int tile_index, unsigned char playfield_tile_type, unsigned char playfield_bg_tile);
