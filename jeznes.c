@@ -511,8 +511,14 @@ void reset_playfield_mark_bit(void) {
 #define playfield_index_x(i) ((i)%32)
 #define playfield_index_y(i) ((i)>>5)
 
+#define inside(i) (playfield[(i)] == PLAYFIELD_UNCLEARED)
+#define set(i) (playfield[(i)] |= PLAYFIELD_BITMASK_MARK)
+
 // Simple flood fill scan-and-fill implementation.
 // Mark all the uncleared playfield tiles inside the region enclosing |ball_index|.
+// Starting at the playfield tile under the ball, walks to all adjacent playfield
+// tiles which are uncleared and not marked. Each such tile is then marked and we
+// will visit its adjacent tiles.
 //
 // scratch:
 // temp_int_1
@@ -521,8 +527,7 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
     temp_int_1 = balls[ball_index].nearest_playfield_tile;
 
     // if not Inside(x, y) then return
-    temp_byte_2 = playfield[temp_int_1];
-    if ((temp_byte_2 & PLAYFIELD_BITMASK_MARK) == PLAYFIELD_BITMASK_MARK) {
+    if (!inside(temp_int_1)) {
         return;
     }
 
@@ -539,7 +544,7 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
     stack_temp = make_word(temp_byte_1, 1);
     stack_push();
 
-    // Add (x, x, y - 1, -1) to s
+    // Add (x, x, y-1, -1) to s
     // (x,y-1)
     stack_temp = temp_int_1 - 32;
     stack_push();
@@ -569,26 +574,26 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
         temp_byte_3 = playfield_index_x(stack_temp);
 
         // if Inside(x, y):
-        if (playfield[temp_int_1] == PLAYFIELD_UNCLEARED) {
-            // while Inside(x - 1, y):
+        if (inside(temp_int_1)) {
+            // while Inside(x-1, y):
             while (1) {
                 // (x-1,y)
                 stack_temp = temp_int_1 - 1;
-                if (playfield[stack_temp] != PLAYFIELD_UNCLEARED) {
+                if (!inside(stack_temp)) {
                     break;
                 }
-                // Set(x - 1, y)
-                playfield[stack_temp] |= PLAYFIELD_BITMASK_MARK;
-                // x = x - 1
+                // Set(x-1, y)
+                set(stack_temp);
+                // x = x-1
                 temp_int_1 = stack_temp;
             }
         }
 
         // if x < x1:
         if (playfield_index_x(temp_int_1) < temp_byte_3) {
+            // Add (x, x1-1, y-dy, -dy) to s
             // -dy
             temp_signed_byte_2 = temp_signed_byte_1 * -1;
-            // Add (x, x1-1, y-dy, -dy) to s
             // (x,y-dy)
             stack_temp = temp_int_1 + temp_signed_byte_2 * 32;
             stack_push();
@@ -597,51 +602,55 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
             stack_push();
         }
 
-        // while x1 < x2:
+        // while x1 <= x2:
         while (1) {
-            if (temp_byte_3 >= temp_byte_2) {
+            if (temp_byte_3 > temp_byte_2) {
                 break;
             }
             // while Inside(x1, y):
             while (1) {
-                if (playfield[temp_int_2] != PLAYFIELD_UNCLEARED) {
+                if (!inside(temp_int_2)) {
                     break;
                 }
                 // Set(x1, y)
-                playfield[temp_int_2] |= PLAYFIELD_BITMASK_MARK;
+                set(temp_int_2);
                 // x1 = x1 + 1
                 ++temp_int_2;
+                // Update x1
+                temp_byte_3 = playfield_index_x(temp_int_2);
+
+                // Add (x, x1-1, y+dy, dy) to s
+                // x1-1
+                temp_byte_4 = temp_byte_3 - 1;
+                // (x,y+dy)
+                stack_temp = temp_int_1 + temp_signed_byte_1 * 32;
+                stack_push();
+                // (x1-1,dy)
+                stack_temp = make_word(temp_byte_4, temp_signed_byte_1);
+                stack_push();
+
+                // if x1-1 > x2:
+                if (temp_byte_4 > temp_byte_2) {
+                    // Add (x2+1, x1-1, y-dy, -dy)
+                    // -dy
+                    temp_signed_byte_2 = temp_signed_byte_1 * -1;
+                    // (x2+1,y-dy)
+                    stack_temp = (temp_byte_2 + 1) + ((playfield_index_y(temp_int_2) + temp_signed_byte_2) << 5);
+                    stack_push();
+                    // (x1-1,-dy)
+                    stack_temp = make_word(temp_byte_4, temp_signed_byte_2);
+                    stack_push();
+                }
             }
 
+            // x1 = x1 + 1
+            ++temp_int_2;
             // Update x1
             temp_byte_3 = playfield_index_x(temp_int_2);
 
-            // Add (x, x1 - 1, y+dy, dy) to s
-            // x1 - 1
-            temp_byte_4 = temp_byte_3 - 1;
-            // (x,y+dy)
-            stack_temp = temp_int_1 + temp_signed_byte_1 * 32;
-            stack_push();
-            // (x1-1,dy)
-            stack_temp = make_word(temp_byte_4, temp_signed_byte_1);
-            stack_push();
-
-            // if x1 - 1 > x2:
-            if (temp_byte_4 > temp_byte_2) {
-                // -dy
-                temp_signed_byte_2 = temp_signed_byte_1 * -1;
-                // Add (x2 + 1, x1 - 1, y-dy, -dy)
-                // (x2+1,y-dy)
-                stack_temp = (temp_byte_2 + 1) + ((playfield_index_y(temp_int_2) + temp_signed_byte_2) << 5);
-                stack_push();
-                // (x1-1,-dy)
-                stack_temp = make_word(temp_byte_4, temp_signed_byte_2);
-                stack_push();
-            }
-
             // while x1 < x2 and not Inside(x1, y):
             while (1) {
-                if (temp_byte_3 >= temp_byte_2 || playfield[temp_int_2] == PLAYFIELD_UNCLEARED) {
+                if (temp_byte_3 >= temp_byte_2 || inside(temp_int_2)) {
                     break;
                 }
                 // x1 = x1 + 1
@@ -663,6 +672,10 @@ void stack_init(void) {
 
 // Pushes stack_temp onto the top of stack
 void stack_push(void) {
+    if (stack_top == STACK_MAX_HEIGHT) {
+        // This should be a break or assert.
+        return;
+    }
     stack[stack_top] = stack_temp;
     ++stack_top;
 }

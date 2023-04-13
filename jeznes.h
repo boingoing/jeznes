@@ -149,7 +149,9 @@ enum {
 };
 unsigned char playfield[PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT];
 
-unsigned int stack[0x66];
+#define STACK_MAX_HEIGHT 0x90
+
+unsigned int stack[STACK_MAX_HEIGHT];
 unsigned char stack_top;
 unsigned int stack_temp;
 
