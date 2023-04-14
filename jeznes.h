@@ -58,12 +58,15 @@ unsigned char temp_byte_2;
 unsigned char temp_byte_3;
 unsigned char temp_byte_4;
 unsigned char temp_byte_5;
+unsigned char temp_byte_6;
 
 signed char temp_signed_byte_1;
 signed char temp_signed_byte_2;
 
 int temp_int_1;
 int temp_int_2;
+int temp_int_3;
+int temp_int_4;
 
 int playfield_index;
 
@@ -141,6 +144,10 @@ struct ObjectBase {
 #define PLAYFIELD_BITMASK_LINE_INDEX (1 << PLAYFIELD_BIT_LINE_INDEX)
 #define PLAYFIELD_BIT_MARK 5
 #define PLAYFIELD_BITMASK_MARK (1 << PLAYFIELD_BIT_MARK)
+// Bitmask for playfield byte which separates only the flag bits.
+#define PLAYFIELD_BITMASK_ALL (PLAYFIELD_BITMASK_LINE_ORIENTATION | PLAYFIELD_BITMASK_LINE_INDEX | PLAYFIELD_BITMASK_MARK)
+// Bitmask for playfield byte which removes the flag bits.
+#define PLAYFIELD_BITMASK_NONE (~PLAYFIELD_BITMASK_ALL)
 
 enum {
     PLAYFIELD_UNCLEARED,
