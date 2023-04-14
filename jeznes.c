@@ -290,8 +290,8 @@ void update_line(void) {
                 temp_byte_3 = TILE_INDEX_PLAYFIELD_LINE_HORIZ + temp_byte_4;
                 set_playfield_tile(temp_int_1, temp_byte_1, temp_byte_3);
 
-                lines[0].current_neg -= temp_byte_5;
-                temp_int_1 = lines[0].current_neg;
+                temp_int_1 -= temp_byte_5;
+                lines[0].current_neg = temp_int_1;
 
                 // If the current block is not an uncleared tile, that means we hit the end for that line.
                 // Walk back over the blocks until we reach origin and update them to cleared.
@@ -305,15 +305,15 @@ void update_line(void) {
                     }
                     lines[0].is_neg_complete = TRUE;
 
-                    line_completed();
-                }
-            } else {
-                // When both directions are complete the line is done
-                if (lines[0].is_pos_complete == TRUE) {
-                    temp_int_1 = lines[0].origin;
-                    set_playfield_tile(temp_int_1, PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
+                    // When both directions are complete the line is done
+                    if (lines[0].is_pos_complete == TRUE) {
+                        temp_int_1 = lines[0].origin;
+                        set_playfield_tile(temp_int_1, PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
 
-                    lines[0].is_started = FALSE;
+                        lines[0].is_started = FALSE;
+                    }
+
+                    line_completed();
                 }
             }
 
@@ -327,6 +327,7 @@ void update_line(void) {
 
                 temp_int_1 += temp_byte_5;
                 lines[0].current_pos = temp_int_1;
+
                 if (playfield[temp_int_1] != PLAYFIELD_UNCLEARED) {
                     while (1) {
                         temp_int_1 -= temp_byte_5;
@@ -336,15 +337,16 @@ void update_line(void) {
                         set_playfield_tile(temp_int_1, PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
                     }
                     lines[0].is_pos_complete = TRUE;
-                    line_completed();
-                }
-            } else {
-                // When both directions are complete the line is done
-                if (lines[0].is_neg_complete == TRUE) {
-                    temp_int_1 = lines[0].origin;
-                    set_playfield_tile(temp_int_1, PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
 
-                    lines[0].is_started = FALSE;
+                    // When both directions are complete the line is done
+                    if (lines[0].is_neg_complete == TRUE) {
+                        temp_int_1 = lines[0].origin;
+                        set_playfield_tile(temp_int_1, PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
+
+                        lines[0].is_started = FALSE;
+                    }
+
+                    line_completed();
                 }
             }
 
@@ -713,7 +715,6 @@ PAINTER_ALGORITHM_START:
                 set_findloop(TRUE);
             } else if (get_findloop() == TRUE) {
                 if (get_mark_null() == TRUE) {
-                    //set_mark(get_cur());
                     set_mark_null(FALSE);
                 }
             } else if (inside(get_front_left()) && inside(get_back_left())) {
@@ -783,7 +784,7 @@ PAINTER_ALGORITHM_START:
             break;
         case 4:
             set(get_cur());
-            break;
+            return;
         }
     }
 }
