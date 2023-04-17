@@ -634,6 +634,12 @@ int get_back_left() {
     }
 }
 
+// Uses a constant-memory usage implementation of the painters algorithm to
+// walk the playfield starting at the playfield tile where |ball_index| is
+// currently located. Each reachable playfield tile is marked until we run
+// out of unmarked playfield tiles to walk to.
+// When this function returns, the region in which |ball_index| is bound will
+// be made up entirely of marked playfield tiles.
 void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
     // Set cur to starting playfield tile
     set_cur(balls[ball_index].nearest_playfield_tile);
