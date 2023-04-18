@@ -1,5 +1,5 @@
-//Written by Doug Fraker 2018
-// v 1.01
+// Written by Doug Fraker
+// version 1.3, 10/31/2022
 
 // Why am I doing so much with a vram_buffer? This is an automated system, which
 // works when the screen is on. You can write to the buffer at any time. 
@@ -27,8 +27,7 @@ void __fastcall__ multi_vram_buffer_vert(const char * data, unsigned char len, i
 
 
 void clear_vram_buffer(void);
-// just sets the index into the vram buffer to zero
-// this should be done at the beginning of each frame, if using the vram_buffer
+// resets the vram buffer, if you need to undo something, like for a scene change
 
 
 unsigned char __fastcall__ get_pad_new(unsigned char pad);
@@ -125,11 +124,10 @@ void __fastcall__ buffer_4_mt(int ppu_address, char index);
 // index should be 0-239, like the room data it represents
 
 
-void flush_vram_update_nmi(void);
+void flush_vram_update2(void);
 // same as flush_vram_update, but assumes that a pointer to the vram has been set already
 // this is for when the screen is OFF, but you still want to write to the PPU
 // with the vram_buffer system
-// "nmi" is a misnomer. this doesn't have to happen during nmi.
 
 
 void __fastcall__ color_emphasis(char color);
