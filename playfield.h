@@ -28,6 +28,6 @@ const unsigned char * const playfield_patterns[] = {
 };
 
 // Maximum here should not exeed 655
-const int playfield_pattern_uncleared_tile_counts[] = {
+const unsigned int playfield_pattern_uncleared_tile_counts[] = {
     560
 };

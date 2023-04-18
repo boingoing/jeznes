@@ -75,13 +75,14 @@ unsigned char pads_new[MAX_PLAYERS];
 enum {
     GAME_STATE_TITLE,
     GAME_STATE_PLAYING,
-    GAME_STATE_UPDATING_PLAYFIELD
+    GAME_STATE_UPDATING_PLAYFIELD,
+    GAME_STATE_REQUEST_HUD_UPDATE
 };
 
 unsigned char game_state;
 unsigned char current_level;
 unsigned char lives_count;
-int cleared_tile_count;
+unsigned int cleared_tile_count;
 
 unsigned char temp_byte_1;
 unsigned char temp_byte_2;
@@ -263,7 +264,7 @@ void __fastcall__ draw_player(unsigned char player_index);
 void __fastcall__ draw_tile_highlight(unsigned char player_index);
 void __fastcall__ draw_line(unsigned char line_index);
 
-void draw_hud(void);
+void update_hud(void);
 
 void stack_init(void);
 void stack_empty(void);
