@@ -30,6 +30,17 @@
 #define TILE_INDEX_BALL_BASE 0x30
 #define TILE_INDEX_TILE_HIGHLIGHT 0x18
 
+#define TILE_INDEX_ALPHANUMERIC_ZERO 0x1e
+
+#define HUD_LEVEL_DISPLAY_TILE_X 8
+#define HUD_LEVEL_DISPLAY_TILE_Y 24
+#define HUD_LIVES_DISPLAY_TILE_X 8
+#define HUD_LIVES_DISPLAY_TILE_Y 25
+#define HUD_CLEAR_DISPLAY_TILE_X 18
+#define HUD_CLEAR_DISPLAY_TILE_Y 24
+#define HUD_TARGET_DISPLAY_TILE_X 18
+#define HUD_TARGET_DISPLAY_TILE_Y 25
+
 // These macros enable various debugging features and should probably be turned off before release
 #define DEBUG 1
 #define DRAW_BALL_NEAREST_TILE_HIGHLIGHT 1
@@ -64,11 +75,14 @@ unsigned char pads_new[MAX_PLAYERS];
 enum {
     GAME_STATE_TITLE,
     GAME_STATE_PLAYING,
-    GAME_STATE_UPDATING_PLAYFIELD
+    GAME_STATE_UPDATING_PLAYFIELD,
+    GAME_STATE_REQUEST_HUD_UPDATE
 };
 
 unsigned char game_state;
 unsigned char current_level;
+unsigned char lives_count;
+unsigned int cleared_tile_count;
 
 unsigned char temp_byte_1;
 unsigned char temp_byte_2;
@@ -249,6 +263,8 @@ void __fastcall__ update_line(unsigned char line_index);
 void __fastcall__ draw_player(unsigned char player_index);
 void __fastcall__ draw_tile_highlight(unsigned char player_index);
 void __fastcall__ draw_line(unsigned char line_index);
+
+void update_hud(void);
 
 void stack_init(void);
 void stack_empty(void);
