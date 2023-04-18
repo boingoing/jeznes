@@ -31,20 +31,31 @@ void main(void) {
         clear_vram_buffer();
 
         if (game_state == GAME_STATE_PLAYING) {
-            update_line(0);
-
-            flip_player_orientation(0);
-            start_line(0);
-
-            move_player(0);
-            move_balls();
-
             // Clear all sprites from the sprite buffer.
             oam_clear();
-            draw_player();
+
+            for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); temp_byte_1++) {
+                // Update the line for this player if there's one in progress.
+                update_line(temp_byte_1);
+
+                // Respond to player gamepad.
+                flip_player_orientation(temp_byte_1);
+                start_line(temp_byte_1);
+
+                // Move the player position in the playfield.
+                move_player(temp_byte_1);
+
+                // Draw the player, the playfield tile highlight, and the in-progress line sprites.
+                draw_player(temp_byte_1);
+                draw_tile_highlight(temp_byte_1);
+                draw_line(temp_byte_1);
+            }
+
+            // Move the ball positions in the playfield.
+            move_balls();
+
+            // Draw the ball sprites.
             draw_balls();
-            draw_tile_highlight();
-            draw_line(0);
         } else if (game_state == GAME_STATE_UPDATING_PLAYFIELD) {
             // Restart the update of cleared playfield tiles.
             if (update_cleared_playfield_tiles() == TRUE) {
@@ -64,46 +75,48 @@ void main(void) {
 }
 
 void init_game(void) {
-    // Load graphics
+    static unsigned char player_default_x[2] = {0x56, 0x96};
+    static unsigned char player_default_y[2] = {0x46, 0x86};
+
+    // Load graphics.
     pal_bg(bg_palette);
     pal_spr(sprite_palette);
     vram_adr(NAMETABLE_A);
     vram_unrle(playfield_screen);
 
+    // Seed the random number generator - it's based on frame count.
     seed_rng();
 
     // Starting game state
     game_state = GAME_STATE_PLAYING;
     current_level = 1;
 
-    // Player position
-    players[0].x = 0x86;
-    players[0].y = 0x66;
-    players[0].orientation = ORIENTATION_HORIZ;
-    players[0].rotate_pressed = FALSE;
-    players[0].place_pressed = FALSE;
-    update_nearest_tile(0);
+    // Player initial positions
+    for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
+        players[temp_byte_1].x = player_default_x[temp_byte_1];
+        players[temp_byte_1].y = player_default_y[temp_byte_1];
+        players[temp_byte_1].orientation = ORIENTATION_HORIZ;
+        players[temp_byte_1].rotate_pressed = FALSE;
+        players[temp_byte_1].place_pressed = FALSE;
+        update_nearest_tile(temp_byte_1);
 
-    lines[0].is_started = FALSE;
+        lines[temp_byte_1].is_started = FALSE;
+    }
 
-    // Ball positions
-    for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
+    // Ball random positions
+    for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
         balls[temp_byte_1].x = rand8() % (0xff - 0x30) + 0x18;
         balls[temp_byte_1].y = rand8() % (0xff - 0x70) + 0x20;
         balls[temp_byte_1].x_velocity = BALL_SPEED;
         balls[temp_byte_1].y_velocity = BALL_SPEED;
     }
 
-    for (temp_byte_1 = current_level; temp_byte_1 < MAX_BALLS; ++temp_byte_1) {
-        balls[temp_byte_1].y = 0xff;
-    }
-
     // Load playfield pattern.
-    load_playfield();
+    load_playfield(0);
 }
 
-void load_playfield(void) {
-    memcpy(&playfield, playfield_patterns[0], PLAYFIELD_WIDTH*PLAYFIELD_HEIGHT);
+void load_playfield(unsigned char playfield_index) {
+    memcpy(&playfield, playfield_patterns[playfield_index], PLAYFIELD_WIDTH*PLAYFIELD_HEIGHT);
 }
 
 void read_controllers(void) {
@@ -113,128 +126,122 @@ void read_controllers(void) {
     }
 }
 
+#define get_pixel_coord_x() (temp_byte_4)
+#define set_pixel_coord_x(a) (temp_byte_4 = (a))
+#define get_pixel_coord_y() (temp_byte_4)
+#define set_pixel_coord_y(a) (temp_byte_4 = (a))
+
 void move_player(unsigned char player_index) {
     if (pads[player_index] & PAD_LEFT) {
-        temp_byte_1 = players[player_index].x;
-        temp_byte_1 -= PLAYER_SPEED;
+        set_pixel_coord_x(players[player_index].x - PLAYER_SPEED);
         if (players[player_index].orientation & ORIENTATION_VERT) {
             temp_byte_2 = PLAYFIELD_LEFT_WALL;
         } else {
             temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
         }
-        if (temp_byte_1 <= temp_byte_2) {
+        if (get_pixel_coord_x() <= temp_byte_2) {
             players[player_index].x = temp_byte_2;
         } else {
-            players[player_index].x = temp_byte_1;
+            players[player_index].x = get_pixel_coord_x();
         }
         update_nearest_tile(player_index);
     } else if (pads[player_index] & PAD_RIGHT) {
-        temp_byte_1 = players[player_index].x;
-        temp_byte_1 += PLAYER_SPEED;
-        if (temp_byte_1 >= PLAYFIELD_RIGHT_WALL) {
+        set_pixel_coord_x(players[player_index].x + PLAYER_SPEED);
+        if (get_pixel_coord_x() >= PLAYFIELD_RIGHT_WALL) {
             players[player_index].x = PLAYFIELD_RIGHT_WALL;
         } else {
-            players[player_index].x = temp_byte_1;
+            players[player_index].x = get_pixel_coord_x();
         }
         update_nearest_tile(player_index);
     }
 
     if (pads[player_index] & PAD_DOWN) {
-        temp_byte_1 = players[player_index].y;
-        temp_byte_1 += PLAYER_SPEED;
-        if (temp_byte_1 >= PLAYFIELD_BOTTOM_WALL) {
+        set_pixel_coord_y(players[player_index].y + PLAYER_SPEED);
+        if (get_pixel_coord_y() >= PLAYFIELD_BOTTOM_WALL) {
             players[player_index].y = PLAYFIELD_BOTTOM_WALL;
         } else {
-            players[player_index].y = temp_byte_1;
+            players[player_index].y = get_pixel_coord_y();
         }
         update_nearest_tile(player_index);
     } else if (pads[player_index] & PAD_UP) {
-        temp_byte_1 = players[player_index].y;
-        temp_byte_1 -= PLAYER_SPEED;
+        set_pixel_coord_y(players[player_index].y - PLAYER_SPEED);
         if (players[player_index].orientation & ORIENTATION_VERT) {
             temp_byte_2 = PLAYFIELD_TOP_WALL + 8;
         } else {
             temp_byte_2 = PLAYFIELD_TOP_WALL;
         }
-        if (temp_byte_1 <= temp_byte_2) {
+        if (get_pixel_coord_y() <= temp_byte_2) {
             players[player_index].y = temp_byte_2;
         } else {
-            players[player_index].y = temp_byte_1;
+            players[player_index].y = get_pixel_coord_y();
         }
         update_nearest_tile(player_index);
     }
 }
 
 void move_balls(void) {
-    for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
-        temp_signed_byte_1 = balls[temp_byte_1].x_velocity;
-        temp_byte_2 = balls[temp_byte_1].x;
-        temp_byte_2 += temp_signed_byte_1;
-
-        // y tile coord
-        temp_byte_5 = balls[temp_byte_1].y >> 3;
-        if (temp_signed_byte_1 > 0) {
-            // Moving right
-            temp_byte_4 = (temp_byte_2 + 7) >> 3;
-            temp_int_1 = temp_byte_4 + 32 * temp_byte_5 - PLAYFIELD_FIRST_TILE_INDEX;
-            temp_byte_4 = (temp_byte_4 << 3) - 8;
-        } else {
-            // Moving left
-            temp_byte_4 = temp_byte_2 >> 3;
-            temp_int_1 = temp_byte_4 + 32 * temp_byte_5 - PLAYFIELD_FIRST_TILE_INDEX;
-            temp_byte_4 = (temp_byte_4 << 3) + 8;
-        }
-        if (playfield[temp_int_1] == PLAYFIELD_WALL) {
-            balls[temp_byte_1].x_velocity *= -1;
-            temp_byte_2 = temp_byte_4;
-        }
-        balls[temp_byte_1].x = temp_byte_2;
-
-        temp_signed_byte_1 = balls[temp_byte_1].y_velocity;
-        temp_byte_3 = balls[temp_byte_1].y;
-        temp_byte_3 += temp_signed_byte_1;
-
-        // x tile coord
-        temp_byte_5 = balls[temp_byte_1].x >> 3;
-        if (temp_signed_byte_1 > 0) {
-            // Moving down
-            temp_byte_4 = (temp_byte_3 + 7) >> 3;
-            temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
-            temp_byte_4 = (temp_byte_4 << 3) - 8;
-        } else {
-            // Moving up
-            temp_byte_4 = temp_byte_3 >> 3;
-            temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
-            temp_byte_4 = (temp_byte_4 << 3) + 8;
-        }
-        if (playfield[temp_int_1] == PLAYFIELD_WALL) {
-            balls[temp_byte_1].y_velocity *= -1;
-            temp_byte_3 = temp_byte_4;
-        }
-        balls[temp_byte_1].y = temp_byte_3;
-
-        // Update nearest playfield tile
-        temp_byte_2 = (temp_byte_2 + 4) >> 3;
-        temp_byte_3 = (temp_byte_3 + 4) >> 3;
-        balls[temp_byte_1].nearest_playfield_tile = temp_byte_2 + (temp_byte_3 << 5) - PLAYFIELD_FIRST_TILE_INDEX;
+    for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); temp_byte_1++) {
+        move_ball(temp_byte_1);
     }
 }
 
-void draw_player(void) {
-    temp_byte_1 = get_frame_count();
-    temp_byte_1 = temp_byte_1 >> 3 & 1;
-    if (players[0].orientation & ORIENTATION_VERT) {
-        temp_byte_2 = temp_byte_1;
+void move_ball(unsigned char ball_index) {
+    temp_signed_byte_1 = balls[ball_index].x_velocity;
+    temp_byte_2 = balls[ball_index].x;
+    temp_byte_2 += temp_signed_byte_1;
+
+    // y tile coord
+    temp_byte_5 = balls[ball_index].y >> 3;
+    if (temp_signed_byte_1 > 0) {
+        // Moving right
+        temp_byte_4 = (temp_byte_2 + 7) >> 3;
+        temp_int_1 = temp_byte_4 + 32 * temp_byte_5 - PLAYFIELD_FIRST_TILE_INDEX;
+        temp_byte_4 = (temp_byte_4 << 3) - 8;
     } else {
-        temp_byte_2 = 2 + temp_byte_1;
+        // Moving left
+        temp_byte_4 = temp_byte_2 >> 3;
+        temp_int_1 = temp_byte_4 + 32 * temp_byte_5 - PLAYFIELD_FIRST_TILE_INDEX;
+        temp_byte_4 = (temp_byte_4 << 3) + 8;
     }
-    oam_meta_spr(players[0].x, players[0].y, player_metasprite_list[temp_byte_2]);
+    if (playfield[temp_int_1] == PLAYFIELD_WALL) {
+        balls[ball_index].x_velocity *= -1;
+        temp_byte_2 = temp_byte_4;
+    }
+    balls[ball_index].x = temp_byte_2;
+
+    temp_signed_byte_1 = balls[ball_index].y_velocity;
+    temp_byte_3 = balls[ball_index].y;
+    temp_byte_3 += temp_signed_byte_1;
+
+    // x tile coord
+    temp_byte_5 = balls[ball_index].x >> 3;
+    if (temp_signed_byte_1 > 0) {
+        // Moving down
+        temp_byte_4 = (temp_byte_3 + 7) >> 3;
+        temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
+        temp_byte_4 = (temp_byte_4 << 3) - 8;
+    } else {
+        // Moving up
+        temp_byte_4 = temp_byte_3 >> 3;
+        temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
+        temp_byte_4 = (temp_byte_4 << 3) + 8;
+    }
+    if (playfield[temp_int_1] == PLAYFIELD_WALL) {
+        balls[ball_index].y_velocity *= -1;
+        temp_byte_3 = temp_byte_4;
+    }
+    balls[ball_index].y = temp_byte_3;
+
+    // Update nearest playfield tile
+    temp_byte_2 = (temp_byte_2 + 4) >> 3;
+    temp_byte_3 = (temp_byte_3 + 4) >> 3;
+    balls[ball_index].nearest_playfield_tile = temp_byte_2 + (temp_byte_3 << 5) - PLAYFIELD_FIRST_TILE_INDEX;
 }
 
 void draw_balls(void) {
     temp_byte_2 = get_frame_count();
     temp_byte_2 = (temp_byte_2 >> 2) % 18 + TILE_INDEX_BALL_BASE;
-    for (temp_byte_1 = 0; temp_byte_1 < current_level; ++temp_byte_1) {
+    for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
         oam_spr(balls[temp_byte_1].x, balls[temp_byte_1].y, temp_byte_2, 0);
 
 #if DRAW_BALL_NEAREST_TILE_HIGHLIGHT
@@ -244,9 +251,19 @@ void draw_balls(void) {
     }
 }
 
-void draw_tile_highlight(void) {
-    if (playfield[players[0].nearest_playfield_tile] == PLAYFIELD_UNCLEARED) {
-        oam_spr(players[0].nearest_tile_x, players[0].nearest_tile_y - 1, TILE_INDEX_TILE_HIGHLIGHT, 1);
+#define get_player_sprite_frame() (get_frame_count() >> 3 & 1)
+
+void draw_player(unsigned char player_index) {
+    temp_byte_2 = get_player_sprite_frame();
+    if ((players[player_index].orientation & ORIENTATION_VERT) == 0) {
+        temp_byte_2 += 2;
+    }
+    oam_meta_spr(players[player_index].x, players[player_index].y, player_metasprite_list[temp_byte_2]);
+}
+
+void draw_tile_highlight(unsigned char player_index) {
+    if (playfield[players[player_index].nearest_playfield_tile] == PLAYFIELD_UNCLEARED) {
+        oam_spr(players[player_index].nearest_tile_x, players[player_index].nearest_tile_y - 1, TILE_INDEX_TILE_HIGHLIGHT, 1);
     }
 }
 
@@ -397,15 +414,15 @@ void start_line(unsigned char player_index) {
             }
 
             // Update the playfield in-memory structure
-            temp_byte_5 = players[player_index].orientation;
-            playfield[temp_int_1] = PLAYFIELD_LINE & (temp_byte_5 << PLAYFIELD_BIT_LINE_ORIENTATION) & (0 << PLAYFIELD_BIT_LINE_INDEX);
+            set_line_orientation(players[player_index].orientation);
+            playfield[temp_int_1] = get_playfield_tile_type_line(get_line_orientation(), player_index);
 
             // Set the bg tile
-            one_vram_buffer(TILE_INDEX_PLAYFIELD_LINE_HORIZ + temp_byte_5, get_ppu_addr(0, players[player_index].nearest_tile_x, players[player_index].nearest_tile_y));
+            one_vram_buffer(get_playfield_bg_tile_line(get_line_orientation()), get_ppu_addr(0, players[player_index].nearest_tile_x, players[player_index].nearest_tile_y));
 
             // Update the line data
             lines[player_index].current_block_completion = 8;
-            lines[player_index].orientation = temp_byte_5;
+            lines[player_index].orientation = get_line_orientation();
             lines[player_index].is_started = TRUE;
             lines[player_index].origin = temp_int_1;
             lines[player_index].current_neg = temp_int_1;
@@ -459,8 +476,12 @@ void update_nearest_tile(unsigned char player_index) {
 }
 
 void line_completed(void) {
+    unsigned char i;
     reset_playfield_mark_bit();
-    compute_playfield_mark_bit_one_ball(0);
+
+    for (i = 0; i < get_ball_count(); ++i) {
+        compute_playfield_mark_bit_one_ball(i);
+    }
 
     // Reset |playfield_index|, set the game state to updating the playfield, which will cause us to call
     // update_cleared_playfield_tiles() from the beginning next frame.
@@ -469,14 +490,11 @@ void line_completed(void) {
     game_state = GAME_STATE_UPDATING_PLAYFIELD;
 }
 
-// input:
-// temp_int_1 has the playfield tile index
-// playfield_tile_type has the new playfield tile type (ie: PLAYFIELD_WALL)
-// playfield_bg_tile has the new bg tile graphic index (ie: TILE_INDEX_PLAYFIELD_CLEARED)
+// Updates the playfield in-memory data structure and sets |tile_index| to |playfield_tile_type|.
+// Sets the bg tile graphic for |tile_index| to |playfield_bg_tile|.
 //
-// scratch:
-// temp_byte_1
-// temp_byte_2
+// |playfield_tile_type| has the new playfield tile type (ie: PLAYFIELD_WALL)
+// |playfield_bg_tile| has the new bg tile graphic index (ie: TILE_INDEX_PLAYFIELD_CLEARED)
 void set_playfield_tile(unsigned int tile_index, unsigned char playfield_tile_type, unsigned char playfield_bg_tile) {
     // Update the playfield in-memory structure.
     playfield[tile_index] = playfield_tile_type;

@@ -36,6 +36,9 @@
 
 #define make_word(lo,hi) ((lo)|(hi << 8))
 
+#define get_ball_count() current_level
+#define get_player_count() 2
+
 #define get_playfield_index() (temp_int_3)
 #define set_playfield_index(a) (temp_int_3 = (a))
 #define inc_playfield_index() (++temp_int_3)
@@ -177,20 +180,24 @@ unsigned int stack_temp;
 #include "graphics.h"
 
 void init_game(void);
-void load_playfield(void);
+void __fastcall__ load_playfield(unsigned char playfield_index);
 
 void read_controllers(void);
 
 void __fastcall__ move_player(unsigned char player_index);
+void __fastcall__ move_ball(unsigned char ball_index);
+
 void move_balls(void);
-void draw_player(void);
 void draw_balls(void);
+
 void __fastcall__ start_line(unsigned char player_index);
 void __fastcall__ flip_player_orientation(unsigned char player_index);
 
-void draw_tile_highlight(void);
 void __fastcall__ update_nearest_tile(unsigned char player_index);
 void __fastcall__ update_line(unsigned char line_index);
+
+void __fastcall__ draw_player(unsigned char player_index);
+void __fastcall__ draw_tile_highlight(unsigned char player_index);
 void __fastcall__ draw_line(unsigned char line_index);
 
 void stack_init(void);
