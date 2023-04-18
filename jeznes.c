@@ -56,6 +56,9 @@ void main(void) {
 
             // Draw the ball sprites.
             draw_balls();
+
+            // Update the hud - score, lives, etc.
+            draw_hud();
         } else if (game_state == GAME_STATE_UPDATING_PLAYFIELD) {
             // Restart the update of cleared playfield tiles.
             if (update_cleared_playfield_tiles() == TRUE) {
@@ -90,6 +93,7 @@ void init_game(void) {
     // Starting game state
     game_state = GAME_STATE_PLAYING;
     current_level = 1;
+    cleared_tile_count = 0;
 
     // Player initial positions
     for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
@@ -124,6 +128,22 @@ void read_controllers(void) {
         pads[temp_byte_1] = pad_poll(temp_byte_1);
         pads_new[temp_byte_1] = get_pad_new(temp_byte_1);
     }
+}
+
+#define get_tile_alphanumeric_number(v) (TILE_INDEX_ALPHANUMERIC_ZERO + (v))
+
+void write_two_digit_number_to_bg(unsigned char num, unsigned char tile_x, unsigned char tile_y) {
+    one_vram_buffer(get_tile_alphanumeric_number(num / 10), NTADR_A(tile_x, tile_y));
+    one_vram_buffer(get_tile_alphanumeric_number(num % 10), NTADR_A(tile_x+1, tile_y));
+}
+
+void draw_hud(void) {
+    write_two_digit_number_to_bg(current_level, HUD_LEVEL_DISPLAY_TILE_X, HUD_LEVEL_DISPLAY_TILE_Y);
+    write_two_digit_number_to_bg(lives_count, HUD_LIVES_DISPLAY_TILE_X, HUD_LIVES_DISPLAY_TILE_Y);
+    write_two_digit_number_to_bg(70, HUD_TARGET_DISPLAY_TILE_X, HUD_TARGET_DISPLAY_TILE_Y);
+
+    temp_byte_1 = (cleared_tile_count * 100) / playfield_pattern_uncleared_tile_counts[current_level];
+    write_two_digit_number_to_bg(temp_byte_1, HUD_CLEAR_DISPLAY_TILE_X, HUD_CLEAR_DISPLAY_TILE_Y);
 }
 
 #define get_pixel_coord_x() (temp_byte_4)
@@ -523,6 +543,7 @@ unsigned char update_cleared_playfield_tiles(void) {
         }
 
         temp_byte_3++;
+        cleared_tile_count++;
         set_playfield_tile(get_playfield_index(), PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
 
         // We can only queue about 40 tile updates per v-blank.
