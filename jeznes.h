@@ -85,6 +85,35 @@ int temp_int_2;
 int temp_int_3;
 int temp_int_4;
 
+#define get_flag(flags_byte, bitmask) (((flags_byte) & (bitmask)) != 0)
+#define set_flag(flags_byte, bitmask) ((flags_byte) |= (bitmask))
+#define unset_flag(flags_byte, bitmask) ((flags_byte) &= ~(bitmask))
+
+#define PLAYER_BIT_ORIENTATION 0
+#define PLAYER_BITMASK_ORIENTATION (1 << PLAYER_BIT_ORIENTATION)
+#define PLAYER_BIT_IS_ROTATE_PRESSED 1
+#define PLAYER_BITMASK_IS_ROTATE_PRESSED (1 << PLAYER_BIT_IS_ROTATE_PRESSED)
+#define PLAYER_BIT_IS_PLACE_PRESSED 2
+#define PLAYER_BITMASK_IS_PLACE_PRESSED (1 << PLAYER_BIT_IS_PLACE_PRESSED)
+
+#define get_player_flag(player_index, bitmask) get_flag(players[(player_index)].flags, (bitmask))
+#define set_player_flag(player_index, bitmask) set_flag(players[(player_index)].flags, (bitmask))
+#define unset_player_flag(player_index, bitmask) unset_flag(players[(player_index)].flags, (bitmask))
+
+#define get_player_is_rotate_pressed(player_index) get_player_flag((player_index), PLAYER_BITMASK_IS_ROTATE_PRESSED)
+#define set_player_is_rotate_pressed(player_index) set_player_flag((player_index), PLAYER_BITMASK_IS_ROTATE_PRESSED)
+#define unset_player_is_rotate_pressed(player_index) unset_player_flag((player_index), PLAYER_BITMASK_IS_ROTATE_PRESSED)
+
+#define get_player_is_place_pressed(player_index) get_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
+#define set_player_is_place_pressed(player_index) set_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
+#define unset_player_is_place_pressed(player_index) unset_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
+
+// Returns either ORIENTATION_HORIZ or ORIENTATION_VERT
+#define get_player_orientation_flag(player_index) (players[(player_index)].flags & PLAYER_BITMASK_ORIENTATION)
+
+// Sets the orientation for |player_index| player to |orientation| which must be either ORIENTATION_HORIZ or ORIENTATION_VERT
+#define set_player_orientation_flag(player_index, orientation) (players[(player_index)].flags = players[(player_index)].flags & ~LINE_BITMASK_ORIENTATION | (orientation))
+
 struct Player {
     // Player metasprite location in pixel-coords
     unsigned char x;
@@ -97,13 +126,8 @@ struct Player {
     // Playfield tile index for nearest tile
     int nearest_playfield_tile;
 
-    // Horiz or Vert orientation
-    unsigned char orientation;
-
-    // Rotate button pressed (B)
-    unsigned char rotate_pressed;
-    // Place button pressed (A)
-    unsigned char place_pressed;
+    // Hold bit-flags used to track state of this player.
+    unsigned char flags;
 };
 
 struct Player players[MAX_PLAYERS];
@@ -122,12 +146,40 @@ struct Ball {
 
 struct Ball balls[MAX_BALLS];
 
+#define LINE_BIT_ORIENTATION 0
+#define LINE_BITMASK_ORIENTATION (1 << LINE_BIT_ORIENTATION)
+#define LINE_BIT_IS_STARTED 1
+#define LINE_BITMASK_IS_STARTED (1 << LINE_BIT_IS_STARTED)
+#define LINE_BIT_IS_POS_COMPLETE 2
+#define LINE_BITMASK_IS_POS_COMPLETE (1 << LINE_BIT_IS_POS_COMPLETE)
+#define LINE_BIT_IS_NEG_COMPLETE 3
+#define LINE_BITMASK_IS_NEG_COMPLETE (1 << LINE_BIT_IS_NEG_COMPLETE)
+
+#define get_line_flag(line_index, bitmask) get_flag(lines[(line_index)].flags, (bitmask))
+#define set_line_flag(line_index, bitmask) set_flag(lines[(line_index)].flags, (bitmask))
+#define unset_line_flag(line_index, bitmask) unset_flag(lines[(line_index)].flags, (bitmask))
+
+#define get_line_is_started_flag(line_index) get_line_flag((line_index), LINE_BITMASK_IS_STARTED)
+#define set_line_is_started_flag(line_index) set_line_flag((line_index), LINE_BITMASK_IS_STARTED)
+#define unset_line_is_started_flag(line_index) unset_line_flag((line_index), LINE_BITMASK_IS_STARTED)
+
+#define get_line_is_positive_complete_flag(line_index) get_line_flag((line_index), LINE_BITMASK_IS_POS_COMPLETE)
+#define set_line_is_positive_complete_flag(line_index) set_line_flag((line_index), LINE_BITMASK_IS_POS_COMPLETE)
+#define unset_line_is_positive_complete_flag(line_index) unset_line_flag((line_index), LINE_BITMASK_IS_POS_COMPLETE)
+
+#define get_line_is_negative_complete_flag(line_index) get_line_flag((line_index), LINE_BITMASK_IS_NEG_COMPLETE)
+#define set_line_is_negative_complete_flag(line_index) set_line_flag((line_index), LINE_BITMASK_IS_NEG_COMPLETE)
+#define unset_line_is_negative_complete_flag(line_index) unset_line_flag((line_index), LINE_BITMASK_IS_NEG_COMPLETE)
+
+// Returns either ORIENTATION_HORIZ or ORIENTATION_VERT
+#define get_line_orientation_flag(line_index) (lines[(line_index)].flags & LINE_BITMASK_ORIENTATION)
+
+// Sets the orientation for |line_index| line to |orientation| which must be either ORIENTATION_HORIZ or ORIENTATION_VERT
+#define set_line_orientation_flag(line_index, orientation) (lines[(line_index)].flags = lines[(line_index)].flags & ~LINE_BITMASK_ORIENTATION | (orientation))
+
 struct Line {
     // Origin playfield tile index for the line
     int origin;
-
-    // Horiz or Vert orientation
-    unsigned char orientation;
 
     // Current playfield tile index for line in both directions
     int current_neg;
@@ -136,10 +188,8 @@ struct Line {
     // Completion of the current block [0-7]
     unsigned char current_block_completion;
 
-    // Is the line active
-    unsigned char is_started;
-    unsigned char is_neg_complete;
-    unsigned char is_pos_complete;
+    // Hold bit-flags used to track state of this line.
+    unsigned char flags;
 };
 
 struct Line lines[MAX_PLAYERS];
