@@ -103,7 +103,7 @@ void init_game(void) {
         lines[temp_byte_1].is_started = FALSE;
     }
 
-    // Ball random positions
+    // Ball random initial positions
     for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
         balls[temp_byte_1].x = rand8() % (0xff - 0x30) + 0x18;
         balls[temp_byte_1].y = rand8() % (0xff - 0x70) + 0x20;
@@ -548,14 +548,9 @@ void reset_playfield_mark_bit(void) {
 #define playfield_index_move_left(i) ((i) - 1)
 #define playfield_index_move_right(i) ((i) + 1)
 
-//#define inside(i) ((playfield[(i)] & (PLAYFIELD_BITMASK_NONE | PLAYFIELD_BITMASK_MARK)) == PLAYFIELD_UNCLEARED)
+#define inside(i) ((playfield[(i)] & (PLAYFIELD_WALL | PLAYFIELD_BITMASK_MARK)) == 0)
 #define set(i) (playfield[(i)] |= PLAYFIELD_BITMASK_MARK)
 #define is_set(i) ((playfield[(i)] & PLAYFIELD_BITMASK_MARK) != 0)
-
-// Returns true if the playfield tile |index| is not a wall and not marked.
-unsigned char __fastcall__ inside(int index) {
-    return (playfield[index] & PLAYFIELD_BITMASK_MARK) == 0 && (playfield[index] & PLAYFIELD_BITMASK_NONE) != PLAYFIELD_WALL;
-}
 
 enum {
     MOVE_DIRECTION_RIGHT,

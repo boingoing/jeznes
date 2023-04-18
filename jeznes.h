@@ -31,13 +31,13 @@
 #define TILE_INDEX_TILE_HIGHLIGHT 0x18
 
 // These macros enable various debugging features and should probably be turned off before release
-#define DRAW_BALL_NEAREST_TILE_HIGHLIGHT 1
 #define DEBUG 1
+#define DRAW_BALL_NEAREST_TILE_HIGHLIGHT 1
 
 #define make_word(lo,hi) ((lo)|(hi << 8))
 
-#define get_ball_count() current_level
-#define get_player_count() 2
+#define get_ball_count() (current_level)
+#define get_player_count() (1)
 
 #define get_playfield_index() (temp_int_3)
 #define set_playfield_index(a) (temp_int_3 = (a))
@@ -66,8 +66,8 @@ enum {
     GAME_STATE_PLAYING,
     GAME_STATE_UPDATING_PLAYFIELD
 };
-unsigned char game_state;
 
+unsigned char game_state;
 unsigned char current_level;
 
 unsigned char temp_byte_1;
