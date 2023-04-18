@@ -95,12 +95,12 @@ void init_game(void) {
     for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
         players[temp_byte_1].x = player_default_x[temp_byte_1];
         players[temp_byte_1].y = player_default_y[temp_byte_1];
-        players[temp_byte_1].orientation = ORIENTATION_HORIZ;
-        players[temp_byte_1].rotate_pressed = FALSE;
-        players[temp_byte_1].place_pressed = FALSE;
         update_nearest_tile(temp_byte_1);
 
-        lines[temp_byte_1].is_started = FALSE;
+        set_player_orientation_flag(temp_byte_1, ORIENTATION_HORIZ);
+        unset_player_is_place_pressed(temp_byte_1);
+        unset_player_is_rotate_pressed(temp_byte_1);
+        unset_line_is_started_flag(temp_byte_1);
     }
 
     // Ball random initial positions
@@ -134,7 +134,7 @@ void read_controllers(void) {
 void move_player(unsigned char player_index) {
     if (pads[player_index] & PAD_LEFT) {
         set_pixel_coord_x(players[player_index].x - PLAYER_SPEED);
-        if (players[player_index].orientation & ORIENTATION_VERT) {
+        if (get_player_orientation_flag(player_index) == ORIENTATION_VERT) {
             temp_byte_2 = PLAYFIELD_LEFT_WALL;
         } else {
             temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
@@ -165,7 +165,7 @@ void move_player(unsigned char player_index) {
         update_nearest_tile(player_index);
     } else if (pads[player_index] & PAD_UP) {
         set_pixel_coord_y(players[player_index].y - PLAYER_SPEED);
-        if (players[player_index].orientation & ORIENTATION_VERT) {
+        if (get_player_orientation_flag(player_index) == ORIENTATION_VERT) {
             temp_byte_2 = PLAYFIELD_TOP_WALL + 8;
         } else {
             temp_byte_2 = PLAYFIELD_TOP_WALL;
@@ -255,7 +255,7 @@ void draw_balls(void) {
 
 void draw_player(unsigned char player_index) {
     temp_byte_2 = get_player_sprite_frame();
-    if ((players[player_index].orientation & ORIENTATION_VERT) == 0) {
+    if (get_player_orientation_flag(player_index) == ORIENTATION_HORIZ) {
         temp_byte_2 += 2;
     }
     oam_meta_spr(players[player_index].x, players[player_index].y, player_metasprite_list[temp_byte_2]);
@@ -268,8 +268,8 @@ void draw_tile_highlight(unsigned char player_index) {
 }
 
 void draw_line(unsigned char line_index) {
-    if (lines[line_index].is_started == TRUE) {
-        if (lines[line_index].orientation & ORIENTATION_VERT) {
+    if (get_line_is_started_flag(line_index)) {
+        if (get_line_orientation_flag(line_index) == ORIENTATION_VERT) {
             temp_byte_3 = SPRITE_INDEX_PLAYFIELD_LINE_VERT_BASE + lines[line_index].current_block_completion;
             temp_byte_4 = OAM_FLIP_V;
         } else {
@@ -277,12 +277,12 @@ void draw_line(unsigned char line_index) {
             temp_byte_4 = OAM_FLIP_H;
         }
 
-        if (lines[line_index].is_neg_complete == FALSE) {
+        if (!get_line_is_negative_complete_flag(line_index)) {
             temp_int_1 = lines[line_index].current_neg;
             oam_spr(playfield_index_pixel_coord_x(temp_int_1), playfield_index_pixel_coord_y(temp_int_1) - 1, temp_byte_3, 1 | temp_byte_4);
         }
 
-        if (lines[line_index].is_pos_complete == FALSE) {
+        if (!get_line_is_positive_complete_flag(line_index)) {
             temp_int_1 = lines[line_index].current_pos;
             oam_spr(playfield_index_pixel_coord_x(temp_int_1), playfield_index_pixel_coord_y(temp_int_1) - 1, temp_byte_3, 1);
         }
@@ -308,20 +308,20 @@ void draw_line(unsigned char line_index) {
 #define get_playfield_bg_tile_line(orientation) (TILE_INDEX_PLAYFIELD_LINE_HORIZ + (orientation))
 
 void update_line(unsigned char line_index) {
-    if (lines[line_index].is_started == TRUE) {
+    if (get_line_is_started_flag(line_index)) {
         set_was_line_completed(FALSE);
 
         // There are 8 pixels in the block and we draw them one by one.
         // When we've reached completion of the 8 pixels, move the current head of the lines forward in either direction.
         if (lines[line_index].current_block_completion == 8) {
-            set_line_orientation(lines[line_index].orientation);
-            if (get_line_orientation() & ORIENTATION_VERT) {
+            set_line_orientation(get_line_orientation_flag(line_index));
+            if (get_line_orientation() == ORIENTATION_VERT) {
                 set_delta_y(32);
             } else {
                 set_delta_y(1);
             }
 
-            if (lines[line_index].is_neg_complete == FALSE) {
+            if (!get_line_is_negative_complete_flag(line_index)) {
                 // Before moving the current line head, update the metadata for the tile we're moving from
                 set_current_playfield_index(lines[line_index].current_neg);
                 set_playfield_tile(get_current_playfield_index(), get_playfield_tile_type_line(get_line_orientation(), line_index), get_playfield_bg_tile_line(get_line_orientation()));
@@ -339,14 +339,14 @@ void update_line(unsigned char line_index) {
                         }
                         set_playfield_tile(get_current_playfield_index(), PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
                     }
-                    lines[line_index].is_neg_complete = TRUE;
+                    set_line_is_negative_complete_flag(line_index);
 
                     // When both directions are complete the line is done
-                    if (lines[line_index].is_pos_complete == TRUE) {
+                    if (get_line_is_positive_complete_flag(line_index)) {
                         set_current_playfield_index(lines[line_index].origin);
                         set_playfield_tile(get_current_playfield_index(), PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
 
-                        lines[line_index].is_started = FALSE;
+                        unset_line_is_started_flag(line_index);
                     }
 
                     set_was_line_completed(TRUE);
@@ -354,7 +354,7 @@ void update_line(unsigned char line_index) {
             }
 
             // Now do the positive direction.
-            if (lines[line_index].is_pos_complete == FALSE) {
+            if (!get_line_is_positive_complete_flag(line_index)) {
                 // Before moving the current line head, update the metadata for the tile we're moving from
                 set_current_playfield_index(lines[line_index].current_pos);
                 set_playfield_tile(get_current_playfield_index(), get_playfield_tile_type_line(get_line_orientation(), line_index), get_playfield_bg_tile_line(get_line_orientation()));
@@ -370,14 +370,14 @@ void update_line(unsigned char line_index) {
                         }
                         set_playfield_tile(get_current_playfield_index(), PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
                     }
-                    lines[line_index].is_pos_complete = TRUE;
+                    set_line_is_positive_complete_flag(line_index);
 
                     // When both directions are complete the line is done
-                    if (lines[line_index].is_neg_complete == TRUE) {
+                    if (get_line_is_negative_complete_flag(line_index)) {
                         set_current_playfield_index(lines[line_index].origin);
                         set_playfield_tile(get_current_playfield_index(), PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
 
-                        lines[line_index].is_started = FALSE;
+                        unset_line_is_started_flag(line_index);
                     }
 
                     set_was_line_completed(TRUE);
@@ -399,11 +399,11 @@ void update_line(unsigned char line_index) {
 
 void start_line(unsigned char player_index) {
     if (pads[player_index] & PAD_A) {
-        if (players[player_index].place_pressed == FALSE) {
-            players[player_index].place_pressed = TRUE;
+        if (!get_player_is_place_pressed(player_index)) {
+            set_player_is_place_pressed(player_index);
 
             // Do nothing if a line is already active
-            if (lines[player_index].is_started == TRUE) {
+            if (get_line_is_started_flag(player_index)) {
                 return;
             }
 
@@ -414,7 +414,7 @@ void start_line(unsigned char player_index) {
             }
 
             // Update the playfield in-memory structure
-            set_line_orientation(players[player_index].orientation);
+            set_line_orientation(get_player_orientation_flag(player_index));
             playfield[temp_int_1] = get_playfield_tile_type_line(get_line_orientation(), player_index);
 
             // Set the bg tile
@@ -422,26 +422,27 @@ void start_line(unsigned char player_index) {
 
             // Update the line data
             lines[player_index].current_block_completion = 8;
-            lines[player_index].orientation = get_line_orientation();
-            lines[player_index].is_started = TRUE;
             lines[player_index].origin = temp_int_1;
             lines[player_index].current_neg = temp_int_1;
             lines[player_index].current_pos = temp_int_1;
-            lines[player_index].is_neg_complete = FALSE;
-            lines[player_index].is_pos_complete = FALSE;
+
+            set_line_is_started_flag(player_index);
+            unset_line_is_negative_complete_flag(player_index);
+            unset_line_is_positive_complete_flag(player_index);
+            set_line_orientation_flag(player_index, get_line_orientation());
         }
     } else {
-        players[player_index].place_pressed = FALSE;
+        unset_player_is_place_pressed(player_index);
     }
 }
 
 void flip_player_orientation(unsigned char player_index) {
     if (pads[player_index] & PAD_B) {
-        if (players[player_index].rotate_pressed == FALSE) {
-            players[player_index].rotate_pressed = TRUE;
-            players[player_index].orientation = players[player_index].orientation ^ 1;
+        if (!get_player_is_rotate_pressed(player_index)) {
+            set_player_is_rotate_pressed(player_index);
+            set_player_orientation_flag(player_index, get_player_orientation_flag(player_index) ^ 1);
 
-            if (players[player_index].orientation == ORIENTATION_HORIZ) {
+            if (get_player_orientation_flag(player_index) == ORIENTATION_HORIZ) {
                 temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
                 if (players[player_index].x <= temp_byte_2) {
                     players[player_index].x = temp_byte_2;
@@ -454,13 +455,13 @@ void flip_player_orientation(unsigned char player_index) {
             }
         }
     } else {
-        players[player_index].rotate_pressed = FALSE;
+        unset_player_is_rotate_pressed(player_index);
     }
 }
 
 // Don't modify temp_byte_1, temp_byte_2
 void update_nearest_tile(unsigned char player_index) {
-    if (players[player_index].orientation & ORIENTATION_VERT) {
+    if (get_player_orientation_flag(player_index) == ORIENTATION_VERT) {
         temp_byte_3 = players[player_index].x + 4;
         temp_byte_4 = players[player_index].y;
     } else {
