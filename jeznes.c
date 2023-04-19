@@ -100,6 +100,7 @@ void init_game(void) {
     game_state = GAME_STATE_PLAYING;
     current_level = 1;
     cleared_tile_count = 0;
+    lives_count = current_level + 1;
 
     // Player initial positions
     for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
