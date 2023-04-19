@@ -99,6 +99,9 @@ int temp_int_2;
 int temp_int_3;
 int temp_int_4;
 
+// Just placeholder to track how many bytes are unused in the zeropage.
+unsigned char unused_zp_bytes[8];
+
 #define get_flag(flags_byte, bitmask) (((flags_byte) & (bitmask)) != 0)
 #define set_flag(flags_byte, bitmask) ((flags_byte) |= (bitmask))
 #define unset_flag(flags_byte, bitmask) ((flags_byte) &= ~(bitmask))
