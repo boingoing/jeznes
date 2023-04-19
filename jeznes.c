@@ -230,6 +230,7 @@ void move_ball(unsigned char ball_index) {
         temp_int_1 = temp_byte_4 + 32 * temp_byte_5 - PLAYFIELD_FIRST_TILE_INDEX;
         temp_byte_4 = (temp_byte_4 << 3) + 8;
     }
+    // Bounce off a wall tile
     if (playfield[temp_int_1] == PLAYFIELD_WALL) {
         balls[ball_index].x_velocity *= -1;
         temp_byte_2 = temp_byte_4;
@@ -253,6 +254,7 @@ void move_ball(unsigned char ball_index) {
         temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
         temp_byte_4 = (temp_byte_4 << 3) + 8;
     }
+    // Bounce off a wall tile
     if (playfield[temp_int_1] == PLAYFIELD_WALL) {
         balls[ball_index].y_velocity *= -1;
         temp_byte_3 = temp_byte_4;
@@ -275,6 +277,12 @@ void draw_balls(void) {
         temp_int_1 = balls[temp_byte_1].nearest_playfield_tile;
         oam_spr(playfield_index_pixel_coord_x(temp_int_1), playfield_index_pixel_coord_y(temp_int_1) - 1, TILE_INDEX_TILE_HIGHLIGHT, 1);
 #endif
+    }
+}
+
+void check_ball_line_collisions(void) {
+    for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
+        temp_byte_2 = playfield[balls[temp_byte_1].nearest_playfield_tile];
     }
 }
 

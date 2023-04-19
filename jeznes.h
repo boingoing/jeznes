@@ -253,6 +253,7 @@ void __fastcall__ move_ball(unsigned char ball_index);
 
 void move_balls(void);
 void draw_balls(void);
+void check_ball_line_collisions(void);
 
 void __fastcall__ start_line(unsigned char player_index);
 void __fastcall__ flip_player_orientation(unsigned char player_index);
