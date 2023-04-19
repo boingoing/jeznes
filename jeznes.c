@@ -57,6 +57,9 @@ void main(void) {
             // Move the ball positions in the playfield.
             move_balls();
 
+            // Check to see if any balls have collided with any lines.
+            check_ball_line_collisions();
+
             // Draw the ball sprites.
             draw_balls();
         } else if (game_state == GAME_STATE_UPDATING_PLAYFIELD) {
@@ -282,7 +285,52 @@ void draw_balls(void) {
 
 void check_ball_line_collisions(void) {
     for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
-        temp_byte_2 = playfield[balls[temp_byte_1].nearest_playfield_tile];
+        temp_int_1 = balls[temp_byte_1].nearest_playfield_tile;
+        temp_byte_2 = playfield[temp_int_1];
+
+        if (get_playfield_tile_type_from_byte(temp_byte_2) == PLAYFIELD_LINE) {
+            temp_byte_3 = get_playfield_line_index_flag_from_byte(temp_byte_2);
+
+            if (get_playfield_line_orientation_flag_from_byte(temp_byte_2) == ORIENTATION_VERT) {
+                temp_signed_byte_1 = -32;
+            } else {
+                temp_signed_byte_1 = -1;
+            }
+
+            if (get_playfield_line_direction_flag_from_byte(temp_byte_2) == LINE_DIRECTION_POSITIVE) {
+                set_line_is_positive_complete_flag(temp_byte_3);
+                temp_int_1 = lines[temp_byte_3].current_pos;
+
+                // If the other direction is also complete, reset the is_started flag of the line.
+                if (get_line_is_negative_complete_flag(temp_byte_3)) {
+                    unset_line_is_started_flag(temp_byte_3);
+                }
+            } else {
+                set_line_is_negative_complete_flag(temp_byte_3);
+                temp_int_1 = lines[temp_byte_3].current_neg;
+                temp_signed_byte_1 *= -1;
+
+                // If the other direction is also complete, reset the is_started flag of the line.
+                if (get_line_is_positive_complete_flag(temp_byte_3)) {
+                    unset_line_is_started_flag(temp_byte_3);
+                }
+            }
+
+            // Walk back across the line segment (to origin) and reset the playfield tiles to uncleared.
+            while (1) {
+                set_playfield_tile(temp_int_1, PLAYFIELD_UNCLEARED, TILE_INDEX_PLAYFIELD_UNCLEARED);
+                if (temp_int_1 == lines[temp_byte_3].origin) {
+                    break;
+                }
+                temp_int_1 += temp_signed_byte_1;
+            }
+
+            lives_count--;
+            // TODO: If lives_count == 0, set game state to game over?
+
+            // We changed the lives count, let's redraw the HUD.
+            game_state = GAME_STATE_REQUEST_HUD_UPDATE;
+        }
     }
 }
 
@@ -333,15 +381,6 @@ void draw_line(unsigned char line_index) {
 #define get_was_line_completed() (temp_byte_3)
 #define set_was_line_completed(a) (temp_byte_3 = (a))
 
-// Get the playfield tile type for lines.
-// Indicate horizontal or vertical via |orientation| which should be ORIENTATION_HORIZ or ORIENTATION_VERT.
-// Indicate the line index via |line_index| which must be 0 or 1.
-#define get_playfield_tile_type_line(orientation, line_index) (PLAYFIELD_LINE & ((orientation) << PLAYFIELD_BIT_LINE_ORIENTATION) & ((line_index) << PLAYFIELD_BIT_LINE_INDEX))
-
-// Get the bg tile graphic index for lines.
-// Indicate horizontal or vertical via |orientation| which should be ORIENTATION_HORIZ or ORIENTATION_VERT.
-#define get_playfield_bg_tile_line(orientation) (TILE_INDEX_PLAYFIELD_LINE_HORIZ + (orientation))
-
 void update_line(unsigned char line_index) {
     if (get_line_is_started_flag(line_index)) {
         set_was_line_completed(FALSE);
@@ -359,7 +398,7 @@ void update_line(unsigned char line_index) {
             if (!get_line_is_negative_complete_flag(line_index)) {
                 // Before moving the current line head, update the metadata for the tile we're moving from
                 set_current_playfield_index(lines[line_index].current_neg);
-                set_playfield_tile(get_current_playfield_index(), get_playfield_tile_type_line(get_line_orientation(), line_index), get_playfield_bg_tile_line(get_line_orientation()));
+                set_playfield_tile(get_current_playfield_index(), get_playfield_tile_type_line(get_line_orientation(), line_index, LINE_DIRECTION_NEGATIVE), get_playfield_bg_tile_line(get_line_orientation()));
 
                 set_current_playfield_index(get_current_playfield_index() - get_delta_y());
                 lines[line_index].current_neg = get_current_playfield_index();
@@ -393,7 +432,7 @@ void update_line(unsigned char line_index) {
             if (!get_line_is_positive_complete_flag(line_index)) {
                 // Before moving the current line head, update the metadata for the tile we're moving from
                 set_current_playfield_index(lines[line_index].current_pos);
-                set_playfield_tile(get_current_playfield_index(), get_playfield_tile_type_line(get_line_orientation(), line_index), get_playfield_bg_tile_line(get_line_orientation()));
+                set_playfield_tile(get_current_playfield_index(), get_playfield_tile_type_line(get_line_orientation(), line_index, LINE_DIRECTION_POSITIVE), get_playfield_bg_tile_line(get_line_orientation()));
 
                 set_current_playfield_index(get_current_playfield_index() + get_delta_y());
                 lines[line_index].current_pos = get_current_playfield_index();
@@ -452,7 +491,7 @@ void start_line(unsigned char player_index) {
 
             // Update the playfield in-memory structure
             set_line_orientation(get_player_orientation_flag(player_index));
-            playfield[temp_int_1] = get_playfield_tile_type_line(get_line_orientation(), player_index);
+            playfield[temp_int_1] = get_playfield_tile_type_line(get_line_orientation(), player_index, LINE_DIRECTION_POSITIVE);
 
             // Set the bg tile
             one_vram_buffer(get_playfield_bg_tile_line(get_line_orientation()), get_ppu_addr(0, players[player_index].nearest_tile_x, players[player_index].nearest_tile_y));
@@ -578,7 +617,7 @@ unsigned char update_cleared_playfield_tiles(void) {
 // temp_int_1
 void reset_playfield_mark_bit(void) {
     for (temp_int_1 = 0; temp_int_1 < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT; ++temp_int_1) {
-        playfield[temp_int_1] &= ~PLAYFIELD_BITMASK_MARK;
+        unset_playfield_is_marked_flag(temp_int_1);
     }
 }
 
@@ -588,8 +627,6 @@ void reset_playfield_mark_bit(void) {
 #define playfield_index_move_right(i) ((i) + 1)
 
 #define inside(i) ((playfield[(i)] & (PLAYFIELD_WALL | PLAYFIELD_BITMASK_MARK)) == 0)
-#define set(i) (playfield[(i)] |= PLAYFIELD_BITMASK_MARK)
-#define is_set(i) ((playfield[(i)] & PLAYFIELD_BITMASK_MARK) != 0)
 
 enum {
     MOVE_DIRECTION_RIGHT,
@@ -789,7 +826,7 @@ PAINTER_ALGORITHM_START:
                 }
             } else if (inside(get_front_left()) && inside(get_back_left())) {
                 set_mark_null(TRUE);
-                set(get_cur());
+                set_playfield_is_marked_flag(get_cur());
                 goto PAINTER_ALGORITHM_PAINT;
             }
             break;
@@ -797,7 +834,7 @@ PAINTER_ALGORITHM_START:
             if (!inside(get_back())) {
                 if (inside(get_front_left())) {
                     set_mark_null(TRUE);
-                    set(get_cur());
+                    set_playfield_is_marked_flag(get_cur());
                     goto PAINTER_ALGORITHM_PAINT;
                 }
             } else if (get_mark_null() == TRUE) {
@@ -814,7 +851,7 @@ PAINTER_ALGORITHM_START:
                             set_mark_null(TRUE);
                             // Turn around
                             set_cur_dir((get_cur_dir() + 2) % 4);
-                            set(get_cur());
+                            set_playfield_is_marked_flag(get_cur());
                             goto PAINTER_ALGORITHM_PAINT;
                         } else {
                             set_backtrack(TRUE);
@@ -835,7 +872,7 @@ PAINTER_ALGORITHM_START:
                         set_backtrack(FALSE);
                         // Turn around
                         set_cur_dir((get_cur_dir() + 2) % 4);
-                        set(get_cur());
+                        set_playfield_is_marked_flag(get_cur());
                         goto PAINTER_ALGORITHM_PAINT;
                     } else if (get_cur() == get_mark2()) {
                         set_mark(get_cur());
@@ -849,11 +886,11 @@ PAINTER_ALGORITHM_START:
             break;
         case 3:
             set_mark_null(TRUE);
-            set(get_cur());
+            set_playfield_is_marked_flag(get_cur());
             goto PAINTER_ALGORITHM_PAINT;
             break;
         case 4:
-            set(get_cur());
+            set_playfield_is_marked_flag(get_cur());
             return;
         }
     }
@@ -928,7 +965,7 @@ void compute_playfield_mark_bit_one_ball2(unsigned char ball_index) {
                     break;
                 }
                 // Set(x-1, y)
-                set(stack_temp);
+                set_playfield_is_marked_flag(stack_temp);
                 // x = x-1
                 temp_int_1 = stack_temp;
             }
@@ -958,7 +995,7 @@ void compute_playfield_mark_bit_one_ball2(unsigned char ball_index) {
                     break;
                 }
                 // Set(x1, y)
-                set(temp_int_2);
+                set_playfield_is_marked_flag(temp_int_2);
                 // x1 = x1 + 1
                 ++temp_int_2;
                 // Update x1
