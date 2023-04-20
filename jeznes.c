@@ -385,8 +385,11 @@ void update_line(unsigned char line_index) {
     if (get_line_is_started_flag(line_index)) {
         set_was_line_completed(FALSE);
 
-        // There are 8 pixels in the block and we draw them one by one.
-        // When we've reached completion of the 8 pixels, move the current head of the lines forward in either direction.
+        // The playfield tile at the front of each line segment is the only one
+        // we need to worry about here.
+        // The tile is 8 pixels wide and we draw one line of pixels at a time.
+        // When we've reached completion of the tile, move the front of both
+        // line segments forward in their directions.
         if (lines[line_index].current_block_completion == 8) {
             set_line_orientation(get_line_orientation_flag(line_index));
             if (get_line_orientation() == ORIENTATION_VERT) {
@@ -501,6 +504,7 @@ void start_line(unsigned char player_index) {
             lines[player_index].origin = temp_int_1;
             lines[player_index].current_neg = temp_int_1;
             lines[player_index].current_pos = temp_int_1;
+            lines[player_index].tile_step_count = 0;
 
             set_line_is_started_flag(player_index);
             unset_line_is_negative_complete_flag(player_index);

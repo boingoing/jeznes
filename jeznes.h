@@ -195,8 +195,17 @@ struct Ball balls[MAX_BALLS];
 #define set_line_orientation_flag(line_index, orientation) (lines[(line_index)].flags = lines[(line_index)].flags & ~LINE_BITMASK_ORIENTATION | (orientation))
 
 struct Line {
-    // Origin playfield tile index for the line
+    // Origin playfield tile index for the line.
+    // This is the tile on which the player pressed the start line button.
+    // For the game, the origin tile is always part of the line segment which
+    // spreads in the negative direction and the tile to the right
+    // (for ORIENTATION_HORIZ lines) or the tile below it (for ORIENTATION_VERT
+    // lines) is where the line segment which spreads in the positive direction
+    // begins.
     int origin;
+
+    // How many steps away from the origin playfield tiles have we taken?
+    unsigned char tile_step_count;
 
     // Current playfield tile index for line in both directions
     int current_neg;
