@@ -38,9 +38,6 @@ void main(void) {
             oam_clear();
 
             for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); temp_byte_1++) {
-                // Update the line for this player if there's one in progress.
-                update_line(temp_byte_1);
-
                 // Respond to player gamepad.
                 flip_player_orientation(temp_byte_1);
                 start_line(temp_byte_1);
@@ -52,6 +49,9 @@ void main(void) {
                 draw_player(temp_byte_1);
                 draw_tile_highlight(temp_byte_1);
                 draw_line(temp_byte_1);
+
+                // Update the line for this player if there's one in progress.
+                update_line(temp_byte_1);
             }
 
             // Move the ball positions in the playfield.
@@ -347,7 +347,11 @@ void update_line(unsigned char line_index) {
 
             // While it was the front of the line segment, current playfield tile was being
             // drawn as a sprite. Now that it's complete, update the playfield and bg tile.
-            set_playfield_tile(get_current_playfield_index(), get_playfield_tile_type_line(get_line_orientation(), line_index, LINE_DIRECTION_NEGATIVE), get_playfield_bg_tile_line(get_line_orientation()));
+            // Note: The origin tile already has the playfield flags (and bg tile) set. We
+            // can ignore that one (when tile_step_count == 0).
+            if (lines[line_index].tile_step_count != 0) {
+                set_playfield_tile(get_current_playfield_index(), get_playfield_tile_type_line(get_line_orientation(), line_index, LINE_DIRECTION_NEGATIVE), get_playfield_bg_tile_line(get_line_orientation()));
+            }
 
             // Now move the front of the line segment forward by one tile.
             set_current_playfield_index(get_current_playfield_index() - get_tile_index_delta());
@@ -390,7 +394,11 @@ void update_line(unsigned char line_index) {
 
             // While it was the front of the line segment, current playfield tile was being
             // drawn as a sprite. Now that it's complete, update the playfield and bg tile.
-            set_playfield_tile(get_current_playfield_index(), get_playfield_tile_type_line(get_line_orientation(), line_index, LINE_DIRECTION_POSITIVE), get_playfield_bg_tile_line(get_line_orientation()));
+            // Note: The origin tile already has the playfield flags (and bg tile) set. We
+            // can ignore that one (when tile_step_count == 0).
+            if (lines[line_index].tile_step_count != 0) {
+                set_playfield_tile(get_current_playfield_index(), get_playfield_tile_type_line(get_line_orientation(), line_index, LINE_DIRECTION_POSITIVE), get_playfield_bg_tile_line(get_line_orientation()));
+            }
 
             // Now move the front of the line segment forward by one tile.
             set_current_playfield_index(get_current_playfield_index() + get_tile_index_delta());
