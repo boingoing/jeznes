@@ -1,16 +1,3 @@
-// playfield tile offsets
-#define PLAYFIELD_FIRST_TILE_X 1
-#define PLAYFIELD_FIRST_TILE_Y 2
-#define PLAYFIELD_FIRST_TILE_INDEX 32
-#define PLAYFIELD_WIDTH 32
-#define PLAYFIELD_HEIGHT 22
-
-// playfield bounds in pixel-coords
-#define PLAYFIELD_LEFT_WALL 0xe
-#define PLAYFIELD_RIGHT_WALL 0xea
-#define PLAYFIELD_TOP_WALL 0xd
-#define PLAYFIELD_BOTTOM_WALL 0xa9
-
 #define MAX_PLAYERS 2
 #define PLAYER_SPEED 0x2
 
@@ -18,6 +5,19 @@
 #define BALL_SPEED 0x1
 #define BALL_WIDTH 8
 #define BALL_HEIGHT 8
+
+// Playfield tile offsets
+#define PLAYFIELD_FIRST_TILE_X 1
+#define PLAYFIELD_FIRST_TILE_Y 2
+#define PLAYFIELD_FIRST_TILE_INDEX 32
+#define PLAYFIELD_WIDTH 32
+#define PLAYFIELD_HEIGHT 22
+
+// Playfield bounds in pixel-coords
+#define PLAYFIELD_LEFT_WALL 0xe
+#define PLAYFIELD_RIGHT_WALL 0xea
+#define PLAYFIELD_TOP_WALL 0xd
+#define PLAYFIELD_BOTTOM_WALL 0xa9
 
 #define SPRITE_INDEX_PLAYFIELD_LINE_HORIZ_BASE 0x80
 #define SPRITE_INDEX_PLAYFIELD_LINE_VERT_BASE 0x90
@@ -29,9 +29,9 @@
 
 #define TILE_INDEX_BALL_BASE 0x30
 #define TILE_INDEX_TILE_HIGHLIGHT 0x18
-
 #define TILE_INDEX_ALPHANUMERIC_ZERO 0x1e
 
+// HUD value locations in tile-coords
 #define HUD_LEVEL_DISPLAY_TILE_X 8
 #define HUD_LEVEL_DISPLAY_TILE_Y 24
 #define HUD_LIVES_DISPLAY_TILE_X 8
@@ -43,6 +43,7 @@
 
 // These macros enable various debugging features and should probably be turned off before release
 #define DEBUG 1
+#define DRAW_GRAY_LINE 0
 #define DRAW_BALL_NEAREST_TILE_HIGHLIGHT 1
 
 #define make_word(lo,hi) ((lo)|(hi << 8))
@@ -68,6 +69,9 @@ enum {
 };
 
 #pragma bss-name(push, "ZEROPAGE")
+
+// Placeholder to track how many bytes are unused in the zeropage.
+unsigned char unused_zp_bytes[14];
 
 unsigned char pads[MAX_PLAYERS];
 unsigned char pads_new[MAX_PLAYERS];
@@ -99,9 +103,6 @@ int temp_int_2;
 int temp_int_3;
 int temp_int_4;
 
-// Just placeholder to track how many bytes are unused in the zeropage.
-unsigned char unused_zp_bytes[8];
-
 #define get_flag(flags_byte, bitmask) (((flags_byte) & (bitmask)) != 0)
 #define set_flag(flags_byte, bitmask) ((flags_byte) |= (bitmask))
 #define unset_flag(flags_byte, bitmask) ((flags_byte) &= ~(bitmask))
@@ -121,9 +122,9 @@ unsigned char unused_zp_bytes[8];
 #define set_player_is_rotate_pressed(player_index) set_player_flag((player_index), PLAYER_BITMASK_IS_ROTATE_PRESSED)
 #define unset_player_is_rotate_pressed(player_index) unset_player_flag((player_index), PLAYER_BITMASK_IS_ROTATE_PRESSED)
 
-#define get_player_is_place_pressed(player_index) get_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
-#define set_player_is_place_pressed(player_index) set_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
-#define unset_player_is_place_pressed(player_index) unset_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
+#define get_player_is_place_pressed_flag(player_index) get_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
+#define set_player_is_place_pressed_flag(player_index) set_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
+#define unset_player_is_place_pressed_flag(player_index) unset_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
 
 // Returns either ORIENTATION_HORIZ or ORIENTATION_VERT
 #define get_player_orientation_flag(player_index) (players[(player_index)].flags & PLAYER_BITMASK_ORIENTATION)
@@ -194,6 +195,11 @@ struct Ball balls[MAX_BALLS];
 // Sets the orientation for |line_index| line to |orientation| which must be either ORIENTATION_HORIZ or ORIENTATION_VERT
 #define set_line_orientation_flag(line_index, orientation) (lines[(line_index)].flags = lines[(line_index)].flags & ~LINE_BITMASK_ORIENTATION | (orientation))
 
+// Get the sprite index for a single line tile.
+// Indicate horizontal or vertical via |orientation| which must be ORIENTATION_HORIZ or ORIENTATION_VERT.
+// Indicate the line segment front tile completion via |completion| which should be [0,7].
+#define get_line_sprite_index(orientation, completion) (SPRITE_INDEX_PLAYFIELD_LINE_HORIZ_BASE + (completion) + 0x10 * (orientation))
+
 struct Line {
     // Origin playfield tile index for the line.
     // This is the tile on which the player pressed the start line button.
@@ -206,10 +212,6 @@ struct Line {
 
     // How many steps away from the origin playfield tiles have we taken?
     unsigned char tile_step_count;
-
-    // Current playfield tile index for line in both directions
-    int current_neg;
-    int current_pos;
 
     // Completion of the current block [0-7]
     unsigned char current_block_completion;
