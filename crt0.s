@@ -277,4 +277,4 @@ sounds_data:
     .word irq     ;$fffe irq / brk
 
 .segment "CHARS"
-    .incbin "graphics.chr"
+    .incbin "graphics/graphics.chr"
