@@ -113,6 +113,8 @@ int temp_int_4;
 #define PLAYER_BITMASK_IS_ROTATE_PRESSED (1 << PLAYER_BIT_IS_ROTATE_PRESSED)
 #define PLAYER_BIT_IS_PLACE_PRESSED 2
 #define PLAYER_BITMASK_IS_PLACE_PRESSED (1 << PLAYER_BIT_IS_PLACE_PRESSED)
+#define PLAYER_BIT_IS_PAUSE_PRESSED 3
+#define PLAYER_BITMASK_IS_PAUSE_PRESSED (1 << PLAYER_BIT_IS_PAUSE_PRESSED)
 
 #define get_player_flag(player_index, bitmask) get_flag(players[(player_index)].flags, (bitmask))
 #define set_player_flag(player_index, bitmask) set_flag(players[(player_index)].flags, (bitmask))
@@ -125,6 +127,10 @@ int temp_int_4;
 #define get_player_is_place_pressed_flag(player_index) get_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
 #define set_player_is_place_pressed_flag(player_index) set_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
 #define unset_player_is_place_pressed_flag(player_index) unset_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
+
+#define get_player_is_pause_pressed(player_index) get_player_flag((player_index), PLAYER_BITMASK_IS_PAUSE_PRESSED)
+#define set_player_is_pause_pressed(player_index) set_player_flag((player_index), PLAYER_BITMASK_IS_PAUSE_PRESSED)
+#define unset_player_is_pause_pressed(player_index) unset_player_flag((player_index), PLAYER_BITMASK_IS_PAUSE_PRESSED)
 
 // Returns either ORIENTATION_HORIZ or ORIENTATION_VERT
 #define get_player_orientation_flag(player_index) (players[(player_index)].flags & PLAYER_BITMASK_ORIENTATION)
@@ -313,6 +319,9 @@ unsigned char stack_top;
 unsigned int stack_temp;
 
 #include "graphics.h"
+
+void init_title(void);
+void start_game(void);
 
 void init_game(void);
 void __fastcall__ load_playfield(unsigned char playfield_index);

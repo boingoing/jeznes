@@ -13,13 +13,10 @@ void main(void) {
     // Tiles are in the 1st CHR bank.
     bank_bg(1);
 
-    init_game();
+    init_title();
 
     set_vram_buffer();
     clear_vram_buffer();
-
-    // Display the level, lives remaining, percentages, etc.
-    update_hud();
 
     // Turn on the screen.
     ppu_on_all();
@@ -33,7 +30,11 @@ void main(void) {
         // Do at the beginning of each frame.
         clear_vram_buffer();
 
-        if (game_state == GAME_STATE_PLAYING) {
+        if (game_state == GAME_STATE_TITLE) {
+            oam_clear();
+
+            start_game();
+        } else if (game_state == GAME_STATE_PLAYING) {
             // Clear all sprites from the sprite buffer.
             oam_clear();
 
@@ -88,20 +89,49 @@ void main(void) {
     }
 }
 
+void init_title(void) {
+    // Load title screen graphics.
+    pal_bg(title_bg_palette);
+    pal_spr(title_sprite_palette);
+    vram_adr(NAMETABLE_A);
+    vram_unrle(title_screen);
+
+    // Starting or returning to the title screen.
+    game_state = GAME_STATE_TITLE;
+}
+
+void start_game(void) {
+    if (pads[0] & PAD_START) {
+        set_player_is_pause_pressed(0);
+
+        // Fade to black
+        pal_fade_to(4,0);
+        // Screen off
+        ppu_off();
+
+        init_game();
+
+        // Screen on
+        ppu_on_all();
+        // Back to normal brightness
+        pal_bright(4);
+    }
+}
+
 void init_game(void) {
     static unsigned char player_default_x[2] = {0x56, 0x96};
     static unsigned char player_default_y[2] = {0x46, 0x86};
 
-    // Load graphics.
-    pal_bg(bg_palette);
-    pal_spr(sprite_palette);
+    // Load playfield graphics.
+    pal_bg(playfield_bg_palette);
+    pal_spr(playfield_sprite_palette);
     vram_adr(NAMETABLE_A);
     vram_unrle(playfield_screen);
 
     // Seed the random number generator - it's based on frame count.
     seed_rng();
 
-    // Starting game state
+    // Starting game state.
     game_state = GAME_STATE_PLAYING;
     current_level = 1;
     cleared_tile_count = 0;
@@ -123,12 +153,23 @@ void init_game(void) {
     for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
         balls[temp_byte_1].x = rand8() % (0xff - 0x30) + 0x18;
         balls[temp_byte_1].y = rand8() % (0xff - 0x70) + 0x20;
-        balls[temp_byte_1].x_velocity = BALL_SPEED;
-        balls[temp_byte_1].y_velocity = BALL_SPEED;
+        if (rand8() > 0x7f) {
+            balls[temp_byte_1].x_velocity = BALL_SPEED;
+        } else {
+            balls[temp_byte_1].x_velocity = -BALL_SPEED;
+        }
+        if (rand8() > 0x7f) {
+            balls[temp_byte_1].y_velocity = BALL_SPEED;
+        } else {
+            balls[temp_byte_1].y_velocity = -BALL_SPEED;
+        }
     }
 
     // Load playfield pattern.
-    load_playfield(current_level-1);
+    load_playfield(0);
+
+    // Display the level, lives remaining, percentages, etc.
+    update_hud();
 }
 
 void load_playfield(unsigned char playfield_index) {
