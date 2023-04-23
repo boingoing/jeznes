@@ -332,6 +332,12 @@ void init_game(void);
 void reset_playfield(void);
 void __fastcall__ load_playfield(unsigned char playfield_index);
 
+// Perform a level up:
+// Increment the current level
+// Add one to the current lives counter
+// Add one to the current number of balls
+// Reset the playfield
+// Change the game state to in-game
 void do_level_up(void);
 
 void read_controllers(void);
