@@ -43,6 +43,12 @@
 #define HUD_TARGET_DISPLAY_TILE_X 18
 #define HUD_TARGET_DISPLAY_TILE_Y 25
 
+// Cursor sprite location for the game over screen
+#define GAME_OVER_CURSOR_RETRY_X 0x72
+#define GAME_OVER_CURSOR_RETRY_Y 0xc0
+#define GAME_OVER_CURSOR_QUIT_X 0x72
+#define GAME_OVER_CURSOR_QUIT_Y 0xd0
+
 // These macros enable various debugging features and should probably be turned off before release
 #define DEBUG 1
 #define DRAW_GRAY_LINE 1
@@ -349,6 +355,7 @@ void __fastcall__ load_playfield(unsigned char playfield_index);
 void change_to_game_over(void);
 void game_over_change_mode(void);
 void game_over_press_start(void);
+void draw_game_over_cursor(void);
 
 // Perform a level up:
 // Increment the current level

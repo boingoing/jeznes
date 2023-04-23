@@ -79,6 +79,9 @@ void main(void) {
             game_over_change_mode();
             // Handle player pressing start.
             game_over_press_start();
+
+            // Draw the cursor sprite wherever it should be.
+            draw_game_over_cursor();
         } else if (game_state == GAME_STATE_UPDATING_PLAYFIELD) {
             // Restart the update of cleared playfield tiles.
             if (update_cleared_playfield_tiles() == TRUE) {
@@ -126,6 +129,10 @@ void init_title(void) {
 
 void start_game(void) {
     if (pads[0] & PAD_START) {
+        if (get_player_is_pause_pressed(0)) {
+            return;
+        }
+
         set_player_is_pause_pressed(0);
 
         // Fade to black
@@ -139,6 +146,8 @@ void start_game(void) {
         ppu_on_all();
         // Back to normal brightness
         pal_bright(4);
+    } else {
+        unset_player_is_pause_pressed(0);
     }
 }
 
@@ -276,6 +285,12 @@ void game_over_change_mode(void) {
 
 void game_over_press_start(void) {
     if (pads[0] & PAD_START) {
+        if (get_player_is_pause_pressed(0)) {
+            return;
+        }
+
+        set_player_is_pause_pressed(0);
+
         if (get_game_over_mode() == GAME_OVER_RETRY) {
             // Reset our lives count back to the default.
             lives_count = current_level + 1;
@@ -305,6 +320,8 @@ void game_over_press_start(void) {
             // Back to normal brightness
             pal_bright(4);
         }
+    } else {
+        unset_player_is_pause_pressed(0);
     }
 }
 
@@ -464,6 +481,14 @@ void draw_player(unsigned char player_index) {
 void draw_tile_highlight(unsigned char player_index) {
     if (playfield[players[player_index].nearest_playfield_tile] == PLAYFIELD_UNCLEARED) {
         oam_spr(players[player_index].nearest_tile_x, players[player_index].nearest_tile_y - 1, TILE_INDEX_TILE_HIGHLIGHT, 1);
+    }
+}
+
+void draw_game_over_cursor(void) {
+    if (get_game_over_mode() == GAME_OVER_RETRY) {
+        oam_spr(GAME_OVER_CURSOR_RETRY_X, GAME_OVER_CURSOR_RETRY_Y, TILE_INDEX_TILE_HIGHLIGHT, 1);
+    } else {
+        oam_spr(GAME_OVER_CURSOR_QUIT_X, GAME_OVER_CURSOR_QUIT_Y, TILE_INDEX_TILE_HIGHLIGHT, 1);
     }
 }
 
