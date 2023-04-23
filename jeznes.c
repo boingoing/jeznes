@@ -71,6 +71,17 @@ void main(void) {
 
             // Just perform a level up.
             do_level_up();
+        } else if (game_state == GAME_STATE_GAME_OVER) {
+            // Clear all sprites from the sprite buffer.
+            oam_clear();
+
+            // Handle player pressing select.
+            game_over_change_mode();
+            // Handle player pressing start.
+            game_over_press_start();
+
+            // Draw the cursor sprite wherever it should be.
+            draw_game_over_cursor();
         } else if (game_state == GAME_STATE_UPDATING_PLAYFIELD) {
             // Restart the update of cleared playfield tiles.
             if (update_cleared_playfield_tiles() == TRUE) {
@@ -118,6 +129,10 @@ void init_title(void) {
 
 void start_game(void) {
     if (pads[0] & PAD_START) {
+        if (get_player_is_pause_pressed(0)) {
+            return;
+        }
+
         set_player_is_pause_pressed(0);
 
         // Fade to black
@@ -131,6 +146,8 @@ void start_game(void) {
         ppu_on_all();
         // Back to normal brightness
         pal_bright(4);
+    } else {
+        unset_player_is_pause_pressed(0);
     }
 }
 
@@ -155,7 +172,6 @@ void init_game(void) {
         set_player_orientation_flag(temp_byte_1, ORIENTATION_HORIZ);
         unset_player_is_place_pressed_flag(temp_byte_1);
         unset_player_is_rotate_pressed(temp_byte_1);
-        unset_line_is_started_flag(temp_byte_1);
     }
 
     // Always loads |current_level|
@@ -177,6 +193,10 @@ void reset_playfield() {
     // Reset per-level state.
     cleared_tile_count = 0;
     cleared_tile_percentage = 0;
+
+    // Make sure no lines will be rendered.
+    unset_line_is_started_flag(0);
+    unset_line_is_started_flag(1);
 
     // Ball random initial positions and directions.
     for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
@@ -224,6 +244,85 @@ void do_level_up(void) {
 
     // Reset state to playing the game.
     game_state = GAME_STATE_PLAYING;
+}
+
+void change_to_game_over(void) {
+    // Fade to black
+    pal_fade_to(4, 0);
+    // Screen off
+    ppu_off();
+
+    // Load game over screen graphics.
+    vram_adr(NAMETABLE_A);
+    vram_unrle(game_over_screen);
+
+    // Screen on
+    ppu_on_all();
+    // Back to normal brightness
+    pal_bright(4);
+
+    set_game_over_mode(GAME_OVER_RETRY);
+    game_state = GAME_STATE_GAME_OVER;
+}
+
+void game_over_change_mode(void) {
+    if (pads[0] & PAD_SELECT) {
+        // Ignore the mode change if player holds the button.
+        if (get_player_is_select_pressed(0)) {
+            return;
+        }
+
+        // Track player is holding the button.
+        set_player_is_select_pressed(0);
+
+        // Toggle game over mode between retry and quit.
+        set_game_over_mode(get_game_over_mode() ^ 1);
+    } else {
+        // No longer holding down the button.
+        unset_player_is_select_pressed(0);
+    }
+}
+
+void game_over_press_start(void) {
+    if (pads[0] & PAD_START) {
+        if (get_player_is_pause_pressed(0)) {
+            return;
+        }
+
+        set_player_is_pause_pressed(0);
+
+        if (get_game_over_mode() == GAME_OVER_RETRY) {
+            // Reset our lives count back to the default.
+            lives_count = current_level + 1;
+
+            // Screen off
+            ppu_off();
+
+            reset_playfield();
+
+            // Screen on
+            ppu_on_all();
+
+            game_state = GAME_STATE_PLAYING;
+        } else {
+            // get_game_over_mode() == GAME_OVER_QUIT
+
+            // Fade to black
+            pal_fade_to(4, 0);
+            // Screen off
+            ppu_off();
+
+            // Back to the title screen
+            init_title();
+
+            // Screen on
+            ppu_on_all();
+            // Back to normal brightness
+            pal_bright(4);
+        }
+    } else {
+        unset_player_is_pause_pressed(0);
+    }
 }
 
 #define get_tile_alphanumeric_number(v) (TILE_INDEX_ALPHANUMERIC_ZERO + (v))
@@ -382,6 +481,14 @@ void draw_player(unsigned char player_index) {
 void draw_tile_highlight(unsigned char player_index) {
     if (playfield[players[player_index].nearest_playfield_tile] == PLAYFIELD_UNCLEARED) {
         oam_spr(players[player_index].nearest_tile_x, players[player_index].nearest_tile_y - 1, TILE_INDEX_TILE_HIGHLIGHT, 1);
+    }
+}
+
+void draw_game_over_cursor(void) {
+    if (get_game_over_mode() == GAME_OVER_RETRY) {
+        oam_spr(GAME_OVER_CURSOR_RETRY_X, GAME_OVER_CURSOR_RETRY_Y, TILE_INDEX_TILE_HIGHLIGHT, 1);
+    } else {
+        oam_spr(GAME_OVER_CURSOR_QUIT_X, GAME_OVER_CURSOR_QUIT_Y, TILE_INDEX_TILE_HIGHLIGHT, 1);
     }
 }
 
@@ -685,7 +792,7 @@ void check_ball_line_collisions(void) {
 
         if (lives_count == 0) {
             // We ran out of lives, move to game over state.
-            game_state = GAME_STATE_GAME_OVER;
+            change_to_game_over();
         } else {
             // We changed the lives count, let's redraw the HUD.
             game_state = GAME_STATE_REQUEST_HUD_UPDATE;
@@ -695,22 +802,26 @@ void check_ball_line_collisions(void) {
 
 void flip_player_orientation(unsigned char player_index) {
     if (pads[player_index] & PAD_B) {
-        if (!get_player_is_rotate_pressed(player_index)) {
-            set_player_is_rotate_pressed(player_index);
-            set_player_orientation_flag(player_index, get_player_orientation_flag(player_index) ^ 1);
+        if (get_player_is_rotate_pressed(player_index)) {
+            return;
+        }
 
-            if (get_player_orientation_flag(player_index) == ORIENTATION_HORIZ) {
-                temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
-                if (players[player_index].x <= temp_byte_2) {
-                    players[player_index].x = temp_byte_2;
-                }
-            } else {
-                temp_byte_2 = PLAYFIELD_TOP_WALL + 8;
-                if (players[player_index].y <= temp_byte_2) {
-                    players[player_index].y = temp_byte_2;
-                }
+        set_player_is_rotate_pressed(player_index);
+        set_player_orientation_flag(player_index, get_player_orientation_flag(player_index) ^ 1);
+
+        if (get_player_orientation_flag(player_index) == ORIENTATION_HORIZ) {
+            temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
+            if (players[player_index].x <= temp_byte_2) {
+                players[player_index].x = temp_byte_2;
+            }
+        } else {
+            temp_byte_2 = PLAYFIELD_TOP_WALL + 8;
+            if (players[player_index].y <= temp_byte_2) {
+                players[player_index].y = temp_byte_2;
             }
         }
+
+        update_nearest_tile(player_index);
     } else {
         unset_player_is_rotate_pressed(player_index);
     }
