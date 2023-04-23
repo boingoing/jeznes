@@ -56,9 +56,13 @@
 #define GAME_OVER_CURSOR_QUIT_Y 0xd0
 
 // These macros enable various debugging features and should probably be turned off before release
-#define DEBUG 1
+#define DEBUG 0
+
+// DEBUG macro gates all the debug features
+#if DEBUG
 #define DRAW_GRAY_LINE 1
 #define DRAW_BALL_NEAREST_TILE_HIGHLIGHT 1
+#endif
 
 enum {
     GAME_STATE_TITLE,
