@@ -31,8 +31,10 @@ void main(void) {
         clear_vram_buffer();
 
         if (game_state == GAME_STATE_TITLE) {
+            // Clear all sprites from the sprite buffer.
             oam_clear();
 
+            // Handle player pressing start.
             start_game();
         } else if (game_state == GAME_STATE_PLAYING) {
             // Clear all sprites from the sprite buffer.
@@ -63,6 +65,9 @@ void main(void) {
 
             // Draw the ball sprites.
             draw_balls();
+        } else if (game_state == GAME_STATE_LEVEL_UP) {
+            // Clear all sprites from the sprite buffer.
+            oam_clear();
         } else if (game_state == GAME_STATE_UPDATING_PLAYFIELD) {
             // Restart the update of cleared playfield tiles.
             if (update_cleared_playfield_tiles() == TRUE) {
@@ -78,6 +83,14 @@ void main(void) {
 
             // Then reset the game state to playing.
             game_state = GAME_STATE_PLAYING;
+
+            // The cleared tile percentage is updated via update_hud().
+            // Because that's an expensive operation, let's not redo it anywhere.
+            // If we detect the target percentage has been reached, switch to the
+            // level up state instead.
+            if (cleared_tile_percentage > TARGET_CLEARED_TILE_PERCENTAGE) {
+                game_state = GAME_STATE_LEVEL_UP;
+            }
         }
 
 #if DEBUG
@@ -173,7 +186,7 @@ void init_game(void) {
 }
 
 void load_playfield(unsigned char playfield_index) {
-    memcpy(&playfield, playfield_patterns[playfield_index], PLAYFIELD_WIDTH*PLAYFIELD_HEIGHT);
+    memcpy(&playfield, playfield_patterns[playfield_index], PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT);
 }
 
 void read_controllers(void) {
@@ -193,10 +206,10 @@ void write_two_digit_number_to_bg(unsigned char num, unsigned char tile_x, unsig
 void update_hud(void) {
     write_two_digit_number_to_bg(current_level, HUD_LEVEL_DISPLAY_TILE_X, HUD_LEVEL_DISPLAY_TILE_Y);
     write_two_digit_number_to_bg(lives_count, HUD_LIVES_DISPLAY_TILE_X, HUD_LIVES_DISPLAY_TILE_Y);
-    write_two_digit_number_to_bg(70, HUD_TARGET_DISPLAY_TILE_X, HUD_TARGET_DISPLAY_TILE_Y);
+    write_two_digit_number_to_bg(TARGET_CLEARED_TILE_PERCENTAGE, HUD_TARGET_DISPLAY_TILE_X, HUD_TARGET_DISPLAY_TILE_Y);
 
-    temp_byte_1 = (cleared_tile_count * 100) / playfield_pattern_uncleared_tile_counts[current_level-1];
-    write_two_digit_number_to_bg(temp_byte_1, HUD_CLEAR_DISPLAY_TILE_X, HUD_CLEAR_DISPLAY_TILE_Y);
+    cleared_tile_percentage = (cleared_tile_count * 100) / playfield_pattern_uncleared_tile_counts[0];
+    write_two_digit_number_to_bg(cleared_tile_percentage, HUD_CLEAR_DISPLAY_TILE_X, HUD_CLEAR_DISPLAY_TILE_Y);
 }
 
 #define get_pixel_coord_x() (temp_byte_4)
