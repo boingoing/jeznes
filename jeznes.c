@@ -68,6 +68,9 @@ void main(void) {
         } else if (game_state == GAME_STATE_LEVEL_UP) {
             // Clear all sprites from the sprite buffer.
             oam_clear();
+
+            // Just perform a level up.
+            do_level_up();
         } else if (game_state == GAME_STATE_UPDATING_PLAYFIELD) {
             // Restart the update of cleared playfield tiles.
             if (update_cleared_playfield_tiles() == TRUE) {
@@ -118,7 +121,7 @@ void start_game(void) {
         set_player_is_pause_pressed(0);
 
         // Fade to black
-        pal_fade_to(4,0);
+        pal_fade_to(4, 0);
         // Screen off
         ppu_off();
 
@@ -135,22 +138,15 @@ void init_game(void) {
     static unsigned char player_default_x[2] = {0x56, 0x96};
     static unsigned char player_default_y[2] = {0x46, 0x86};
 
-    // Load playfield graphics.
-    pal_bg(playfield_bg_palette);
-    pal_spr(playfield_sprite_palette);
-    vram_adr(NAMETABLE_A);
-    vram_unrle(playfield_screen);
-
     // Seed the random number generator - it's based on frame count.
     seed_rng();
 
     // Starting game state.
     game_state = GAME_STATE_PLAYING;
     current_level = 1;
-    cleared_tile_count = 0;
     lives_count = current_level + 1;
 
-    // Player initial positions
+    // Player initial positions.
     for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
         players[temp_byte_1].x = player_default_x[temp_byte_1];
         players[temp_byte_1].y = player_default_y[temp_byte_1];
@@ -162,7 +158,27 @@ void init_game(void) {
         unset_line_is_started_flag(temp_byte_1);
     }
 
-    // Ball random initial positions
+    // Always loads |current_level|
+    load_level();
+}
+
+void load_playfield(unsigned char playfield_index) {
+    memcpy(&playfield, playfield_patterns[playfield_index], PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT);
+}
+
+void read_controllers(void) {
+    for (temp_byte_1 = 0; temp_byte_1 < MAX_PLAYERS; ++temp_byte_1) {
+        pads[temp_byte_1] = pad_poll(temp_byte_1);
+        pads_new[temp_byte_1] = get_pad_new(temp_byte_1);
+    }
+}
+
+void load_level() {
+    // Reset per-level state.
+    cleared_tile_count = 0;
+    cleared_tile_percentage = 0;
+
+    // Ball random initial positions and directions.
     for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
         balls[temp_byte_1].x = rand8() % (0xff - 0x30) + 0x18;
         balls[temp_byte_1].y = rand8() % (0xff - 0x70) + 0x20;
@@ -178,6 +194,13 @@ void init_game(void) {
         }
     }
 
+    // Load playfield graphics.
+    // Note: Screen must be off!
+    pal_bg(playfield_bg_palette);
+    pal_spr(playfield_sprite_palette);
+    vram_adr(NAMETABLE_A);
+    vram_unrle(playfield_screen);
+
     // Load playfield pattern.
     load_playfield(0);
 
@@ -185,15 +208,22 @@ void init_game(void) {
     update_hud();
 }
 
-void load_playfield(unsigned char playfield_index) {
-    memcpy(&playfield, playfield_patterns[playfield_index], PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT);
-}
+void do_level_up(void) {
+    // Actually level up the player.
+    current_level++;
+    lives_count++;
 
-void read_controllers(void) {
-    for (temp_byte_1 = 0; temp_byte_1 < MAX_PLAYERS; ++temp_byte_1) {
-        pads[temp_byte_1] = pad_poll(temp_byte_1);
-        pads_new[temp_byte_1] = get_pad_new(temp_byte_1);
-    }
+    // Turn off the screen.
+    ppu_off();
+
+    // Redraw the playfield and reset the balls while adding one more.
+    load_level();
+
+    // Turn on the screen.
+    ppu_on_all();
+
+    // Reset state to playing the game.
+    game_state = GAME_STATE_PLAYING;
 }
 
 #define get_tile_alphanumeric_number(v) (TILE_INDEX_ALPHANUMERIC_ZERO + (v))
@@ -652,10 +682,14 @@ void check_ball_line_collisions(void) {
         }
 
         lives_count--;
-        // TODO: If lives_count == 0, set game state to game over?
 
-        // We changed the lives count, let's redraw the HUD.
-        game_state = GAME_STATE_REQUEST_HUD_UPDATE;
+        if (lives_count == 0) {
+            // We ran out of lives, move to game over state.
+            game_state = GAME_STATE_GAME_OVER;
+        } else {
+            // We changed the lives count, let's redraw the HUD.
+            game_state = GAME_STATE_REQUEST_HUD_UPDATE;
+        }
     }
 }
 

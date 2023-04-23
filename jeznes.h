@@ -50,7 +50,7 @@
 
 #define make_word(lo,hi) ((lo)|(hi << 8))
 
-#define get_ball_count() (current_level)
+#define get_ball_count() (current_level+1)
 #define get_player_count() (1)
 
 #define get_playfield_index() (temp_int_3)
@@ -82,6 +82,7 @@ enum {
     GAME_STATE_TITLE,
     GAME_STATE_PLAYING,
     GAME_STATE_LEVEL_UP,
+    GAME_STATE_GAME_OVER,
     GAME_STATE_UPDATING_PLAYFIELD,
     GAME_STATE_REQUEST_HUD_UPDATE
 };
@@ -328,8 +329,10 @@ void init_title(void);
 void start_game(void);
 
 void init_game(void);
-void __fastcall__ load_level(unsigned char level);
+void load_level(void);
 void __fastcall__ load_playfield(unsigned char playfield_index);
+
+void do_level_up(void);
 
 void read_controllers(void);
 
