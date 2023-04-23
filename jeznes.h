@@ -329,7 +329,7 @@ void init_title(void);
 void start_game(void);
 
 void init_game(void);
-void load_level(void);
+void reset_playfield(void);
 void __fastcall__ load_playfield(unsigned char playfield_index);
 
 void do_level_up(void);

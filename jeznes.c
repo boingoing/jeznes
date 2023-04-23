@@ -159,7 +159,7 @@ void init_game(void) {
     }
 
     // Always loads |current_level|
-    load_level();
+    reset_playfield();
 }
 
 void load_playfield(unsigned char playfield_index) {
@@ -173,7 +173,7 @@ void read_controllers(void) {
     }
 }
 
-void load_level() {
+void reset_playfield() {
     // Reset per-level state.
     cleared_tile_count = 0;
     cleared_tile_percentage = 0;
@@ -217,7 +217,7 @@ void do_level_up(void) {
     ppu_off();
 
     // Redraw the playfield and reset the balls while adding one more.
-    load_level();
+    reset_playfield();
 
     // Turn on the screen.
     ppu_on_all();
