@@ -34,8 +34,13 @@ void main(void) {
             // Clear all sprites from the sprite buffer.
             oam_clear();
 
+            // Handle player pressing select.
+            title_change_mode();
             // Handle player pressing start.
-            start_game();
+            title_press_start();
+
+            // Draw the cursor on the title screen.
+            draw_title_cursor();
         } else if (game_state == GAME_STATE_PLAYING) {
             // Clear all sprites from the sprite buffer.
             oam_clear();
@@ -123,17 +128,27 @@ void init_title(void) {
     vram_adr(NAMETABLE_A);
     vram_unrle(title_screen);
 
+    // By default, select the "1 Player" option.
+    set_title_mode(TITLE_1_PLAYER);
+
     // Starting or returning to the title screen.
     game_state = GAME_STATE_TITLE;
 }
 
-void start_game(void) {
+void title_press_start(void) {
     if (pads[0] & PAD_START) {
         if (get_player_is_pause_pressed(0)) {
             return;
         }
 
         set_player_is_pause_pressed(0);
+
+        if (get_title_mode() == TITLE_1_PLAYER) {
+            player_count = 1;
+        } else {
+            // get_title_mode() == TITLE_2_PLAYER
+            player_count = 2;
+        }
 
         // Fade to black
         pal_fade_to(4, 0);
@@ -148,6 +163,24 @@ void start_game(void) {
         pal_bright(4);
     } else {
         unset_player_is_pause_pressed(0);
+    }
+}
+
+void title_change_mode(void) {
+    if (pads[0] & PAD_SELECT) {
+        // Ignore the mode change if player holds the button.
+        if (get_player_is_select_pressed(0)) {
+            return;
+        }
+
+        // Track player is holding the button.
+        set_player_is_select_pressed(0);
+
+        // Toggle game over mode between retry and quit.
+        set_title_mode(get_title_mode() ^ 1);
+    } else {
+        // No longer holding down the button.
+        unset_player_is_select_pressed(0);
     }
 }
 
@@ -481,6 +514,14 @@ void draw_player(unsigned char player_index) {
 void draw_tile_highlight(unsigned char player_index) {
     if (playfield[players[player_index].nearest_playfield_tile] == PLAYFIELD_UNCLEARED) {
         oam_spr(players[player_index].nearest_tile_x, players[player_index].nearest_tile_y - 1, TILE_INDEX_TILE_HIGHLIGHT, 1);
+    }
+}
+
+void draw_title_cursor(void) {
+    if (get_title_mode() == TITLE_1_PLAYER) {
+        oam_spr(TITLE_CURSOR_1_PLAYER_X, TITLE_CURSOR_1_PLAYER_Y, TILE_INDEX_TILE_HIGHLIGHT, 1);
+    } else {
+        oam_spr(TITLE_CURSOR_2_PLAYERS_X, TITLE_CURSOR_2_PLAYERS_Y, TILE_INDEX_TILE_HIGHLIGHT, 1);
     }
 }
 

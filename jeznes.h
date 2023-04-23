@@ -43,54 +43,22 @@
 #define HUD_TARGET_DISPLAY_TILE_X 18
 #define HUD_TARGET_DISPLAY_TILE_Y 25
 
+// Cursor sprite location for the title screen
+#define TITLE_CURSOR_1_PLAYER_X 0x58
+#define TITLE_CURSOR_1_PLAYER_Y 0xa8
+#define TITLE_CURSOR_2_PLAYERS_X 0x58
+#define TITLE_CURSOR_2_PLAYERS_Y 0xb8
+
 // Cursor sprite location for the game over screen
-#define GAME_OVER_CURSOR_RETRY_X 0x72
+#define GAME_OVER_CURSOR_RETRY_X 0x70
 #define GAME_OVER_CURSOR_RETRY_Y 0xc0
-#define GAME_OVER_CURSOR_QUIT_X 0x72
+#define GAME_OVER_CURSOR_QUIT_X 0x70
 #define GAME_OVER_CURSOR_QUIT_Y 0xd0
 
 // These macros enable various debugging features and should probably be turned off before release
 #define DEBUG 1
 #define DRAW_GRAY_LINE 1
 #define DRAW_BALL_NEAREST_TILE_HIGHLIGHT 1
-
-#define make_word(lo,hi) ((lo)|(hi << 8))
-
-#define get_ball_count() (current_level+1)
-#define get_player_count() (1)
-
-#define get_playfield_index() (temp_int_3)
-#define set_playfield_index(a) (temp_int_3 = (a))
-#define inc_playfield_index() (++temp_int_3)
-
-// Calculate the playfield tile position in (x,y) of the playfield tile |i|.
-#define playfield_index_x(i) ((i)%32)
-#define playfield_index_y(i) ((i)>>5)
-
-// Calculate the bg tile position in pixel coords of the playfield tile |i|.
-#define playfield_index_pixel_coord_x(i) (playfield_index_x((i)+PLAYFIELD_FIRST_TILE_INDEX)<<3)
-#define playfield_index_pixel_coord_y(i) (playfield_index_y((i)+PLAYFIELD_FIRST_TILE_INDEX)<<3)
-
-enum {
-    ORIENTATION_HORIZ,
-    ORIENTATION_VERT
-};
-
-enum {
-    GAME_OVER_RETRY,
-    GAME_OVER_QUIT
-};
-
-#define get_game_over_mode() (temp_byte_6)
-#define set_game_over_mode(a) (temp_byte_6 = (a))
-
-#pragma bss-name(push, "ZEROPAGE")
-
-// Placeholder to track how many bytes are unused in the zeropage.
-unsigned char unused_zp_bytes[13];
-
-unsigned char pads[MAX_PLAYERS];
-unsigned char pads_new[MAX_PLAYERS];
 
 enum {
     GAME_STATE_TITLE,
@@ -101,8 +69,99 @@ enum {
     GAME_STATE_REQUEST_HUD_UPDATE
 };
 
+enum {
+    ORIENTATION_HORIZ,
+    ORIENTATION_VERT
+};
+
+enum {
+    LINE_DIRECTION_POSITIVE,
+    LINE_DIRECTION_NEGATIVE
+};
+
+enum {
+    PLAYFIELD_UNCLEARED,
+    PLAYFIELD_WALL,
+    PLAYFIELD_LINE
+};
+
+enum {
+    GAME_OVER_RETRY,
+    GAME_OVER_QUIT
+};
+
+enum {
+    TITLE_1_PLAYER,
+    TITLE_2_PLAYERS
+};
+
+struct Player {
+    // Player metasprite location in pixel-coords
+    unsigned char x;
+    unsigned char y;
+
+    // Pixel-coords of nearest bg tile under the player
+    unsigned char nearest_tile_x;
+    unsigned char nearest_tile_y;
+
+    // Playfield tile index for nearest tile
+    int nearest_playfield_tile;
+
+    // Hold bit-flags used to track state of this player.
+    unsigned char flags;
+};
+
+struct Ball {
+    // Ball sprite location in pixel-coords
+    unsigned char x;
+    unsigned char y;
+
+    signed char x_velocity;
+    signed char y_velocity;
+
+    // Playfield tile index for nearest tile
+    int nearest_playfield_tile;
+};
+
+struct Line {
+    // Origin playfield tile index for the line.
+    // This is the tile on which the player pressed the start line button.
+    // For the game, the origin tile is always part of the line segment which
+    // spreads in the negative direction and the tile to the right
+    // (for ORIENTATION_HORIZ lines) or the tile below it (for ORIENTATION_VERT
+    // lines) is where the line segment which spreads in the positive direction
+    // begins.
+    int origin;
+
+    // How many steps away from the origin playfield tiles have we taken?
+    unsigned char tile_step_count;
+
+    // Completion of the current block [0-7]
+    unsigned char current_block_completion;
+
+    // Hold bit-flags used to track state of this line.
+    unsigned char flags;
+};
+
+// Used by sprite collision detection code.
+struct ObjectBase {
+    unsigned char x;
+    unsigned char y;
+    unsigned char width;
+    unsigned char height;
+};
+
+#pragma bss-name(push, "ZEROPAGE")
+
+// Placeholder to track how many bytes are unused in the zeropage.
+unsigned char unused_zp_bytes[12];
+
+unsigned char pads[MAX_PLAYERS];
+unsigned char pads_new[MAX_PLAYERS];
+
 unsigned char game_state;
 unsigned char current_level;
+unsigned char player_count;
 unsigned char lives_count;
 unsigned char cleared_tile_percentage;
 unsigned int cleared_tile_count;
@@ -121,6 +180,33 @@ int temp_int_1;
 int temp_int_2;
 int temp_int_3;
 int temp_int_4;
+
+struct Player players[MAX_PLAYERS];
+struct Ball balls[MAX_BALLS];
+struct Line lines[MAX_PLAYERS];
+
+#define make_word(lo,hi) ((lo)|(hi << 8))
+
+#define get_ball_count() (current_level+1)
+#define get_player_count() (player_count)
+
+#define get_playfield_index() (temp_int_3)
+#define set_playfield_index(a) (temp_int_3 = (a))
+#define inc_playfield_index() (++temp_int_3)
+
+#define get_game_over_mode() (temp_byte_6)
+#define set_game_over_mode(a) (temp_byte_6 = (a))
+
+#define get_title_mode() (temp_byte_6)
+#define set_title_mode(a) (temp_byte_6 = (a))
+
+// Calculate the playfield tile position in (x,y) of the playfield tile |i|.
+#define playfield_index_x(i) ((i)%32)
+#define playfield_index_y(i) ((i)>>5)
+
+// Calculate the bg tile position in pixel coords of the playfield tile |i|.
+#define playfield_index_pixel_coord_x(i) (playfield_index_x((i)+PLAYFIELD_FIRST_TILE_INDEX)<<3)
+#define playfield_index_pixel_coord_y(i) (playfield_index_y((i)+PLAYFIELD_FIRST_TILE_INDEX)<<3)
 
 #define get_flag(flags_byte, bitmask) (((flags_byte) & (bitmask)) != 0)
 #define set_flag(flags_byte, bitmask) ((flags_byte) |= (bitmask))
@@ -163,38 +249,6 @@ int temp_int_4;
 // Sets the orientation for |player_index| player to |orientation| which must be either ORIENTATION_HORIZ or ORIENTATION_VERT
 #define set_player_orientation_flag(player_index, orientation) (players[(player_index)].flags = players[(player_index)].flags & ~LINE_BITMASK_ORIENTATION | (orientation))
 
-struct Player {
-    // Player metasprite location in pixel-coords
-    unsigned char x;
-    unsigned char y;
-
-    // Pixel-coords of nearest bg tile under the player
-    unsigned char nearest_tile_x;
-    unsigned char nearest_tile_y;
-
-    // Playfield tile index for nearest tile
-    int nearest_playfield_tile;
-
-    // Hold bit-flags used to track state of this player.
-    unsigned char flags;
-};
-
-struct Player players[MAX_PLAYERS];
-
-struct Ball {
-    // Ball sprite location in pixel-coords
-    unsigned char x;
-    unsigned char y;
-
-    signed char x_velocity;
-    signed char y_velocity;
-
-    // Playfield tile index for nearest tile
-    int nearest_playfield_tile;
-};
-
-struct Ball balls[MAX_BALLS];
-
 #define LINE_BIT_ORIENTATION 0
 #define LINE_BITMASK_ORIENTATION (1 << LINE_BIT_ORIENTATION)
 #define LINE_BIT_IS_STARTED 1
@@ -230,42 +284,6 @@ struct Ball balls[MAX_BALLS];
 // Indicate horizontal or vertical via |orientation| which must be ORIENTATION_HORIZ or ORIENTATION_VERT.
 // Indicate the line segment front tile completion via |completion| which should be [0,7].
 #define get_line_sprite_index(orientation, completion) (SPRITE_INDEX_PLAYFIELD_LINE_HORIZ_BASE + (completion) + 0x10 * (orientation))
-
-struct Line {
-    // Origin playfield tile index for the line.
-    // This is the tile on which the player pressed the start line button.
-    // For the game, the origin tile is always part of the line segment which
-    // spreads in the negative direction and the tile to the right
-    // (for ORIENTATION_HORIZ lines) or the tile below it (for ORIENTATION_VERT
-    // lines) is where the line segment which spreads in the positive direction
-    // begins.
-    int origin;
-
-    // How many steps away from the origin playfield tiles have we taken?
-    unsigned char tile_step_count;
-
-    // Completion of the current block [0-7]
-    unsigned char current_block_completion;
-
-    // Hold bit-flags used to track state of this line.
-    unsigned char flags;
-};
-
-struct Line lines[MAX_PLAYERS];
-
-#pragma bss-name(push, "BSS")
-
-struct ObjectBase {
-    unsigned char x;
-    unsigned char y;
-    unsigned char width;
-    unsigned char height;
-};
-
-enum {
-    LINE_DIRECTION_POSITIVE,
-    LINE_DIRECTION_NEGATIVE
-};
 
 #define PLAYFIELD_BIT_LINE_ORIENTATION 7
 #define PLAYFIELD_BITMASK_LINE_ORIENTATION (1 << PLAYFIELD_BIT_LINE_ORIENTATION)
@@ -330,11 +348,8 @@ enum {
 // Indicate horizontal or vertical via |orientation| which should be ORIENTATION_HORIZ or ORIENTATION_VERT.
 #define get_playfield_bg_tile_line(orientation) (TILE_INDEX_PLAYFIELD_LINE_HORIZ + (orientation))
 
-enum {
-    PLAYFIELD_UNCLEARED,
-    PLAYFIELD_WALL,
-    PLAYFIELD_LINE
-};
+#pragma bss-name(push, "BSS")
+
 unsigned char playfield[PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT];
 
 #define STACK_MAX_HEIGHT 0x90
@@ -343,10 +358,13 @@ unsigned int stack[STACK_MAX_HEIGHT];
 unsigned char stack_top;
 unsigned int stack_temp;
 
+// Must be included under BSS section
 #include "graphics.h"
 
 void init_title(void);
-void start_game(void);
+void title_change_mode(void);
+void title_press_start(void);
+void draw_title_cursor(void);
 
 void init_game(void);
 void reset_playfield(void);
