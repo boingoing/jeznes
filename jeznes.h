@@ -6,6 +6,8 @@
 #define BALL_WIDTH 8
 #define BALL_HEIGHT 8
 
+#define TARGET_CLEARED_TILE_PERCENTAGE 75
+
 // Playfield tile offsets
 #define PLAYFIELD_FIRST_TILE_X 1
 #define PLAYFIELD_FIRST_TILE_Y 2
@@ -43,12 +45,12 @@
 
 // These macros enable various debugging features and should probably be turned off before release
 #define DEBUG 1
-#define DRAW_GRAY_LINE 0
+#define DRAW_GRAY_LINE 1
 #define DRAW_BALL_NEAREST_TILE_HIGHLIGHT 1
 
 #define make_word(lo,hi) ((lo)|(hi << 8))
 
-#define get_ball_count() (current_level)
+#define get_ball_count() (current_level+1)
 #define get_player_count() (1)
 
 #define get_playfield_index() (temp_int_3)
@@ -71,7 +73,7 @@ enum {
 #pragma bss-name(push, "ZEROPAGE")
 
 // Placeholder to track how many bytes are unused in the zeropage.
-unsigned char unused_zp_bytes[14];
+unsigned char unused_zp_bytes[13];
 
 unsigned char pads[MAX_PLAYERS];
 unsigned char pads_new[MAX_PLAYERS];
@@ -79,6 +81,8 @@ unsigned char pads_new[MAX_PLAYERS];
 enum {
     GAME_STATE_TITLE,
     GAME_STATE_PLAYING,
+    GAME_STATE_LEVEL_UP,
+    GAME_STATE_GAME_OVER,
     GAME_STATE_UPDATING_PLAYFIELD,
     GAME_STATE_REQUEST_HUD_UPDATE
 };
@@ -86,6 +90,7 @@ enum {
 unsigned char game_state;
 unsigned char current_level;
 unsigned char lives_count;
+unsigned char cleared_tile_percentage;
 unsigned int cleared_tile_count;
 
 unsigned char temp_byte_1;
@@ -324,7 +329,10 @@ void init_title(void);
 void start_game(void);
 
 void init_game(void);
+void reset_playfield(void);
 void __fastcall__ load_playfield(unsigned char playfield_index);
+
+void do_level_up(void);
 
 void read_controllers(void);
 
