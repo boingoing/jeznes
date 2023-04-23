@@ -112,11 +112,9 @@ void main(void) {
             }
         }
 
-#if DEBUG
 #if DRAW_GRAY_LINE
         // For debugging, render a line indicating how much CPU is used.
         gray_line();
-#endif
 #endif
     }
 }
