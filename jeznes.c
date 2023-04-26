@@ -37,10 +37,12 @@ void main(void) {
             // Handle player pressing select.
             title_change_mode();
             // Handle player pressing start.
-            title_press_start();
-
-            // Draw the cursor on the title screen.
-            draw_title_cursor();
+            if (!title_press_start()) {
+                // Draw the cursor on the title screen if the player didn't press start.
+                // Because title_press_start() writes to the screen, we would be drawing
+                // the cursor sprite over the playfield.
+                draw_title_cursor();
+            }
         } else if (game_state == GAME_STATE_PLAYING) {
             // Clear all sprites from the sprite buffer.
             oam_clear();
@@ -83,10 +85,11 @@ void main(void) {
             // Handle player pressing select.
             game_over_change_mode();
             // Handle player pressing start.
-            game_over_press_start();
-
-            // Draw the cursor sprite wherever it should be.
-            draw_game_over_cursor();
+            if (!game_over_press_start()) {
+                // Draw the cursor sprite wherever it should be if the player didn't
+                // press start.
+                draw_game_over_cursor();
+            }
         } else if (game_state == GAME_STATE_UPDATING_PLAYFIELD) {
             // Restart the update of cleared playfield tiles.
             if (update_cleared_playfield_tiles() == TRUE) {
@@ -133,10 +136,10 @@ void init_title(void) {
     game_state = GAME_STATE_TITLE;
 }
 
-void title_press_start(void) {
+unsigned char title_press_start(void) {
     if (pads[0] & PAD_START) {
         if (get_player_is_pause_pressed(0)) {
-            return;
+            return FALSE;
         }
 
         set_player_is_pause_pressed(0);
@@ -159,9 +162,13 @@ void title_press_start(void) {
         ppu_on_all();
         // Back to normal brightness
         pal_bright(4);
+
+        return TRUE;
     } else {
         unset_player_is_pause_pressed(0);
     }
+
+    return FALSE;
 }
 
 void title_change_mode(void) {
@@ -314,10 +321,10 @@ void game_over_change_mode(void) {
     }
 }
 
-void game_over_press_start(void) {
+unsigned char game_over_press_start(void) {
     if (pads[0] & PAD_START) {
         if (get_player_is_pause_pressed(0)) {
-            return;
+            return FALSE;
         }
 
         set_player_is_pause_pressed(0);
@@ -351,9 +358,13 @@ void game_over_press_start(void) {
             // Back to normal brightness
             pal_bright(4);
         }
+
+        return TRUE;
     } else {
         unset_player_is_pause_pressed(0);
     }
+
+    return FALSE;
 }
 
 #define get_tile_alphanumeric_number(v) (TILE_INDEX_ALPHANUMERIC_ZERO + (v))

@@ -367,7 +367,10 @@ unsigned int stack_temp;
 
 void init_title(void);
 void title_change_mode(void);
-void title_press_start(void);
+
+// Handle player start button presses for the title screen.
+// Returns TRUE if the player did press start.
+unsigned char title_press_start(void);
 void draw_title_cursor(void);
 
 void init_game(void);
@@ -376,7 +379,10 @@ void __fastcall__ load_playfield(unsigned char playfield_index);
 
 void change_to_game_over(void);
 void game_over_change_mode(void);
-void game_over_press_start(void);
+
+// Handle player start button presses for the game over screen.
+// Returns TRUE if the player did press start.
+unsigned char game_over_press_start(void);
 void draw_game_over_cursor(void);
 
 // Perform a level up:
