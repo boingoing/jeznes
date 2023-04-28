@@ -732,7 +732,7 @@ void draw_game_over_cursor(void) {
 }
 
 void draw_pause_sprites(void) {
-  for (temp_byte_2 = 0; temp_byte_2 < 5; ++temp_byte_2) {
+  for (temp_byte_2 = 0; temp_byte_2 < 6; ++temp_byte_2) {
     temp_byte_3 = temp_byte_2 << 3;
     oam_spr(PAUSE_LETTER_BASE_X + temp_byte_3, PAUSE_LETTER_BASE_Y, SPRITE_INDEX_PAUSE_BASE + temp_byte_2, 0);
   }

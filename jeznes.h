@@ -26,7 +26,7 @@
 
 #define SPRITE_INDEX_CURSOR 0x17
 
-#define SPRITE_INDEX_PAUSE_BASE 0x12
+#define SPRITE_INDEX_PAUSE_BASE 0x23
 
 #define TILE_INDEX_PLAYFIELD_UNCLEARED 0x0
 #define TILE_INDEX_PLAYFIELD_CLEARED 0x3
@@ -60,8 +60,8 @@
 #define GAME_OVER_CURSOR_QUIT_Y 0xd0
 
 // PAUSE letter starting location for the pause screen
-#define PAUSE_LETTER_BASE_X 0x70
-#define PAUSE_LETTER_BASE_Y 0x60
+#define PAUSE_LETTER_BASE_X 0x68
+#define PAUSE_LETTER_BASE_Y 0x48
 
 // These macros enable various debugging features and should probably be turned off before release
 #define DEBUG 0
