@@ -24,6 +24,8 @@
 #define SPRITE_INDEX_PLAYFIELD_LINE_HORIZ_BASE 0x80
 #define SPRITE_INDEX_PLAYFIELD_LINE_VERT_BASE 0x90
 
+#define SPRITE_INDEX_CURSOR 0x17
+
 #define TILE_INDEX_PLAYFIELD_UNCLEARED 0x0
 #define TILE_INDEX_PLAYFIELD_CLEARED 0x3
 #define TILE_INDEX_PLAYFIELD_LINE_HORIZ 0x1
@@ -62,12 +64,14 @@
 #if DEBUG
 #define DRAW_GRAY_LINE 1
 #define DRAW_BALL_NEAREST_TILE_HIGHLIGHT 1
+#define ENABLE_CHEATS 1
 #endif
 
 enum {
     GAME_STATE_TITLE,
     GAME_STATE_PLAYING,
     GAME_STATE_LEVEL_UP,
+    GAME_STATE_LEVEL_DOWN,
     GAME_STATE_GAME_OVER,
     GAME_STATE_UPDATING_PLAYFIELD,
     GAME_STATE_REQUEST_HUD_UPDATE
@@ -158,13 +162,14 @@ struct ObjectBase {
 #pragma bss-name(push, "ZEROPAGE")
 
 // Placeholder to track how many bytes are unused in the zeropage.
-unsigned char unused_zp_bytes[12];
+unsigned char unused_zp_bytes[11];
 
 unsigned char pads[MAX_PLAYERS];
 unsigned char pads_new[MAX_PLAYERS];
 
 unsigned char game_state;
 unsigned char current_level;
+unsigned char current_playfield_pattern;
 unsigned char player_count;
 unsigned char lives_count;
 unsigned char cleared_tile_percentage;
@@ -193,6 +198,9 @@ struct Line lines[MAX_PLAYERS];
 
 #define get_ball_count() (current_level+1)
 #define get_player_count() (player_count)
+
+#define get_playfield_pattern() (current_playfield_pattern)
+#define set_playfield_pattern(a) (current_playfield_pattern = (a))
 
 #define get_playfield_index() (temp_int_3)
 #define set_playfield_index(a) (temp_int_3 = (a))
@@ -226,6 +234,8 @@ struct Line lines[MAX_PLAYERS];
 #define PLAYER_BITMASK_IS_PAUSE_PRESSED (1 << PLAYER_BIT_IS_PAUSE_PRESSED)
 #define PLAYER_BIT_IS_SELECT_PRESSED 4
 #define PLAYER_BITMASK_IS_SELECT_PRESSED (1 << PLAYER_BIT_IS_SELECT_PRESSED)
+#define PLAYER_BIT_IS_CHEAT_PRESSED 5
+#define PLAYER_BITMASK_IS_CHEAT_PRESSED (1 << PLAYER_BIT_IS_CHEAT_PRESSED)
 
 #define get_player_flag(player_index, bitmask) get_flag(players[(player_index)].flags, (bitmask))
 #define set_player_flag(player_index, bitmask) set_flag(players[(player_index)].flags, (bitmask))
@@ -246,6 +256,10 @@ struct Line lines[MAX_PLAYERS];
 #define get_player_is_select_pressed(player_index) get_player_flag((player_index), PLAYER_BITMASK_IS_SELECT_PRESSED)
 #define set_player_is_select_pressed(player_index) set_player_flag((player_index), PLAYER_BITMASK_IS_SELECT_PRESSED)
 #define unset_player_is_select_pressed(player_index) unset_player_flag((player_index), PLAYER_BITMASK_IS_SELECT_PRESSED)
+
+#define get_player_is_cheat_pressed(player_index) get_player_flag((player_index), PLAYER_BITMASK_IS_CHEAT_PRESSED)
+#define set_player_is_cheat_pressed(player_index) set_player_flag((player_index), PLAYER_BITMASK_IS_CHEAT_PRESSED)
+#define unset_player_is_cheat_pressed(player_index) unset_player_flag((player_index), PLAYER_BITMASK_IS_CHEAT_PRESSED)
 
 // Returns either ORIENTATION_HORIZ or ORIENTATION_VERT
 #define get_player_orientation_flag(player_index) (players[(player_index)].flags & PLAYER_BITMASK_ORIENTATION)
@@ -362,8 +376,16 @@ unsigned int stack[STACK_MAX_HEIGHT];
 unsigned char stack_top;
 unsigned int stack_temp;
 
+#if ENABLE_CHEATS
+unsigned char enable_ball_line_collisions;
+#endif  //  ENABLE_CHEATS
+
 // Must be included under BSS section
 #include "graphics.h"
+
+// Initializes the locations and directions of the active balls on the valid
+// ball region of the playfield pattern defined by |current_playfield_pattern|.
+void init_balls();
 
 void init_title(void);
 void title_change_mode(void);
@@ -375,7 +397,10 @@ void draw_title_cursor(void);
 
 void init_game(void);
 void reset_playfield(void);
-void __fastcall__ load_playfield(unsigned char playfield_index);
+
+// Loads the playfield pattern defined by |current_playfield_pattern| into the
+// in-memory playfield.
+void load_playfield();
 
 void change_to_game_over(void);
 void game_over_change_mode(void);
@@ -385,6 +410,14 @@ void game_over_change_mode(void);
 unsigned char game_over_press_start(void);
 void draw_game_over_cursor(void);
 
+#if ENABLE_CHEATS
+// Set initial state for cheat flags.
+void init_cheat_flags(void);
+
+// Handle player cheat button presses.
+void handle_cheat_buttons(void);
+#endif  // ENABLE_CHEATS
+
 // Perform a level up:
 // Increment the current level
 // Add one to the current lives counter
@@ -392,6 +425,8 @@ void draw_game_over_cursor(void);
 // Reset the playfield
 // Change the game state to in-game
 void do_level_up(void);
+
+void do_level_down(void);
 
 void read_controllers(void);
 
