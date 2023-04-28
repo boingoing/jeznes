@@ -378,6 +378,7 @@ unsigned int stack_temp;
 
 #if ENABLE_CHEATS
 unsigned char enable_ball_line_collisions;
+unsigned char enable_losing_lives;
 #endif  //  ENABLE_CHEATS
 
 // Must be included under BSS section

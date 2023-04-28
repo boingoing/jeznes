@@ -233,6 +233,7 @@ unsigned char title_press_start(void) {
 #if ENABLE_CHEATS
 void init_cheat_flags(void) {
   enable_ball_line_collisions = TRUE;
+  enable_losing_lives = TRUE;
 }
 
 void handle_cheat_buttons(void) {
@@ -243,7 +244,7 @@ void handle_cheat_buttons(void) {
       return;
     }
 
-    if ((pads[0] & (PAD_LEFT | PAD_B | PAD_UP | PAD_DOWN | PAD_START)) != 0) {
+    if ((pads[0] & (PAD_LEFT | PAD_B | PAD_A | PAD_UP | PAD_DOWN | PAD_START)) != 0) {
       // Remember a cheat keypress is being held with the select button.
       set_player_is_cheat_pressed(0);
     }
@@ -254,6 +255,9 @@ void handle_cheat_buttons(void) {
     } else if (pads[0] & PAD_B) {
       // SELECT + B => Enable / Disable ball-line collisions.
       enable_ball_line_collisions ^= TRUE;
+    } else if (pads[0] & PAD_A) {
+      // SELECT + A => Enable / Disable losing a life on ball-line collision.
+      enable_losing_lives ^= TRUE;
     } else if (pads[0] & PAD_UP) {
       // SELECT + UP => Perform level-up
       game_state = GAME_STATE_LEVEL_UP;
@@ -976,6 +980,9 @@ void check_ball_line_collisions(void) {
             }
         }
 
+#if ENABLE_CHEATS
+        if (enable_losing_lives == TRUE)
+#endif  // ENABLE_CHEATS
         lives_count--;
 
         if (lives_count == 0) {
