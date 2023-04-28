@@ -260,6 +260,13 @@ void handle_cheat_buttons(void) {
     } else if (pads[0] & PAD_DOWN) {
       // SELECT + DOWN => Perform level-down
       game_state = GAME_STATE_LEVEL_DOWN;
+    } else if (pads[0] & PAD_START) {
+      // SELECT + START => Reset to title
+      // Screen off
+      ppu_off();
+      init_title();
+      // Screen on
+      ppu_on_all();
     }
   } else {
     // Select is not pressed, reset cheat flag.
