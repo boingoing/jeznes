@@ -243,7 +243,7 @@ void handle_cheat_buttons(void) {
       return;
     }
 
-    if ((pads[0] & (PAD_LEFT | PAD_B | PAD_UP | PAD_DOWN)) != 0) {
+    if ((pads[0] & (PAD_LEFT | PAD_B | PAD_UP | PAD_DOWN | PAD_START)) != 0) {
       // Remember a cheat keypress is being held with the select button.
       set_player_is_cheat_pressed(0);
     }
