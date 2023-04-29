@@ -43,6 +43,12 @@ enum {
 #define get_mark2_null() (temp_signed_byte_2)
 #define set_mark2_null(a) (temp_signed_byte_2 = (a))
 
+// Uses a constant-memory usage implementation of the painters algorithm to
+// walk the playfield starting at the playfield tile where |ball_index| is
+// currently located. Each reachable playfield tile is marked until we run
+// out of unmarked playfield tiles to walk to.
+// When this function returns, the region in which |ball_index| is bound will
+// be made up entirely of marked playfield tiles.
 void __fastcall__ compute_playfield_mark_bit_one_ball(unsigned char ball_index);
 
 #endif  // __JEZNES_FLOOD_FILL_H__
