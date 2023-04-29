@@ -252,20 +252,20 @@ detectNTSC:
 
     jmp _main            ;no parameters
 
-    .include "LIB/neslib.s"
-    .include "LIB/nesdoug.s"
-    .include "MUSIC/famitone2.s"
+    .include "lib/neslib.s"
+    .include "lib/nesdoug.s"
+    .include "music/famitone2.s"
     
     
     
 .segment "RODATA"
 
 music_data:
-    .include "MUSIC/TestMusic3.s"
+    .include "music/TestMusic3.s"
 
     .if(FT_SFX_ENABLE)
 sounds_data:
-    .include "MUSIC/SoundFx.s"
+    .include "music/SoundFx.s"
     .endif
 
 .segment "SAMPLES"
@@ -277,4 +277,4 @@ sounds_data:
     .word irq     ;$fffe irq / brk
 
 .segment "CHARS"
-    .incbin "graphics/graphics.chr"
+    .incbin "../graphics/graphics.chr"
