@@ -1,3 +1,12 @@
+//------------------------------------------------------------------------------
+// Copyright (C) Taylor Woll. All rights reserved.
+// Licensed under the MIT license. See LICENSE.txt file in the project root for
+// full license information.
+//------------------------------------------------------------------------------
+
+#ifndef __JEZNES_PLAYFIELD_H__
+#define __JEZNES_PLAYFIELD_H__
+
 #define PLAYFIELD_PATTERN_TITLE_SCREEN 0
 #define PLAYFIELD_PATTERN_GAME_OVER_SCREEN 1
 #define FIRST_PLAYFIELD_PATTERN 2
@@ -115,3 +124,5 @@ const unsigned char playfield_pattern_valid_ball_height_in_pixels[] = {
   0x28,
   0x90
 };
+
+#endif  // __JEZNES_PLAYFIELD_H__

@@ -1,8 +1,17 @@
 #include "lib/neslib.h"
 #include "lib/nesdoug.h"
-#include "sprites.h"
-#include "playfield.h"
 #include "jeznes.h"
+#include "zeropage.h"
+#include "bss.h"
+#include "types.h"
+#include "data.h"
+#include "debug.h"
+#include "constants/game.h"
+#include "constants/sprites.h"
+#include "constants/tiles.h"
+#include "flags/line.h"
+#include "flags/player.h"
+#include "flags/playfield.h"
 
 void main(void) {
 #if ENABLE_CHEATS
@@ -556,8 +565,6 @@ unsigned char pause_press_start(unsigned char player_index) {
     return FALSE;
 }
 
-#define get_tile_alphanumeric_number(v) (TILE_INDEX_ALPHANUMERIC_ZERO + (v))
-
 void write_two_digit_number_to_bg(unsigned char num, unsigned char tile_x, unsigned char tile_y) {
     one_vram_buffer(get_tile_alphanumeric_number(num / 10), NTADR_A(tile_x, tile_y));
     one_vram_buffer(get_tile_alphanumeric_number(num % 10), NTADR_A(tile_x+1, tile_y));
@@ -571,11 +578,6 @@ void update_hud(void) {
     cleared_tile_percentage = (cleared_tile_count * 100) / playfield_pattern_uncleared_tile_counts[FIRST_PLAYFIELD_PATTERN];
     write_two_digit_number_to_bg(cleared_tile_percentage, HUD_CLEAR_DISPLAY_TILE_X, HUD_CLEAR_DISPLAY_TILE_Y);
 }
-
-#define get_pixel_coord_x() (temp_byte_4)
-#define set_pixel_coord_x(a) (temp_byte_4 = (a))
-#define get_pixel_coord_y() (temp_byte_4)
-#define set_pixel_coord_y(a) (temp_byte_4 = (a))
 
 void move_player(unsigned char player_index) {
     if (pads[player_index] & PAD_LEFT) {
@@ -737,20 +739,6 @@ void draw_pause_sprites(void) {
     oam_spr(PAUSE_LETTER_BASE_X + temp_byte_3, PAUSE_LETTER_BASE_Y, SPRITE_INDEX_PAUSE_BASE + temp_byte_2, 0);
   }
 }
-
-#define get_line_orientation() (temp_byte_4)
-#define set_line_orientation(a) (temp_byte_4 = (a))
-#define get_current_playfield_index() (temp_int_1)
-#define set_current_playfield_index(a) (temp_int_1 = (a))
-#define get_was_line_segment_completed() (temp_byte_3)
-#define set_was_line_segment_completed(a) (temp_byte_3 = (a))
-
-#define get_tile_index_delta() (temp_byte_5)
-#define set_tile_index_delta(a) (temp_byte_5 = (a))
-#define get_negative_line_segment_origin() (temp_int_2)
-#define set_negative_line_segment_origin(a) (temp_int_2 = (a))
-#define get_positive_line_segment_origin() (temp_int_2)
-#define set_positive_line_segment_origin(a) (temp_int_2 = (a))
 
 // The tile index delta is the number we add to a playfield tile index to move
 // to the next playfield tile along the line segment.
@@ -1434,186 +1422,5 @@ PAINTER_ALGORITHM_START:
             set_playfield_is_marked_flag(get_cur());
             return;
         }
-    }
-}
-
-// Simple flood fill scan-and-fill implementation.
-// Mark all the uncleared playfield tiles inside the region enclosing |ball_index|.
-// Starting at the playfield tile under the ball, walks to all adjacent playfield
-// tiles which are uncleared and not marked. Each such tile is then marked and we
-// will visit its adjacent tiles.
-//
-// scratch:
-// temp_int_1
-// temp_byte_2
-void compute_playfield_mark_bit_one_ball2(unsigned char ball_index) {
-    temp_int_1 = balls[ball_index].nearest_playfield_tile;
-
-    // if not Inside(x, y) then return
-    if (!inside(temp_int_1)) {
-        return;
-    }
-
-    // let s = new empty stack
-    stack_init();
-
-    // Add (x, x, y, 1) to s
-    // (x,y)
-    stack_temp = temp_int_1;
-    stack_push();
-    // x
-    temp_byte_1 = playfield_index_x(temp_int_1);
-    // (x,1)
-    stack_temp = make_word(temp_byte_1, 1);
-    stack_push();
-
-    // Add (x, x, y-1, -1) to s
-    // (x,y-1)
-    stack_temp = temp_int_1 - 32;
-    stack_push();
-    // (x,-1)
-    stack_temp = make_word(temp_byte_1, -1);
-    stack_push();
-
-    // while s is not empty:
-    while (1) {
-        stack_empty();
-        if (temp_byte_2 & TRUE) {
-            break;
-        }
-
-        // Remove an (x1, x2, y, dy) from s
-        stack_pop();
-        // x2
-        temp_byte_2 = low_byte(stack_temp);
-        // dy
-        temp_signed_byte_1 = high_byte(stack_temp);
-        stack_pop();
-        // (x1,y)
-        temp_int_2 = stack_temp;
-        // let x = x1
-        temp_int_1 = stack_temp;
-        // x1
-        temp_byte_3 = playfield_index_x(stack_temp);
-
-        // if Inside(x, y):
-        if (inside(temp_int_1)) {
-            // while Inside(x-1, y):
-            while (1) {
-                // (x-1,y)
-                stack_temp = temp_int_1 - 1;
-                if (!inside(stack_temp)) {
-                    break;
-                }
-                // Set(x-1, y)
-                set_playfield_is_marked_flag(stack_temp);
-                // x = x-1
-                temp_int_1 = stack_temp;
-            }
-        }
-
-        // if x < x1:
-        if (playfield_index_x(temp_int_1) < temp_byte_3) {
-            // Add (x, x1-1, y-dy, -dy) to s
-            // -dy
-            temp_signed_byte_2 = temp_signed_byte_1 * -1;
-            // (x,y-dy)
-            stack_temp = temp_int_1 + temp_signed_byte_2 * 32;
-            stack_push();
-            // (x1-1,-dy)
-            stack_temp = make_word(temp_byte_3 - 1, temp_signed_byte_2);
-            stack_push();
-        }
-
-        // while x1 <= x2:
-        while (1) {
-            if (temp_byte_3 > temp_byte_2) {
-                break;
-            }
-            // while Inside(x1, y):
-            while (1) {
-                if (!inside(temp_int_2)) {
-                    break;
-                }
-                // Set(x1, y)
-                set_playfield_is_marked_flag(temp_int_2);
-                // x1 = x1 + 1
-                ++temp_int_2;
-                // Update x1
-                temp_byte_3 = playfield_index_x(temp_int_2);
-
-                // Add (x, x1-1, y+dy, dy) to s
-                // x1-1
-                temp_byte_4 = temp_byte_3 - 1;
-                // (x,y+dy)
-                stack_temp = temp_int_1 + temp_signed_byte_1 * 32;
-                stack_push();
-                // (x1-1,dy)
-                stack_temp = make_word(temp_byte_4, temp_signed_byte_1);
-                stack_push();
-
-                // if x1-1 > x2:
-                if (temp_byte_4 > temp_byte_2) {
-                    // Add (x2+1, x1-1, y-dy, -dy)
-                    // -dy
-                    temp_signed_byte_2 = temp_signed_byte_1 * -1;
-                    // (x2+1,y-dy)
-                    stack_temp = (temp_byte_2 + 1) + ((playfield_index_y(temp_int_2) + temp_signed_byte_2) << 5);
-                    stack_push();
-                    // (x1-1,-dy)
-                    stack_temp = make_word(temp_byte_4, temp_signed_byte_2);
-                    stack_push();
-                }
-            }
-
-            // x1 = x1 + 1
-            ++temp_int_2;
-            // Update x1
-            temp_byte_3 = playfield_index_x(temp_int_2);
-
-            // while x1 < x2 and not Inside(x1, y):
-            while (1) {
-                if (temp_byte_3 >= temp_byte_2 || inside(temp_int_2)) {
-                    break;
-                }
-                // x1 = x1 + 1
-                ++temp_int_2;
-                // update x1
-                temp_byte_3 = playfield_index_x(temp_int_2);
-            }
-
-            // x = x1
-            temp_int_1 = temp_int_2;
-        }
-    }
-}
-
-// Empties the stack
-void stack_init(void) {
-    stack_top = 0;
-}
-
-// Pushes stack_temp onto the top of stack
-void stack_push(void) {
-    if (stack_top == STACK_MAX_HEIGHT) {
-        // This should be a break or assert.
-        return;
-    }
-    stack[stack_top] = stack_temp;
-    ++stack_top;
-}
-
-// Pops top of stack and stores in stack_temp
-void stack_pop(void) {
-    --stack_top;
-    stack_temp = stack[stack_top];
-}
-
-// Sets temp_byte_2 to TRUE when the stack is empty
-void stack_empty(void) {
-    if (stack_top == 0) {
-        temp_byte_2 = TRUE;
-    } else {
-        temp_byte_2 = FALSE;
     }
 }
