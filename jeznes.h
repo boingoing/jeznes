@@ -29,6 +29,8 @@
 #define TILE_INDEX_PLAYFIELD_LINE_HORIZ 0x1
 #define TILE_INDEX_PLAYFIELD_LINE_VERT 0x2
 
+#define TILE_INDEX_PLAYFIELD_LAND_BASE 0x1e
+
 #define TILE_INDEX_BALL_BASE 0x30
 #define TILE_INDEX_TILE_HIGHLIGHT 0x18
 #define TILE_INDEX_ALPHANUMERIC_ZERO 0x1e
@@ -87,6 +89,11 @@ enum {
     PLAYFIELD_UNCLEARED,
     PLAYFIELD_WALL,
     PLAYFIELD_LINE
+};
+
+enum {
+    PLAYFIELD_WATER,
+    PLAYFIELD_LAND
 };
 
 enum {
@@ -158,7 +165,7 @@ struct ObjectBase {
 #pragma bss-name(push, "ZEROPAGE")
 
 // Placeholder to track how many bytes are unused in the zeropage.
-unsigned char unused_zp_bytes[12];
+//unsigned char unused_zp_bytes[12];
 
 unsigned char pads[MAX_PLAYERS];
 unsigned char pads_new[MAX_PLAYERS];
@@ -169,6 +176,7 @@ unsigned char player_count;
 unsigned char lives_count;
 unsigned char cleared_tile_percentage;
 unsigned int cleared_tile_count;
+unsigned char island_count;
 
 unsigned char temp_byte_1;
 unsigned char temp_byte_2;
@@ -176,6 +184,8 @@ unsigned char temp_byte_3;
 unsigned char temp_byte_4;
 unsigned char temp_byte_5;
 unsigned char temp_byte_6;
+unsigned char temp_byte_7;
+unsigned char temp_byte_8;
 
 signed char temp_signed_byte_1;
 signed char temp_signed_byte_2;
@@ -184,6 +194,7 @@ int temp_int_1;
 int temp_int_2;
 int temp_int_3;
 int temp_int_4;
+int temp_int_5;
 
 struct Player players[MAX_PLAYERS];
 struct Ball balls[MAX_BALLS];
@@ -425,3 +436,6 @@ unsigned char __fastcall__ update_cleared_playfield_tiles(void);
 void line_completed(void);
 
 void __fastcall__ set_playfield_tile(unsigned int tile_index, unsigned char playfield_tile_type, unsigned char playfield_bg_tile);
+
+int count_islands_by_walking_them(void);
+unsigned char redraw_playfield_tiles(void);

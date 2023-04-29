@@ -13,7 +13,7 @@ void main(void) {
     // Tiles are in the 1st CHR bank.
     bank_bg(1);
 
-    init_title();
+    init_game();
 
     set_vram_buffer();
     clear_vram_buffer();
@@ -47,31 +47,8 @@ void main(void) {
             // Clear all sprites from the sprite buffer.
             oam_clear();
 
-            for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); temp_byte_1++) {
-                // Respond to player gamepad.
-                flip_player_orientation(temp_byte_1);
-                start_line(temp_byte_1);
-
-                // Move the player position in the playfield.
-                move_player(temp_byte_1);
-
-                // Draw the player, the playfield tile highlight, and the in-progress line sprites.
-                draw_player(temp_byte_1);
-                draw_tile_highlight(temp_byte_1);
-                draw_line(temp_byte_1);
-
-                // Update the line for this player if there's one in progress.
-                update_line(temp_byte_1);
-            }
-
-            // Move the ball positions in the playfield.
-            move_balls();
-
-            // Check to see if any balls have collided with any lines.
-            check_ball_line_collisions();
-
-            // Draw the ball sprites.
-            draw_balls();
+            // Check for A button press.
+            start_line(0);
         } else if (game_state == GAME_STATE_LEVEL_UP) {
             // Clear all sprites from the sprite buffer.
             oam_clear();
@@ -91,13 +68,10 @@ void main(void) {
                 draw_game_over_cursor();
             }
         } else if (game_state == GAME_STATE_UPDATING_PLAYFIELD) {
-            // Restart the update of cleared playfield tiles.
-            if (update_cleared_playfield_tiles() == TRUE) {
-                // We might have cleared tiles, let's update the HUD.
+            // Restart the redraw of playfield tiles.
+            if (redraw_playfield_tiles() == TRUE) {
+                // We're done redrawing the land tiles, let's update the HUD.
                 game_state = GAME_STATE_REQUEST_HUD_UPDATE;
-
-                // We finished updating the playfield tiles, let's remove the mark bits.
-                reset_playfield_mark_bit();
             }
         } else if (game_state == GAME_STATE_REQUEST_HUD_UPDATE) {
             // Update the level, lives remaining, percentages, etc.
@@ -105,14 +79,6 @@ void main(void) {
 
             // Then reset the game state to playing.
             game_state = GAME_STATE_PLAYING;
-
-            // The cleared tile percentage is updated via update_hud().
-            // Because that's an expensive operation, let's not redo it anywhere.
-            // If we detect the target percentage has been reached, switch to the
-            // level up state instead.
-            if (cleared_tile_percentage > TARGET_CLEARED_TILE_PERCENTAGE) {
-                game_state = GAME_STATE_LEVEL_UP;
-            }
         }
 
 #if DRAW_GRAY_LINE
@@ -196,8 +162,9 @@ void init_game(void) {
     // Seed the random number generator - it's based on frame count.
     seed_rng();
 
-    // Starting game state.
-    game_state = GAME_STATE_PLAYING;
+    // Starting game state should redraw the playfield.
+    set_playfield_index(0);
+    game_state = GAME_STATE_UPDATING_PLAYFIELD;
     current_level = 1;
     lives_count = current_level + 1;
 
@@ -376,11 +343,8 @@ void write_two_digit_number_to_bg(unsigned char num, unsigned char tile_x, unsig
 
 void update_hud(void) {
     write_two_digit_number_to_bg(current_level, HUD_LEVEL_DISPLAY_TILE_X, HUD_LEVEL_DISPLAY_TILE_Y);
-    write_two_digit_number_to_bg(lives_count, HUD_LIVES_DISPLAY_TILE_X, HUD_LIVES_DISPLAY_TILE_Y);
-    write_two_digit_number_to_bg(TARGET_CLEARED_TILE_PERCENTAGE, HUD_TARGET_DISPLAY_TILE_X, HUD_TARGET_DISPLAY_TILE_Y);
-
-    cleared_tile_percentage = (cleared_tile_count * 100) / playfield_pattern_uncleared_tile_counts[0];
-    write_two_digit_number_to_bg(cleared_tile_percentage, HUD_CLEAR_DISPLAY_TILE_X, HUD_CLEAR_DISPLAY_TILE_Y);
+    write_two_digit_number_to_bg(playfield_pattern_uncleared_tile_counts[0], HUD_TARGET_DISPLAY_TILE_X, HUD_TARGET_DISPLAY_TILE_Y);
+    write_two_digit_number_to_bg(island_count, HUD_CLEAR_DISPLAY_TILE_X, HUD_CLEAR_DISPLAY_TILE_Y);
 }
 
 #define get_pixel_coord_x() (temp_byte_4)
@@ -694,51 +658,12 @@ void start_line(unsigned char player_index) {
         // Keep track that user is pressing this button.
         set_player_is_place_pressed_flag(player_index);
 
-        // Do nothing if a line is already started for |player_index|.
-        if (get_line_is_started_flag(player_index)) {
-            return;
-        }
+        // Count the islands and mark them in the playfield.
+        island_count = count_islands_by_walking_them();
 
-        // Origin for the line is whatever tile we're tracking as "nearest" to the player metasprite.
-        // This is technically the origin tile for the negative-direction line segment.
-        // The origin tile for the positive-direction line segment is origin + 1 (for horiz line) or
-        // origin + 32 (for vert line) but we only keep track of one origin in the line itself.
-        set_negative_line_segment_origin(players[player_index].nearest_playfield_tile);
-
-        // We only want to start a line if the origin tile is not already cleared.
-        if (get_playfield_tile_type(get_negative_line_segment_origin()) == PLAYFIELD_WALL) {
-            return;
-        }
-
-        // Orientation of the line itself matches the current orientation of the player.
-        set_line_orientation(get_player_orientation_flag(player_index));
-
-        // Update the playfield origin tile.
-        set_playfield_tile(get_negative_line_segment_origin(), get_playfield_tile_type_line(get_line_orientation(), player_index, LINE_DIRECTION_NEGATIVE), get_playfield_bg_tile_line(get_line_orientation()));
-
-        // Update the line data for the negative-direction line segment.
-        lines[player_index].origin = get_negative_line_segment_origin();
-        unset_line_is_negative_complete_flag(player_index);
-
-        // Now check to see if we can start a positive-direction line segment.
-        set_tile_index_delta(compute_tile_index_delta(get_line_orientation()));
-        set_positive_line_segment_origin(get_negative_line_segment_origin() + get_tile_index_delta());
-
-        // We can only start the positive-direction line segment if it would have origin on an
-        // uncleared playfield tile.
-        if (get_playfield_tile_type(get_positive_line_segment_origin()) != PLAYFIELD_WALL) {
-            // Update the positive-direction line segment origin playfield tile.
-            set_playfield_tile(get_positive_line_segment_origin(), get_playfield_tile_type_line(get_line_orientation(), player_index, LINE_DIRECTION_POSITIVE), get_playfield_bg_tile_line(get_line_orientation()));
-            unset_line_is_positive_complete_flag(player_index);
-        }
-
-        // Current line segment front tile is the origin tile.
-        lines[player_index].tile_step_count = 0;
-        // The origin tiles start at complete.
-        lines[player_index].current_block_completion = 8;
-
-        set_line_orientation_flag(player_index, get_line_orientation());
-        set_line_is_started_flag(player_index);
+        // Change the game state so we will redraw the playfield for a few frames.
+        set_playfield_index(0);
+        game_state = GAME_STATE_UPDATING_PLAYFIELD;
     } else {
         unset_player_is_place_pressed_flag(player_index);
     }
@@ -963,12 +888,35 @@ void reset_playfield_mark_bit(void) {
     }
 }
 
+unsigned char redraw_playfield_tiles(void) {
+    // Track the number of tile updates we request.
+    temp_byte_3 = 0;
+    for (; get_playfield_index() < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT; inc_playfield_index()) {
+        // The value stored in the playfield is either WATER (0), undiscovered LAND (1), or discovered LAND (>1).
+        temp_byte_4 = playfield[get_playfield_index()];
+
+        if (temp_byte_4 > 0) {
+            temp_byte_3++;
+            set_playfield_tile(get_playfield_index(), temp_byte_4, TILE_INDEX_PLAYFIELD_LAND_BASE + temp_byte_4);
+        }
+
+        // We can only queue about 40 tile updates per v-blank.
+        if (temp_byte_3 >= 40) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
 #define playfield_index_move_up(i) ((i) - 32)
 #define playfield_index_move_down(i) ((i) + 32)
 #define playfield_index_move_left(i) ((i) - 1)
 #define playfield_index_move_right(i) ((i) + 1)
 
-#define inside(i) ((playfield[(i)] & (PLAYFIELD_WALL | PLAYFIELD_BITMASK_MARK)) == 0)
+#define inside(i) (playfield[(i)] == PLAYFIELD_LAND)
+
+#define set_island_id(index, id) (playfield[(index)] = (id))
 
 enum {
     MOVE_DIRECTION_RIGHT,
@@ -1075,6 +1023,195 @@ int get_back_left() {
     case MOVE_DIRECTION_UP:
         return playfield_index_move_down(playfield_index_move_left(get_cur()));
     }
+}
+
+// Uses a constant-memory usage implementation of the painters algorithm to
+// walk the playfield starting at the playfield tile where |ball_index| is
+// currently located. Each reachable playfield tile is marked until we run
+// out of unmarked playfield tiles to walk to.
+// When this function returns, the region in which |ball_index| is bound will
+// be made up entirely of marked playfield tiles.
+void walk_one_island(int starting_index, unsigned char island_id) {
+    // Set cur to starting playfield tile
+    set_cur(starting_index);
+
+    // If the playfield tile where |ball_index| is located has already been marked,
+    // another ball is in the same region of the playfield as |ball_index|. There's
+    // no point in remarking the region.
+    if (!inside(get_cur())) {
+        return;
+    }
+
+    // Set cur-dir to default direction
+    set_cur_dir(MOVE_DIRECTION_DEFAULT);
+    // Clear mark and mark2 (set values to null)
+    set_mark_null(TRUE);
+    set_mark2_null(TRUE);
+    // Set backtrack and findloop to false
+    set_backtrack(FALSE);
+    set_findloop(FALSE);
+
+    // Move forward until the playfield tile in front is marked or not uncleared
+    // (ie: it is not inside).
+    // Note: This function does not do bounds checking, we assume the playfield
+    //       has a border of wall tiles on all sides.
+    temp_int_4 = get_front();
+    while (inside(temp_int_4)) {
+        set_cur(temp_int_4);
+        temp_int_4 = get_front();
+    }
+
+    goto PAINTER_ALGORITHM_START;
+
+    while(1) {
+        // Move forward
+        set_cur(get_front());
+
+        if (inside(get_right())) {
+            if (get_backtrack() == TRUE && get_findloop() == FALSE && (inside(get_front()) || inside(get_left()))) {
+                set_findloop(TRUE);
+            }
+            // Turn right
+            set_cur_dir((get_cur_dir() + 1) % 4);
+
+PAINTER_ALGORITHM_PAINT:
+            // Move forward
+            set_cur(get_front());
+        }
+
+PAINTER_ALGORITHM_START:
+        // Count number of non-diagonally adjacent marked playfield tiles.
+        temp_byte_6 = 0;
+        if (!inside(playfield_index_move_up(get_cur()))) {
+            temp_byte_6++;
+        }
+        if (!inside(playfield_index_move_down(get_cur()))) {
+            temp_byte_6++;
+        }
+        if (!inside(playfield_index_move_left(get_cur()))) {
+            temp_byte_6++;
+        }
+        if (!inside(playfield_index_move_right(get_cur()))) {
+            temp_byte_6++;
+        }
+
+        if (temp_byte_6 != 4) {
+            do {
+                // Turn right
+                set_cur_dir((get_cur_dir() + 1) % 4);
+            } while (inside(get_front()));
+            do {
+                // Turn left
+                set_cur_dir((get_cur_dir() + 3) % 4);
+            } while (!inside(get_front()));
+        }
+
+        switch (temp_byte_6) {
+        case 1:
+            if (get_backtrack() == TRUE) {
+                set_findloop(TRUE);
+            } else if (get_findloop() == TRUE) {
+                if (get_mark_null() == TRUE) {
+                    set_mark_null(FALSE);
+                }
+            } else if (inside(get_front_left()) && inside(get_back_left())) {
+                set_mark_null(TRUE);
+                set_island_id(get_cur(), island_id);
+                goto PAINTER_ALGORITHM_PAINT;
+            }
+            break;
+        case 2:
+            if (!inside(get_back())) {
+                if (inside(get_front_left())) {
+                    set_mark_null(TRUE);
+                    set_island_id(get_cur(), island_id);
+                    goto PAINTER_ALGORITHM_PAINT;
+                }
+            } else if (get_mark_null() == TRUE) {
+                set_mark(get_cur());
+                set_mark_null(FALSE);
+                set_mark_dir(get_cur_dir());
+                set_mark2_null(TRUE);
+                set_findloop(FALSE);
+                set_backtrack(FALSE);
+            } else {
+                if (get_mark2_null() == TRUE) {
+                    if (get_cur() == get_mark()) {
+                        if (get_cur_dir() == get_mark_dir()) {
+                            set_mark_null(TRUE);
+                            // Turn around
+                            set_cur_dir((get_cur_dir() + 2) % 4);
+                            set_island_id(get_cur(), island_id);
+                            goto PAINTER_ALGORITHM_PAINT;
+                        } else {
+                            set_backtrack(TRUE);
+                            set_findloop(FALSE);
+                            set_cur_dir(get_mark_dir());
+                        }
+                    } else if (get_findloop() == TRUE) {
+                        set_mark2(get_cur());
+                        set_mark2_null(FALSE);
+                        set_mark2_dir(get_cur_dir());
+                    }
+                } else {
+                    if (get_cur() == get_mark()) {
+                        set_cur(get_mark2());
+                        set_cur_dir(get_mark2_dir());
+                        set_mark_null(TRUE);
+                        set_mark2_null(TRUE);
+                        set_backtrack(FALSE);
+                        // Turn around
+                        set_cur_dir((get_cur_dir() + 2) % 4);
+                        set_island_id(get_cur(), island_id);
+                        goto PAINTER_ALGORITHM_PAINT;
+                    } else if (get_cur() == get_mark2()) {
+                        set_mark(get_cur());
+                        set_mark_null(FALSE);
+                        set_cur_dir(get_mark2_dir());
+                        set_mark_dir(get_mark2_dir());
+                        set_mark2_null(TRUE);
+                    }
+                }
+            }
+            break;
+        case 3:
+            set_mark_null(TRUE);
+            set_island_id(get_cur(), island_id);
+            goto PAINTER_ALGORITHM_PAINT;
+            break;
+        case 4:
+            set_island_id(get_cur(), island_id);
+            return;
+        }
+    }
+}
+
+int count_islands_by_walking_them(void) {
+    // Next island unique id.
+    temp_byte_8 = 1;
+
+    // Walk right and down across the playfield from the top left corner.
+    for (temp_int_5 = 0; temp_int_5 < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT; ++temp_int_5) {
+        // Cache the playfield byte.
+        temp_byte_7 = playfield[temp_int_5];
+
+        // Skip water tiles.
+        if (temp_byte_7 == PLAYFIELD_WATER) {
+            continue;
+        }
+        // assert(playfield[get_playfield_index()] >= PLAYFIELD_LAND);
+
+        // Land tile must be part of undiscovered island.
+        // If it's already been discovered, we would have marked it with an id.
+        if (temp_byte_7 == PLAYFIELD_LAND) {
+            // Walk to each tile in the island set the playfield value to the next island_id.
+            walk_one_island(temp_int_5, ++temp_byte_8);
+        }
+
+        // Because we discovered the entire island above, there's no need to check for other playfield values.
+    }
+
+    return temp_byte_8;
 }
 
 // Uses a constant-memory usage implementation of the painters algorithm to
