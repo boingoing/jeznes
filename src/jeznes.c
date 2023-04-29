@@ -1,17 +1,26 @@
+#include "jeznes.h"
+
 #include "lib/neslib.h"
 #include "lib/nesdoug.h"
-#include "jeznes.h"
 #include "zeropage.h"
 #include "bss.h"
 #include "types.h"
 #include "data.h"
 #include "debug.h"
+#include "flood_fill.h"
 #include "constants/game.h"
 #include "constants/sprites.h"
 #include "constants/tiles.h"
 #include "flags/line.h"
 #include "flags/player.h"
 #include "flags/playfield.h"
+
+// Include the other C files here as a workaround for multiply-defined symbols
+// ending up in each compilation unit as a result of the need to define common
+// memory locations in their sections (ie: zeropage).
+// TODO(boingoing): Fix this somehow. Define the memory in asm and the named
+// locations in a header? Will this affect performance?
+#include "flood_fill.c"
 
 void main(void) {
 #if ENABLE_CHEATS
@@ -1147,280 +1156,5 @@ unsigned char update_cleared_playfield_tiles(void) {
 void reset_playfield_mark_bit(void) {
     for (temp_int_1 = 0; temp_int_1 < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT; ++temp_int_1) {
         unset_playfield_is_marked_flag(temp_int_1);
-    }
-}
-
-#define playfield_index_move_up(i) ((i) - 32)
-#define playfield_index_move_down(i) ((i) + 32)
-#define playfield_index_move_left(i) ((i) - 1)
-#define playfield_index_move_right(i) ((i) + 1)
-
-#define inside(i) ((playfield[(i)] & (PLAYFIELD_WALL | PLAYFIELD_BITMASK_MARK)) == 0)
-
-enum {
-    MOVE_DIRECTION_RIGHT,
-    MOVE_DIRECTION_DOWN,
-    MOVE_DIRECTION_LEFT,
-    MOVE_DIRECTION_UP,
-    MOVE_DIRECTION_DEFAULT = MOVE_DIRECTION_RIGHT
-};
-
-#define get_cur() (temp_int_1)
-#define set_cur(a) (temp_int_1 = (a))
-#define get_mark() (temp_int_2)
-#define set_mark(a) (temp_int_2 = (a))
-#define get_mark2() (temp_int_3)
-#define set_mark2(a) (temp_int_3 = (a))
-#define get_cur_dir() (temp_byte_1)
-#define set_cur_dir(a) (temp_byte_1 = (a))
-#define get_mark_dir() (temp_byte_4)
-#define set_mark_dir(a) (temp_byte_4 = (a))
-#define get_mark2_dir() (temp_byte_5)
-#define set_mark2_dir(a) (temp_byte_5 = (a))
-#define get_backtrack() (temp_byte_2)
-#define set_backtrack(a) (temp_byte_2 = (a))
-#define get_findloop() (temp_byte_3)
-#define set_findloop(a) (temp_byte_3 = (a))
-#define get_mark_null() (temp_signed_byte_1)
-#define set_mark_null(a) (temp_signed_byte_1 = (a))
-#define get_mark2_null() (temp_signed_byte_2)
-#define set_mark2_null(a) (temp_signed_byte_2 = (a))
-
-int get_front() {
-    switch (get_cur_dir()) {
-    case MOVE_DIRECTION_RIGHT:
-        return playfield_index_move_right(get_cur());
-    case MOVE_DIRECTION_LEFT:
-        return playfield_index_move_left(get_cur());
-    case MOVE_DIRECTION_DOWN:
-        return playfield_index_move_down(get_cur());
-    case MOVE_DIRECTION_UP:
-        return playfield_index_move_up(get_cur());
-    }
-}
-
-int get_back() {
-    switch (get_cur_dir()) {
-    case MOVE_DIRECTION_RIGHT:
-        return playfield_index_move_left(get_cur());
-    case MOVE_DIRECTION_LEFT:
-        return playfield_index_move_right(get_cur());
-    case MOVE_DIRECTION_DOWN:
-        return playfield_index_move_up(get_cur());
-    case MOVE_DIRECTION_UP:
-        return playfield_index_move_down(get_cur());
-    }
-}
-
-int get_right() {
-    switch (get_cur_dir()) {
-    case MOVE_DIRECTION_RIGHT:
-        return playfield_index_move_down(get_cur());
-    case MOVE_DIRECTION_LEFT:
-        return playfield_index_move_up(get_cur());
-    case MOVE_DIRECTION_DOWN:
-        return playfield_index_move_left(get_cur());
-    case MOVE_DIRECTION_UP:
-        return playfield_index_move_right(get_cur());
-    }
-}
-
-int get_left() {
-    switch (get_cur_dir()) {
-    case MOVE_DIRECTION_RIGHT:
-        return playfield_index_move_up(get_cur());
-    case MOVE_DIRECTION_LEFT:
-        return playfield_index_move_down(get_cur());
-    case MOVE_DIRECTION_DOWN:
-        return playfield_index_move_right(get_cur());
-    case MOVE_DIRECTION_UP:
-        return playfield_index_move_left(get_cur());
-    }
-}
-
-int get_front_left() {
-    switch (get_cur_dir()) {
-    case MOVE_DIRECTION_RIGHT:
-        return playfield_index_move_right(playfield_index_move_up(get_cur()));
-    case MOVE_DIRECTION_LEFT:
-        return playfield_index_move_left(playfield_index_move_down(get_cur()));
-    case MOVE_DIRECTION_DOWN:
-        return playfield_index_move_down(playfield_index_move_right(get_cur()));
-    case MOVE_DIRECTION_UP:
-        return playfield_index_move_up(playfield_index_move_left(get_cur()));
-    }
-}
-
-int get_back_left() {
-    switch (get_cur_dir()) {
-    case MOVE_DIRECTION_RIGHT:
-        return playfield_index_move_left(playfield_index_move_up(get_cur()));
-    case MOVE_DIRECTION_LEFT:
-        return playfield_index_move_right(playfield_index_move_down(get_cur()));
-    case MOVE_DIRECTION_DOWN:
-        return playfield_index_move_up(playfield_index_move_right(get_cur()));
-    case MOVE_DIRECTION_UP:
-        return playfield_index_move_down(playfield_index_move_left(get_cur()));
-    }
-}
-
-// Uses a constant-memory usage implementation of the painters algorithm to
-// walk the playfield starting at the playfield tile where |ball_index| is
-// currently located. Each reachable playfield tile is marked until we run
-// out of unmarked playfield tiles to walk to.
-// When this function returns, the region in which |ball_index| is bound will
-// be made up entirely of marked playfield tiles.
-void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
-    // Set cur to starting playfield tile
-    set_cur(balls[ball_index].nearest_playfield_tile);
-
-    // If the playfield tile where |ball_index| is located has already been marked,
-    // another ball is in the same region of the playfield as |ball_index|. There's
-    // no point in remarking the region.
-    if (!inside(get_cur())) {
-        return;
-    }
-
-    // Set cur-dir to default direction
-    set_cur_dir(MOVE_DIRECTION_DEFAULT);
-    // Clear mark and mark2 (set values to null)
-    set_mark_null(TRUE);
-    set_mark2_null(TRUE);
-    // Set backtrack and findloop to false
-    set_backtrack(FALSE);
-    set_findloop(FALSE);
-
-    // Move forward until the playfield tile in front is marked or not uncleared
-    // (ie: it is not inside).
-    // Note: This function does not do bounds checking, we assume the playfield
-    //       has a border of wall tiles on all sides.
-    temp_int_4 = get_front();
-    while (inside(temp_int_4)) {
-        set_cur(temp_int_4);
-        temp_int_4 = get_front();
-    }
-
-    goto PAINTER_ALGORITHM_START;
-
-    while(1) {
-        // Move forward
-        set_cur(get_front());
-
-        if (inside(get_right())) {
-            if (get_backtrack() == TRUE && get_findloop() == FALSE && (inside(get_front()) || inside(get_left()))) {
-                set_findloop(TRUE);
-            }
-            // Turn right
-            set_cur_dir((get_cur_dir() + 1) % 4);
-
-PAINTER_ALGORITHM_PAINT:
-            // Move forward
-            set_cur(get_front());
-        }
-
-PAINTER_ALGORITHM_START:
-        // Count number of non-diagonally adjacent marked playfield tiles.
-        temp_byte_6 = 0;
-        if (!inside(playfield_index_move_up(get_cur()))) {
-            temp_byte_6++;
-        }
-        if (!inside(playfield_index_move_down(get_cur()))) {
-            temp_byte_6++;
-        }
-        if (!inside(playfield_index_move_left(get_cur()))) {
-            temp_byte_6++;
-        }
-        if (!inside(playfield_index_move_right(get_cur()))) {
-            temp_byte_6++;
-        }
-
-        if (temp_byte_6 != 4) {
-            do {
-                // Turn right
-                set_cur_dir((get_cur_dir() + 1) % 4);
-            } while (inside(get_front()));
-            do {
-                // Turn left
-                set_cur_dir((get_cur_dir() + 3) % 4);
-            } while (!inside(get_front()));
-        }
-
-        switch (temp_byte_6) {
-        case 1:
-            if (get_backtrack() == TRUE) {
-                set_findloop(TRUE);
-            } else if (get_findloop() == TRUE) {
-                if (get_mark_null() == TRUE) {
-                    set_mark_null(FALSE);
-                }
-            } else if (inside(get_front_left()) && inside(get_back_left())) {
-                set_mark_null(TRUE);
-                set_playfield_is_marked_flag(get_cur());
-                goto PAINTER_ALGORITHM_PAINT;
-            }
-            break;
-        case 2:
-            if (!inside(get_back())) {
-                if (inside(get_front_left())) {
-                    set_mark_null(TRUE);
-                    set_playfield_is_marked_flag(get_cur());
-                    goto PAINTER_ALGORITHM_PAINT;
-                }
-            } else if (get_mark_null() == TRUE) {
-                set_mark(get_cur());
-                set_mark_null(FALSE);
-                set_mark_dir(get_cur_dir());
-                set_mark2_null(TRUE);
-                set_findloop(FALSE);
-                set_backtrack(FALSE);
-            } else {
-                if (get_mark2_null() == TRUE) {
-                    if (get_cur() == get_mark()) {
-                        if (get_cur_dir() == get_mark_dir()) {
-                            set_mark_null(TRUE);
-                            // Turn around
-                            set_cur_dir((get_cur_dir() + 2) % 4);
-                            set_playfield_is_marked_flag(get_cur());
-                            goto PAINTER_ALGORITHM_PAINT;
-                        } else {
-                            set_backtrack(TRUE);
-                            set_findloop(FALSE);
-                            set_cur_dir(get_mark_dir());
-                        }
-                    } else if (get_findloop() == TRUE) {
-                        set_mark2(get_cur());
-                        set_mark2_null(FALSE);
-                        set_mark2_dir(get_cur_dir());
-                    }
-                } else {
-                    if (get_cur() == get_mark()) {
-                        set_cur(get_mark2());
-                        set_cur_dir(get_mark2_dir());
-                        set_mark_null(TRUE);
-                        set_mark2_null(TRUE);
-                        set_backtrack(FALSE);
-                        // Turn around
-                        set_cur_dir((get_cur_dir() + 2) % 4);
-                        set_playfield_is_marked_flag(get_cur());
-                        goto PAINTER_ALGORITHM_PAINT;
-                    } else if (get_cur() == get_mark2()) {
-                        set_mark(get_cur());
-                        set_mark_null(FALSE);
-                        set_cur_dir(get_mark2_dir());
-                        set_mark_dir(get_mark2_dir());
-                        set_mark2_null(TRUE);
-                    }
-                }
-            }
-            break;
-        case 3:
-            set_mark_null(TRUE);
-            set_playfield_is_marked_flag(get_cur());
-            goto PAINTER_ALGORITHM_PAINT;
-            break;
-        case 4:
-            set_playfield_is_marked_flag(get_cur());
-            return;
-        }
     }
 }

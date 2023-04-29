@@ -9,6 +9,8 @@
 
 #include "debug.h"
 
+void main(void);
+
 // Initializes the locations and directions of the active balls on the valid
 // ball region of the playfield pattern defined by |current_playfield_pattern|.
 void init_balls();
@@ -83,7 +85,6 @@ void __fastcall__ draw_line(unsigned char line_index);
 void update_hud(void);
 
 void reset_playfield_mark_bit(void);
-void __fastcall__ compute_playfield_mark_bit_one_ball(unsigned char ball_index);
 unsigned char __fastcall__ update_cleared_playfield_tiles(void);
 void line_completed(void);
 
