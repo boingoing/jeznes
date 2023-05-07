@@ -41,8 +41,10 @@ void main(void) {
     // Tiles are in the 1st CHR bank.
     bank_bg(1);
 
+    // Start the game with the title screen loaded.
     init_title();
 
+    // Set the vram buffer pointer.
     set_vram_buffer();
     clear_vram_buffer();
 
