@@ -9,7 +9,7 @@
 
 // These macros enable various debugging features and should probably be turned
 // off before release.
-#define DEBUG 0
+#define DEBUG 1
 
 // DEBUG macro gates all the debug features.
 #if DEBUG
@@ -22,7 +22,7 @@
 
 // Draw a highlight tile on the playfield at the nearest tile location to each
 // ball sprite.
-#define DRAW_BALL_NEAREST_TILE_HIGHLIGHT 1
+#define DRAW_BALL_NEAREST_TILE_HIGHLIGHT 0
 
 // Enable the use of cheat code input sequences.
 #define ENABLE_CHEATS 1

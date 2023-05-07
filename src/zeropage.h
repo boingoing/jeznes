@@ -14,7 +14,7 @@
 #pragma bss-name(push, "ZEROPAGE")
 
 // Placeholder to track how many bytes are unused in the zeropage.
-unsigned char unused_zp_bytes[11];
+unsigned char unused_zp_bytes[9];
 
 unsigned char pads[MAX_PLAYERS];
 unsigned char pads_new[MAX_PLAYERS];
@@ -41,6 +41,8 @@ int temp_int_1;
 int temp_int_2;
 int temp_int_3;
 int temp_int_4;
+
+void* temp_ptr_1;
 
 struct Player players[MAX_PLAYERS];
 struct Ball balls[MAX_BALLS];

@@ -82,19 +82,20 @@ void main(void) {
             oam_clear();
 
             for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); temp_byte_1++) {
+                set_temp_ptr(&players[temp_byte_1]);
                 // Respond to player gamepad.
-                flip_player_orientation(temp_byte_1);
-                start_line(temp_byte_1);
+                flip_player_orientation(get_temp_ptr(struct Player), temp_byte_1);
+                start_line(get_temp_ptr(struct Player), temp_byte_1);
                 if (pause_press_start(temp_byte_1) == TRUE) {
                     continue;
                 }
 
                 // Move the player position in the playfield.
-                move_player(temp_byte_1);
+                move_player(get_temp_ptr(struct Player), temp_byte_1);
 
                 // Draw the player, the playfield tile highlight, and the in-progress line sprites.
-                draw_player(temp_byte_1);
-                draw_tile_highlight(temp_byte_1);
+                draw_player(get_temp_ptr(struct Player));
+                draw_tile_highlight(get_temp_ptr(struct Player));
                 draw_line(temp_byte_1);
 
                 // Update the line for this player if there's one in progress.
@@ -354,13 +355,15 @@ void init_game(void) {
 
     // Player initial positions.
     for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
-        players[temp_byte_1].x = player_default_x[temp_byte_1];
-        players[temp_byte_1].y = player_default_y[temp_byte_1];
-        update_nearest_tile(temp_byte_1);
+        set_temp_ptr(&players[temp_byte_1]);
+        get_temp_ptr(struct Player)->x = player_default_x[temp_byte_1];
+        get_temp_ptr(struct Player)->y = player_default_y[temp_byte_1];
+        update_nearest_tile(get_temp_ptr(struct Player));
 
-        set_player_orientation_flag(temp_byte_1, ORIENTATION_HORIZ);
-        unset_player_is_place_pressed_flag(temp_byte_1);
-        unset_player_is_rotate_pressed(temp_byte_1);
+        temp_byte_2 = get_temp_ptr(struct Player)->flags;
+        set_player_orientation_flag_from_byte(temp_byte_2, ORIENTATION_HORIZ);
+        unset_player_is_place_pressed_flag_from_byte(temp_byte_2);
+        unset_player_is_rotate_pressed_from_byte(temp_byte_2);
     }
 
     // Always loads |get_playfield_pattern()|
@@ -594,51 +597,52 @@ void update_hud(void) {
     write_two_digit_number_to_bg(cleared_tile_percentage, HUD_CLEAR_DISPLAY_TILE_X, HUD_CLEAR_DISPLAY_TILE_Y);
 }
 
-void move_player(unsigned char player_index) {
+void move_player(struct Player* player, unsigned char player_index) {
+    temp_byte_3 = player->flags;
     if (pads[player_index] & PAD_LEFT) {
-        set_pixel_coord_x(players[player_index].x - PLAYER_SPEED);
-        if (get_player_orientation_flag(player_index) == ORIENTATION_VERT) {
+        set_pixel_coord_x(player->x - PLAYER_SPEED);
+        if (get_player_orientation_flag_from_byte(temp_byte_3) == ORIENTATION_VERT) {
             temp_byte_2 = PLAYFIELD_LEFT_WALL;
         } else {
             temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
         }
         if (get_pixel_coord_x() <= temp_byte_2) {
-            players[player_index].x = temp_byte_2;
+            player->x = temp_byte_2;
         } else {
-            players[player_index].x = get_pixel_coord_x();
+            player->x = get_pixel_coord_x();
         }
-        update_nearest_tile(player_index);
+        update_nearest_tile(player);
     } else if (pads[player_index] & PAD_RIGHT) {
-        set_pixel_coord_x(players[player_index].x + PLAYER_SPEED);
+        set_pixel_coord_x(player->x + PLAYER_SPEED);
         if (get_pixel_coord_x() >= PLAYFIELD_RIGHT_WALL) {
-            players[player_index].x = PLAYFIELD_RIGHT_WALL;
+            player->x = PLAYFIELD_RIGHT_WALL;
         } else {
-            players[player_index].x = get_pixel_coord_x();
+            player->x = get_pixel_coord_x();
         }
-        update_nearest_tile(player_index);
+        update_nearest_tile(player);
     }
 
     if (pads[player_index] & PAD_DOWN) {
-        set_pixel_coord_y(players[player_index].y + PLAYER_SPEED);
+        set_pixel_coord_y(player->y + PLAYER_SPEED);
         if (get_pixel_coord_y() >= PLAYFIELD_BOTTOM_WALL) {
-            players[player_index].y = PLAYFIELD_BOTTOM_WALL;
+            player->y = PLAYFIELD_BOTTOM_WALL;
         } else {
-            players[player_index].y = get_pixel_coord_y();
+            player->y = get_pixel_coord_y();
         }
-        update_nearest_tile(player_index);
+        update_nearest_tile(player);
     } else if (pads[player_index] & PAD_UP) {
-        set_pixel_coord_y(players[player_index].y - PLAYER_SPEED);
-        if (get_player_orientation_flag(player_index) == ORIENTATION_VERT) {
+        set_pixel_coord_y(player->y - PLAYER_SPEED);
+        if (get_player_orientation_flag_from_byte(temp_byte_3) == ORIENTATION_VERT) {
             temp_byte_2 = PLAYFIELD_TOP_WALL + 8;
         } else {
             temp_byte_2 = PLAYFIELD_TOP_WALL;
         }
         if (get_pixel_coord_y() <= temp_byte_2) {
-            players[player_index].y = temp_byte_2;
+            player->y = temp_byte_2;
         } else {
-            players[player_index].y = get_pixel_coord_y();
+            player->y = get_pixel_coord_y();
         }
-        update_nearest_tile(player_index);
+        update_nearest_tile(player);
     }
 }
 
@@ -718,17 +722,20 @@ void draw_balls(void) {
 
 #define get_player_sprite_frame() (get_frame_count() >> 3 & 1)
 
-void draw_player(unsigned char player_index) {
-    temp_byte_2 = get_player_sprite_frame();
-    if (get_player_orientation_flag(player_index) == ORIENTATION_HORIZ) {
-        temp_byte_2 += 2;
+void draw_player(struct Player* player) {
+    temp_byte_2 = player->flags;
+    if (get_player_orientation_flag_from_byte(temp_byte_2) == ORIENTATION_HORIZ) {
+        temp_byte_2 = 2;
+    } else {
+        temp_byte_2 = 0;
     }
-    oam_meta_spr(players[player_index].x, players[player_index].y, player_metasprite_list[temp_byte_2]);
+    temp_byte_2 += get_player_sprite_frame();
+    oam_meta_spr(player->x, player->y, player_metasprite_list[temp_byte_2]);
 }
 
-void draw_tile_highlight(unsigned char player_index) {
-    if (playfield[players[player_index].nearest_playfield_tile] == PLAYFIELD_UNCLEARED) {
-        oam_spr(players[player_index].nearest_tile_x, players[player_index].nearest_tile_y - 1, TILE_INDEX_TILE_HIGHLIGHT, 1);
+void draw_tile_highlight(struct Player* player) {
+    if (playfield[player->nearest_playfield_tile] == PLAYFIELD_UNCLEARED) {
+        oam_spr(player->nearest_tile_x, player->nearest_tile_y - 1, TILE_INDEX_TILE_HIGHLIGHT, 1);
     }
 }
 
@@ -883,15 +890,16 @@ void update_line(unsigned char line_index) {
     }
 }
 
-void start_line(unsigned char player_index) {
+void start_line(struct Player* player, unsigned char player_index) {
+    temp_byte_3 = player->flags;
     if (pads[player_index] & PAD_A) {
         // Do nothing if the player is holding the button and we already handled the press.
-        if (get_player_is_place_pressed_flag(player_index)) {
+        if (get_player_is_place_pressed_flag_from_byte(temp_byte_3)) {
             return;
         }
 
         // Keep track that user is pressing this button.
-        set_player_is_place_pressed_flag(player_index);
+        set_player_is_place_pressed_flag_from_byte(temp_byte_3);
 
         // Do nothing if a line is already started for |player_index|.
         if (get_line_is_started_flag(player_index)) {
@@ -902,7 +910,7 @@ void start_line(unsigned char player_index) {
         // This is technically the origin tile for the negative-direction line segment.
         // The origin tile for the positive-direction line segment is origin + 1 (for horiz line) or
         // origin + 32 (for vert line) but we only keep track of one origin in the line itself.
-        set_negative_line_segment_origin(players[player_index].nearest_playfield_tile);
+        set_negative_line_segment_origin(player->nearest_playfield_tile);
 
         // We only want to start a line if the origin tile is not already cleared.
         if (get_playfield_tile_type(get_negative_line_segment_origin()) == PLAYFIELD_WALL) {
@@ -910,7 +918,7 @@ void start_line(unsigned char player_index) {
         }
 
         // Orientation of the line itself matches the current orientation of the player.
-        set_line_orientation(get_player_orientation_flag(player_index));
+        set_line_orientation(get_player_orientation_flag_from_byte(temp_byte_3));
 
         // Update the playfield origin tile.
         set_playfield_tile(get_negative_line_segment_origin(), get_playfield_tile_type_line(get_line_orientation(), player_index, LINE_DIRECTION_NEGATIVE), get_playfield_bg_tile_line(get_line_orientation()));
@@ -939,7 +947,7 @@ void start_line(unsigned char player_index) {
         set_line_orientation_flag(player_index, get_line_orientation());
         set_line_is_started_flag(player_index);
     } else {
-        unset_player_is_place_pressed_flag(player_index);
+        unset_player_is_place_pressed_flag_from_byte(temp_byte_3);
     }
 }
 
@@ -1052,48 +1060,49 @@ void check_ball_line_collisions(void) {
     }
 }
 
-void flip_player_orientation(unsigned char player_index) {
+void flip_player_orientation(struct Player* player, unsigned char player_index) {
+    temp_byte_3 = player->flags;
     if (pads[player_index] & PAD_B) {
-        if (get_player_is_rotate_pressed(player_index)) {
+        if (get_player_is_rotate_pressed_from_byte(temp_byte_3)) {
             return;
         }
 
-        set_player_is_rotate_pressed(player_index);
-        set_player_orientation_flag(player_index, get_player_orientation_flag(player_index) ^ 1);
+        set_player_is_rotate_pressed_from_byte(temp_byte_3);
+        set_player_orientation_flag_from_byte(temp_byte_3, get_player_orientation_flag_from_byte(temp_byte_3) ^ 1);
 
-        if (get_player_orientation_flag(player_index) == ORIENTATION_HORIZ) {
+        if (get_player_orientation_flag_from_byte(temp_byte_3) == ORIENTATION_HORIZ) {
             temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
-            if (players[player_index].x <= temp_byte_2) {
-                players[player_index].x = temp_byte_2;
+            if (player->x <= temp_byte_2) {
+                player->x = temp_byte_2;
             }
         } else {
             temp_byte_2 = PLAYFIELD_TOP_WALL + 8;
-            if (players[player_index].y <= temp_byte_2) {
-                players[player_index].y = temp_byte_2;
+            if (player->y <= temp_byte_2) {
+                player->y = temp_byte_2;
             }
         }
 
-        update_nearest_tile(player_index);
+        update_nearest_tile(player);
     } else {
-        unset_player_is_rotate_pressed(player_index);
+        unset_player_is_rotate_pressed_from_byte(temp_byte_3);
     }
 }
 
-// Don't modify temp_byte_1, temp_byte_2
-void update_nearest_tile(unsigned char player_index) {
-    if (get_player_orientation_flag(player_index) == ORIENTATION_VERT) {
-        temp_byte_3 = players[player_index].x + 4;
-        temp_byte_4 = players[player_index].y;
+void update_nearest_tile(struct Player* player) {
+    temp_byte_3 = player->flags;
+    if (get_player_orientation_flag_from_byte(temp_byte_3) == ORIENTATION_VERT) {
+        temp_byte_3 = player->x + 4;
+        temp_byte_4 = player->y;
     } else {
-        temp_byte_3 = players[player_index].x;
-        temp_byte_4 = players[player_index].y + 4;
+        temp_byte_3 = player->x;
+        temp_byte_4 = player->y + 4;
     }
     temp_byte_3 = temp_byte_3 >> 3;
     temp_byte_4 = temp_byte_4 >> 3;
 
-    players[player_index].nearest_tile_x = temp_byte_3 << 3;
-    players[player_index].nearest_tile_y = temp_byte_4 << 3;
-    players[player_index].nearest_playfield_tile = temp_byte_3 + (temp_byte_4 << 5) - PLAYFIELD_FIRST_TILE_INDEX;
+    player->nearest_tile_x = temp_byte_3 << 3;
+    player->nearest_tile_y = temp_byte_4 << 3;
+    player->nearest_playfield_tile = temp_byte_3 + (temp_byte_4 << 5) - PLAYFIELD_FIRST_TILE_INDEX;
 }
 
 void line_completed(void) {

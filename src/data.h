@@ -50,4 +50,7 @@
 #define get_positive_line_segment_origin() (temp_int_2)
 #define set_positive_line_segment_origin(a) (temp_int_2 = (a))
 
+#define set_temp_ptr(v) (temp_ptr_1=(int*)(v))
+#define get_temp_ptr(type) ((type*)temp_ptr_1)
+
 #endif  // __JEZNES_DATA_H__

@@ -26,13 +26,17 @@
 #define set_player_flag(player_index, bitmask) set_flag(players[(player_index)].flags, (bitmask))
 #define unset_player_flag(player_index, bitmask) unset_flag(players[(player_index)].flags, (bitmask))
 
+#define get_player_is_rotate_pressed_from_byte(flags_byte) get_flag((flags_byte), PLAYER_BITMASK_IS_ROTATE_PRESSED)
+#define set_player_is_rotate_pressed_from_byte(flags_byte) set_flag((flags_byte), PLAYER_BITMASK_IS_ROTATE_PRESSED)
+#define unset_player_is_rotate_pressed_from_byte(flags_byte) unset_flag((flags_byte), PLAYER_BITMASK_IS_ROTATE_PRESSED)
+
 #define get_player_is_rotate_pressed(player_index) get_player_flag((player_index), PLAYER_BITMASK_IS_ROTATE_PRESSED)
 #define set_player_is_rotate_pressed(player_index) set_player_flag((player_index), PLAYER_BITMASK_IS_ROTATE_PRESSED)
 #define unset_player_is_rotate_pressed(player_index) unset_player_flag((player_index), PLAYER_BITMASK_IS_ROTATE_PRESSED)
 
-#define get_player_is_place_pressed_flag(player_index) get_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
-#define set_player_is_place_pressed_flag(player_index) set_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
-#define unset_player_is_place_pressed_flag(player_index) unset_player_flag((player_index), PLAYER_BITMASK_IS_PLACE_PRESSED)
+#define get_player_is_place_pressed_flag_from_byte(flags_byte) get_flag((flags_byte), PLAYER_BITMASK_IS_PLACE_PRESSED)
+#define set_player_is_place_pressed_flag_from_byte(flags_byte) set_flag((flags_byte), PLAYER_BITMASK_IS_PLACE_PRESSED)
+#define unset_player_is_place_pressed_flag_from_byte(flags_byte) unset_flag((flags_byte), PLAYER_BITMASK_IS_PLACE_PRESSED)
 
 #define get_player_is_pause_pressed(player_index) get_player_flag((player_index), PLAYER_BITMASK_IS_PAUSE_PRESSED)
 #define set_player_is_pause_pressed(player_index) set_player_flag((player_index), PLAYER_BITMASK_IS_PAUSE_PRESSED)
@@ -47,9 +51,15 @@
 #define unset_player_is_cheat_pressed(player_index) unset_player_flag((player_index), PLAYER_BITMASK_IS_CHEAT_PRESSED)
 
 // Returns either ORIENTATION_HORIZ or ORIENTATION_VERT
-#define get_player_orientation_flag(player_index) (players[(player_index)].flags & PLAYER_BITMASK_ORIENTATION)
+#define get_player_orientation_flag_from_byte(flag_bytes) ((flag_bytes) & PLAYER_BITMASK_ORIENTATION)
+
+// Returns either ORIENTATION_HORIZ or ORIENTATION_VERT
+#define get_player_orientation_flag(player_index) (get_player_orientation_flag_from_byte(players[(player_index)].flags))
+
+// Sets the orientation for player flags in |flag_bytes| to |orientation| which must be either ORIENTATION_HORIZ or ORIENTATION_VERT
+#define set_player_orientation_flag_from_byte(flag_bytes, orientation) (flag_bytes = flag_bytes & ~LINE_BITMASK_ORIENTATION | (orientation))
 
 // Sets the orientation for |player_index| player to |orientation| which must be either ORIENTATION_HORIZ or ORIENTATION_VERT
-#define set_player_orientation_flag(player_index, orientation) (players[(player_index)].flags = players[(player_index)].flags & ~LINE_BITMASK_ORIENTATION | (orientation))
+#define set_player_orientation_flag(player_index, orientation) (set_player_orientation_flag_from_byte(players[(player_index)].flags, (orientation)))
 
 #endif  // __JEZNES_FLAGS_PLAYER_H__
