@@ -875,7 +875,7 @@ void update_line(unsigned char line_index) {
         lines[line_index].current_block_completion = 0;
         lines[line_index].tile_step_count++;
     } else {
-        if (get_frame_count() % 3 == 0) {
+        if (get_frame_count() % 2 == 0) {
             ++lines[line_index].current_block_completion;
         }
     }
