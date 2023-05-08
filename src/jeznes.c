@@ -683,60 +683,68 @@ void move_balls(void) {
   }
 }
 
+#define get_x_velocity() (temp_signed_byte_1)
+#define set_x_velocity(a) (temp_signed_byte_1 = (a))
+#define get_y_velocity() (temp_signed_byte_2)
+#define set_y_velocity(a) (temp_signed_byte_2 = (a))
+#define get_x_candidate_pixel_coord() (temp_byte_2)
+#define set_x_candidate_pixel_coord(a) (temp_byte_2 = (a))
+#define get_y_candidate_pixel_coord() (temp_byte_3)
+#define set_y_candidate_pixel_coord(a) (temp_byte_3 = (a))
+
+#define playfield_tile_from_pixel_coords(x,y) (((x) >> 3) + (((y) >> 3) * 32) - PLAYFIELD_FIRST_TILE_INDEX)
+
 void move_ball(unsigned char ball_index) {
-  temp_signed_byte_1 = balls[ball_index].x_velocity;
-  temp_byte_2 = balls[ball_index].x;
-  temp_byte_2 += temp_signed_byte_1;
+  struct Ball* ball = &balls[ball_index];
 
-  // y tile coord
-  temp_byte_5 = balls[ball_index].y >> 3;
-  if (temp_signed_byte_1 > 0) {
-    // Moving right
-    temp_byte_4 = (temp_byte_2 + 7) >> 3;
-    temp_int_1 = temp_byte_4 + 32 * temp_byte_5 - PLAYFIELD_FIRST_TILE_INDEX;
-    temp_byte_4 = (temp_byte_4 << 3) - 8;
-  } else {
-    // Moving left
-    temp_byte_4 = temp_byte_2 >> 3;
-    temp_int_1 = temp_byte_4 + 32 * temp_byte_5 - PLAYFIELD_FIRST_TILE_INDEX;
-    temp_byte_4 = (temp_byte_4 << 3) + 8;
+  // Consider moving right or left first.
+  set_x_velocity(ball->x_velocity);
+  set_x_candidate_pixel_coord(ball->x + get_x_velocity());
+  temp_byte_4 = get_x_candidate_pixel_coord();
+  // Moving right
+  if (get_x_velocity() > 0) {
+    // Balls are 8 pixels wide, compare to the right-edge.
+    temp_byte_4 += 8;
   }
-  // Bounce off a wall tile
+  // Find x-direction candidate playfield tile index.
+  temp_int_1 = playfield_tile_from_pixel_coords(temp_byte_4, ball->y);
+  // Bounce off a left or right wall tile.
   if (playfield[temp_int_1] == PLAYFIELD_WALL) {
-    balls[ball_index].x_velocity *= -1;
-    temp_byte_2 = temp_byte_4;
+    // Reverse x-direction.
+    set_x_velocity(get_x_velocity() * -1);
+    // Move the ball such that it's in the non-wall tile opposite the candidate.
+    set_x_candidate_pixel_coord(ball->x + get_x_velocity());
+    // Update the ball velocity.
+    ball->x_velocity = get_x_velocity();
   }
-  balls[ball_index].x = temp_byte_2;
+  ball->x = get_x_candidate_pixel_coord();
 
-  temp_signed_byte_1 = balls[ball_index].y_velocity;
-  temp_byte_3 = balls[ball_index].y;
-  temp_byte_3 += temp_signed_byte_1;
-
-  // x tile coord
-  temp_byte_5 = balls[ball_index].x >> 3;
-  if (temp_signed_byte_1 > 0) {
-    // Moving down
-    temp_byte_4 = (temp_byte_3 + 7) >> 3;
-    temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
-    temp_byte_4 = (temp_byte_4 << 3) - 8;
-  } else {
-    // Moving up
-    temp_byte_4 = temp_byte_3 >> 3;
-    temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
-    temp_byte_4 = (temp_byte_4 << 3) + 8;
+  // Consider moving up or down next (we already moved right/left).
+  set_y_velocity(ball->y_velocity);
+  set_y_candidate_pixel_coord(ball->y + get_y_velocity());
+  temp_byte_4 = get_y_candidate_pixel_coord();
+  // Moving down
+  if (get_y_velocity() > 0) {
+    // Balls are 8 pixels tall, compare to the bottom edge.
+    temp_byte_4 += 8;
   }
-  // Bounce off a wall tile
+  // Find y-direction candidate playfield tile index.
+  temp_int_1 = playfield_tile_from_pixel_coords(get_x_candidate_pixel_coord(), temp_byte_4);
+  // Bounce off a top or bottom wall tile.
   if (playfield[temp_int_1] == PLAYFIELD_WALL) {
-    balls[ball_index].y_velocity *= -1;
-    temp_byte_3 = temp_byte_4;
+    // Reverse y-direction.
+    set_y_velocity(get_y_velocity() * -1);
+    // Move the ball such that it's in the non-wall tile opposite the candidate.
+    set_y_candidate_pixel_coord(ball->y + get_y_velocity());
+    // Update the ball velocity.
+    ball->y_velocity = get_y_velocity();
   }
-  balls[ball_index].y = temp_byte_3;
+  ball->y = get_y_candidate_pixel_coord();
 
-  // Update nearest playfield tile
-  temp_byte_2 = (temp_byte_2 + 4) >> 3;
-  temp_byte_3 = (temp_byte_3 + 4) >> 3;
-  balls[ball_index].nearest_playfield_tile =
-      temp_byte_2 + (temp_byte_3 << 5) - PLAYFIELD_FIRST_TILE_INDEX;
+  // Update nearest playfield tile - center of the ball.
+  temp_byte_2 = get_x_candidate_pixel_coord() + 4;
+  temp_byte_3 = get_y_candidate_pixel_coord() + 4;
+  ball->nearest_playfield_tile = playfield_tile_from_pixel_coords(temp_byte_2, temp_byte_3);
 }
 
 void draw_balls(void) {
