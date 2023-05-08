@@ -11,6 +11,13 @@
 #define PLAYFIELD_PATTERN_GAME_OVER_SCREEN 1
 #define FIRST_PLAYFIELD_PATTERN 2
 
+// The playfield patterns and arrays here are intended to be human-readable-ish.
+// The patterns are laid-out matching the full screen which they correspond to.
+// The arrays need to all have the same number of entries.
+// Disable clang-format for this file as it'll screw those up.
+
+// clang-format off
+
 // The title screen includes a playfield section which is this pattern.
 const unsigned char title_screen_pattern[] = {
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -124,5 +131,7 @@ const unsigned char playfield_pattern_valid_ball_height_in_pixels[] = {
   0x28,
   0x90
 };
+
+// clang-format on
 
 #endif  // __JEZNES_PLAYFIELD_H__

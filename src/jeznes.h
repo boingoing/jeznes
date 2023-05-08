@@ -88,6 +88,8 @@ void reset_playfield_mark_bit(void);
 unsigned char __fastcall__ update_cleared_playfield_tiles(void);
 void line_completed(void);
 
-void __fastcall__ set_playfield_tile(unsigned int tile_index, unsigned char playfield_tile_type, unsigned char playfield_bg_tile);
+void __fastcall__ set_playfield_tile(unsigned int tile_index,
+                                     unsigned char playfield_tile_type,
+                                     unsigned char playfield_bg_tile);
 
 #endif  // __JEZNES_JEZNES_H__

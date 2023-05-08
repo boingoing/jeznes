@@ -7,11 +7,14 @@
 #ifndef __JEZNES_ZEROPAGE_H__
 #define __JEZNES_ZEROPAGE_H__
 
-#include "types.h"
 #include "constants/game.h"
+#include "types.h"
 
+// Clang-format tries to change the name "bss-name"
+// clang-format off
 // Define the contents of the zeropage - address range [$00 - $ff].
 #pragma bss-name(push, "ZEROPAGE")
+// clang-format on
 
 // Placeholder to track how many bytes are unused in the zeropage.
 unsigned char unused_zp_bytes[10];

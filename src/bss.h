@@ -7,15 +7,18 @@
 #ifndef __JEZNES_BSS_H__
 #define __JEZNES_BSS_H__
 
+// Clang-format tries to change the name "bss-name"
+// clang-format off
 // Define the contents of the BSS section.
 #pragma bss-name(push, "BSS")
+// clang-format on
 
+#include "playfield.h"
 #include "screens/game_over.h"
-#include "screens/playfield.h"
 #include "screens/pause.h"
+#include "screens/playfield.h"
 #include "screens/title.h"
 #include "sprites.h"
-#include "playfield.h"
 
 unsigned char playfield[PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT];
 
