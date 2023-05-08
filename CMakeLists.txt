@@ -5,8 +5,8 @@ set(CMAKE_TOOLCHAIN_FILE toolchain/cc65-toolchain.cmake)
 project(jeznes C ASM)
 
 set (SOURCES
-  ${PROJECT_SOURCE_DIR}/crt0.s
-  ${PROJECT_SOURCE_DIR}/jeznes.c)
+  ${PROJECT_SOURCE_DIR}/src/crt0.s
+  ${PROJECT_SOURCE_DIR}/src/jeznes.c)
 
 add_executable (jeznes ${SOURCES})
 
