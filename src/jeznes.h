@@ -9,7 +9,9 @@
 
 #include "debug.h"
 
-void main(void);
+#define rand2() (rand8() % 2)
+
+int main(void);
 
 // Initializes the locations and directions of the active balls on the valid
 // ball region of the playfield pattern defined by |current_playfield_pattern|.
@@ -25,7 +27,7 @@ void draw_title_cursor(void);
 
 // Handle player start button presses for the pause screen.
 // Returns TRUE if the player did press start.
-unsigned char __fastcall__ pause_press_start(unsigned char player_index);
+unsigned char pause_press_start(unsigned char player_index);
 
 // Draw the words PAUSE on the screen.
 void draw_pause_sprites(void);
@@ -65,30 +67,30 @@ void do_level_down(void);
 
 void read_controllers(void);
 
-void __fastcall__ move_player(unsigned char player_index);
-void __fastcall__ move_ball(unsigned char ball_index);
+void move_player(unsigned char player_index);
+void move_ball(unsigned char ball_index);
 
 void move_balls(void);
 void draw_balls(void);
 void check_ball_line_collisions(void);
 
-void __fastcall__ start_line(unsigned char player_index);
-void __fastcall__ flip_player_orientation(unsigned char player_index);
+void start_line(unsigned char player_index);
+void flip_player_orientation(unsigned char player_index);
 
-void __fastcall__ update_nearest_tile(unsigned char player_index);
-void __fastcall__ update_line(unsigned char line_index);
+void update_nearest_tile(unsigned char player_index);
+void update_line(unsigned char line_index);
 
-void __fastcall__ draw_player(unsigned char player_index);
-void __fastcall__ draw_tile_highlight(unsigned char player_index);
-void __fastcall__ draw_line(unsigned char line_index);
+void draw_player(unsigned char player_index);
+void draw_tile_highlight(unsigned char player_index);
+void draw_line(unsigned char line_index);
 
 void update_hud(void);
 
 void reset_playfield_mark_bit(void);
-unsigned char __fastcall__ update_cleared_playfield_tiles(void);
+unsigned char update_cleared_playfield_tiles(void);
 void line_completed(void);
 
-void __fastcall__ set_playfield_tile(unsigned int tile_index,
+void set_playfield_tile(unsigned int tile_index,
                                      unsigned char playfield_tile_type,
                                      unsigned char playfield_bg_tile);
 

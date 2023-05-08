@@ -67,7 +67,7 @@
 #define set_playfield_line_orientation_flag(playfield_index, orientation)   \
   (playfield[(playfield_index)] =                                           \
        playfield[(playfield_index)] & ~PLAYFIELD_BITMASK_LINE_ORIENTATION | \
-       (orientation << PLAYFIELD_BIT_LINE_ORIENTATION))
+       ((orientation) << PLAYFIELD_BIT_LINE_ORIENTATION))
 
 // Returns the line index from a playfield byte which will be either 0 or 1
 #define get_playfield_line_index_flag_from_byte(flags_byte) \
@@ -83,7 +83,7 @@
 #define set_playfield_line_index_flag(playfield_index, index)         \
   (playfield[(playfield_index)] =                                     \
        playfield[(playfield_index)] & ~PLAYFIELD_BITMASK_LINE_INDEX | \
-       (index << PLAYFIELD_BIT_LINE_INDEX))
+       ((index) << PLAYFIELD_BIT_LINE_INDEX))
 
 // Returns the playfield tile type from a playfield byte |flags_byte| by
 // removing the bit-flags from the playfield byte

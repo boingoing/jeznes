@@ -28,7 +28,7 @@
 // locations in a header? Will this affect performance?
 #include "flood_fill.c"
 
-void main(void) {
+int main(void) {
 #if ENABLE_CHEATS
   init_cheat_flags();
 #endif  // ENABLE_CHEATS
@@ -194,6 +194,8 @@ void main(void) {
     gray_line();
 #endif
   }
+
+  return 0;
 }
 
 void init_balls(void) {
@@ -206,12 +208,12 @@ void init_balls(void) {
         rand8() % playfield_pattern_valid_ball_height_in_pixels
                       [get_playfield_pattern()] +
         playfield_pattern_valid_ball_start_pixel_y[get_playfield_pattern()];
-    if (rand8() > 0x7f) {
+    if (rand2()) {
       balls[temp_byte_1].x_velocity = BALL_SPEED;
     } else {
       balls[temp_byte_1].x_velocity = -BALL_SPEED;
     }
-    if (rand8() > 0x7f) {
+    if (rand2()) {
       balls[temp_byte_1].y_velocity = BALL_SPEED;
     } else {
       balls[temp_byte_1].y_velocity = -BALL_SPEED;
@@ -274,10 +276,10 @@ unsigned char title_press_start(void) {
     pal_bright(4);
 
     return TRUE;
-  } else {
-    unset_player_is_pause_pressed(0);
   }
 
+  // If the button was pressed, we returned above.
+  unset_player_is_pause_pressed(0);
   return FALSE;
 }
 
@@ -350,9 +352,6 @@ void title_change_mode(void) {
 }
 
 void init_game(void) {
-  static unsigned char player_default_x[2] = {0x56, 0x96};
-  static unsigned char player_default_y[2] = {0x46, 0x86};
-
   // Seed the random number generator - it's based on frame count.
   seed_rng();
 
@@ -367,8 +366,8 @@ void init_game(void) {
 
   // Player initial positions.
   for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
-    players[temp_byte_1].x = player_default_x[temp_byte_1];
-    players[temp_byte_1].y = player_default_y[temp_byte_1];
+    players[temp_byte_1].x = playfield_pattern_player_default_x[temp_byte_1];
+    players[temp_byte_1].y = playfield_pattern_player_default_y[temp_byte_1];
     update_nearest_tile(temp_byte_1);
 
     set_player_orientation_flag(temp_byte_1, ORIENTATION_HORIZ);
@@ -566,10 +565,10 @@ unsigned char game_over_press_start(void) {
     }
 
     return TRUE;
-  } else {
-    unset_player_is_pause_pressed(0);
   }
 
+  // If the button was pressed, we returned above.
+  unset_player_is_pause_pressed(0);
   return FALSE;
 }
 
@@ -598,10 +597,10 @@ unsigned char pause_press_start(unsigned char player_index) {
     }
 
     return TRUE;
-  } else {
-    unset_player_is_pause_pressed(player_index);
   }
 
+  // If the button was pressed, we returned above.
+  unset_player_is_pause_pressed(player_index);
   return FALSE;
 }
 

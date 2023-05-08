@@ -7,7 +7,7 @@
 #ifndef __JEZNES_DATA_H__
 #define __JEZNES_DATA_H__
 
-#define make_word(lo, hi) ((lo) | (hi << 8))
+#define make_word(lo, hi) ((lo) | ((hi) << 8))
 
 // Define a lot of helpers for accessing or modifying named data.
 
