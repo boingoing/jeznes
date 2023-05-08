@@ -729,9 +729,9 @@ void move_ball(unsigned char ball_index) {
     temp_byte_4 += 8;
   }
   // Find y-direction candidate playfield tile index.
-  temp_int_1 = playfield_tile_from_pixel_coords(get_x_candidate_pixel_coord(), temp_byte_4);
+  temp_int_2 = playfield_tile_from_pixel_coords(get_x_candidate_pixel_coord(), temp_byte_4);
   // Bounce off a top or bottom wall tile.
-  if (playfield[temp_int_1] == PLAYFIELD_WALL) {
+  if (playfield[temp_int_2] == PLAYFIELD_WALL) {
     // Reverse y-direction.
     set_y_velocity(get_y_velocity() * -1);
     // Move the ball such that it's in the non-wall tile opposite the candidate.
