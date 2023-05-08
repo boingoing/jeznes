@@ -14,13 +14,14 @@
 #pragma bss-name(push, "ZEROPAGE")
 
 // Placeholder to track how many bytes are unused in the zeropage.
-unsigned char unused_zp_bytes[11];
+unsigned char unused_zp_bytes[10];
 
 unsigned char pads[MAX_PLAYERS];
 unsigned char pads_new[MAX_PLAYERS];
 
 unsigned char game_state;
 unsigned char current_level;
+unsigned char current_ball_count;
 unsigned char current_playfield_pattern;
 unsigned char player_count;
 unsigned char lives_count;

@@ -11,8 +11,11 @@
 
 // Define a lot of helpers for accessing or modifying named data.
 
-#define get_ball_count() (current_level+1)
+#define get_ball_count() (current_ball_count)
+#define set_ball_count(v) (current_ball_count = (v))
+
 #define get_player_count() (player_count)
+#define set_player_count(v) (player_count = (v))
 
 #define get_playfield_pattern() (current_playfield_pattern)
 #define set_playfield_pattern(a) (current_playfield_pattern = (a))

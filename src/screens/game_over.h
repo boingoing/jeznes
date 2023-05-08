@@ -13,6 +13,9 @@
 #define GAME_OVER_CURSOR_QUIT_X 0x70
 #define GAME_OVER_CURSOR_QUIT_Y 0xd0
 
+// How many balls should bounce around inside the playfield section of the game over screen.
+#define GAME_OVER_SCREEN_BALL_COUNT 2
+
 // Game over screen RLE graphics data.
 const unsigned char game_over_screen[] = {
     0x01,0x70,0x01,0x62,0x41,0x43,0x01,0x17,0x42,0x70,0x01,0x05,0x40,0x70,0x01,0x17,

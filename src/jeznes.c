@@ -212,8 +212,8 @@ void init_balls() {
 }
 
 void init_title(void) {
-    // Set the level here just so we can control ball count.
-    current_level = 1;
+    // Make sure we only have a fixed count of balls bouncing around on the title screen.
+    set_ball_count(TITLE_SCREEN_BALL_COUNT);
 
     // Set the playfield pattern to use.
     set_playfield_pattern(PLAYFIELD_PATTERN_TITLE_SCREEN);
@@ -246,10 +246,10 @@ unsigned char title_press_start(void) {
         set_player_is_pause_pressed(0);
 
         if (get_title_mode() == TITLE_1_PLAYER) {
-            player_count = 1;
+            set_player_count(1);
         } else {
             // get_title_mode() == TITLE_2_PLAYER
-            player_count = 2;
+            set_player_count(2);
         }
 
         // Fade to black
@@ -349,7 +349,8 @@ void init_game(void) {
     // Starting game state.
     game_state = GAME_STATE_PLAYING;
     current_level = 1;
-    lives_count = current_level + 1;
+    lives_count = STARTING_LIVES_COUNT;
+    set_ball_count(current_level + 1);
 
     // Set the current playfield pattern.
     set_playfield_pattern(FIRST_PLAYFIELD_PATTERN);
@@ -410,6 +411,9 @@ void do_level_down(void) {
     // Actually level down the player.
     current_level--;
 
+    // Update the count of balls.
+    set_ball_count(current_level + 1);
+
     // Set the current playfield pattern.
     // TODO(boingoing): If the current_level affects the playfield.
     set_playfield_pattern(FIRST_PLAYFIELD_PATTERN);
@@ -432,6 +436,9 @@ void do_level_up(void) {
     current_level++;
     lives_count++;
 
+    // Update the ball count.
+    set_ball_count(current_level + 1);
+
     // Set the current playfield pattern.
     // TODO(boingoing): If the current_level affects the playfield.
     set_playfield_pattern(FIRST_PLAYFIELD_PATTERN);
@@ -450,8 +457,8 @@ void do_level_up(void) {
 }
 
 void change_to_game_over(void) {
-    // Set the level here just so we can control ball count.
-    current_level = 1;
+    // Reset the count of balls so it isn't variable.
+    set_ball_count(GAME_OVER_SCREEN_BALL_COUNT);
 
     // Set the playfield pattern to use.
     set_playfield_pattern(PLAYFIELD_PATTERN_GAME_OVER_SCREEN);
@@ -511,7 +518,10 @@ unsigned char game_over_press_start(void) {
 
         if (get_game_over_mode() == GAME_OVER_RETRY) {
             // Reset our lives count back to the default.
-            lives_count = current_level + 1;
+            lives_count = STARTING_LIVES_COUNT;
+
+            // Reset the count of balls for the playfield.
+            set_ball_count(current_level + 1);
 
             // Set the current playfield pattern.
             // TODO(boingoing): Load a different pattern if the current_level should affect this.
