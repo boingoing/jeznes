@@ -194,7 +194,7 @@ void main(void) {
     }
 }
 
-void init_balls() {
+void init_balls(void) {
   for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
     balls[temp_byte_1].x = rand8() % playfield_pattern_valid_ball_width_in_pixels[get_playfield_pattern()] + playfield_pattern_valid_ball_start_pixel_x[get_playfield_pattern()];
     balls[temp_byte_1].y = rand8() % playfield_pattern_valid_ball_height_in_pixels[get_playfield_pattern()] + playfield_pattern_valid_ball_start_pixel_y[get_playfield_pattern()];
@@ -370,7 +370,7 @@ void init_game(void) {
     reset_playfield();
 }
 
-void load_playfield() {
+void load_playfield(void) {
     memcpy(&playfield, playfield_patterns[get_playfield_pattern()], PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT);
 }
 
