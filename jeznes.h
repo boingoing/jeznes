@@ -26,6 +26,8 @@
 
 #define SPRITE_INDEX_CURSOR 0x17
 
+#define SPRITE_INDEX_PAUSE_BASE 0x23
+
 #define TILE_INDEX_PLAYFIELD_UNCLEARED 0x0
 #define TILE_INDEX_PLAYFIELD_CLEARED 0x3
 #define TILE_INDEX_PLAYFIELD_LINE_HORIZ 0x1
@@ -57,6 +59,10 @@
 #define GAME_OVER_CURSOR_QUIT_X 0x70
 #define GAME_OVER_CURSOR_QUIT_Y 0xd0
 
+// PAUSE letter starting location for the pause screen
+#define PAUSE_LETTER_BASE_X 0x68
+#define PAUSE_LETTER_BASE_Y 0x48
+
 // These macros enable various debugging features and should probably be turned off before release
 #define DEBUG 0
 
@@ -74,7 +80,8 @@ enum {
     GAME_STATE_LEVEL_DOWN,
     GAME_STATE_GAME_OVER,
     GAME_STATE_UPDATING_PLAYFIELD,
-    GAME_STATE_REQUEST_HUD_UPDATE
+    GAME_STATE_REQUEST_HUD_UPDATE,
+    GAME_STATE_PAUSED
 };
 
 enum {
@@ -395,6 +402,13 @@ void title_change_mode(void);
 // Returns TRUE if the player did press start.
 unsigned char title_press_start(void);
 void draw_title_cursor(void);
+
+// Handle player start button presses for the pause screen.
+// Returns TRUE if the player did press start.
+unsigned char __fastcall__ pause_press_start(unsigned char player_index);
+
+// Draw the words PAUSE on the screen.
+void draw_pause_sprites(void);
 
 void init_game(void);
 void reset_playfield(void);

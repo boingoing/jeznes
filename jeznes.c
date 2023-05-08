@@ -61,6 +61,9 @@ void main(void) {
                 // Respond to player gamepad.
                 flip_player_orientation(temp_byte_1);
                 start_line(temp_byte_1);
+                if (pause_press_start(temp_byte_1) == TRUE) {
+                    continue;
+                }
 
                 // Move the player position in the playfield.
                 move_player(temp_byte_1);
@@ -85,6 +88,19 @@ void main(void) {
 
             // Draw the ball sprites.
             draw_balls();
+        } else if (game_state == GAME_STATE_PAUSED) {
+            // Clear all sprites from the sprite buffer.
+            oam_clear();
+
+            // Handle any player pressing start to unpause.
+            for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); temp_byte_1++) {
+                if (pause_press_start(temp_byte_1) == TRUE) {
+                    continue;
+                }
+            }
+
+            // Draw the pause message on the screen while we're paused.
+            draw_pause_sprites();
         } else if (game_state == GAME_STATE_LEVEL_UP) {
             // Clear all sprites from the sprite buffer.
             oam_clear();
@@ -509,6 +525,37 @@ unsigned char game_over_press_start(void) {
     return FALSE;
 }
 
+unsigned char pause_press_start(unsigned char player_index) {
+    // Any player can pause / unpause right now?
+    // TODO(boingoing): Track which player initiated the pause and only let that player unpause.
+    if (pads[player_index] & PAD_START) {
+        if (get_player_is_pause_pressed(player_index)) {
+            return FALSE;
+        }
+
+        set_player_is_pause_pressed(player_index);
+
+        if (game_state == GAME_STATE_PLAYING) {
+            // Fade the screen a bit
+            pal_fade_to(4, 4);
+
+            game_state = GAME_STATE_PAUSED;
+        } else {
+            // game_state == GAME_STATE_PAUSED
+            // Back to normal brightness
+            pal_bright(4);
+
+            game_state = GAME_STATE_PLAYING;
+        }
+
+        return TRUE;
+    } else {
+        unset_player_is_pause_pressed(player_index);
+    }
+
+    return FALSE;
+}
+
 #define get_tile_alphanumeric_number(v) (TILE_INDEX_ALPHANUMERIC_ZERO + (v))
 
 void write_two_digit_number_to_bg(unsigned char num, unsigned char tile_x, unsigned char tile_y) {
@@ -682,6 +729,13 @@ void draw_game_over_cursor(void) {
     } else {
         oam_spr(GAME_OVER_CURSOR_QUIT_X, GAME_OVER_CURSOR_QUIT_Y, SPRITE_INDEX_CURSOR, 0);
     }
+}
+
+void draw_pause_sprites(void) {
+  for (temp_byte_2 = 0; temp_byte_2 < 6; ++temp_byte_2) {
+    temp_byte_3 = temp_byte_2 << 3;
+    oam_spr(PAUSE_LETTER_BASE_X + temp_byte_3, PAUSE_LETTER_BASE_Y, SPRITE_INDEX_PAUSE_BASE + temp_byte_2, 0);
+  }
 }
 
 #define get_line_orientation() (temp_byte_4)
