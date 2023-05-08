@@ -5,6 +5,10 @@
 #include "jeznes.h"
 
 void main(void) {
+#if ENABLE_CHEATS
+    init_cheat_flags();
+#endif  // ENABLE_CHEATS
+
     // Turn off the screen.
     ppu_off();
 
@@ -42,6 +46,12 @@ void main(void) {
                 // Because title_press_start() writes to the screen, we would be drawing
                 // the cursor sprite over the playfield.
                 draw_title_cursor();
+
+                // Move the ball positions in the playfield part of the title screen.
+                move_balls();
+
+                // Draw the ball sprites.
+                draw_balls();
             }
         } else if (game_state == GAME_STATE_PLAYING) {
             // Clear all sprites from the sprite buffer.
@@ -68,6 +78,9 @@ void main(void) {
             move_balls();
 
             // Check to see if any balls have collided with any lines.
+#if ENABLE_CHEATS
+            if (enable_ball_line_collisions != FALSE)
+#endif  // ENABLE_CHEATS
             check_ball_line_collisions();
 
             // Draw the ball sprites.
@@ -89,6 +102,12 @@ void main(void) {
                 // Draw the cursor sprite wherever it should be if the player didn't
                 // press start.
                 draw_game_over_cursor();
+
+                // Move the ball positions in the playfield part of the game over screen.
+                move_balls();
+
+                // Draw the ball sprites.
+                draw_balls();
             }
         } else if (game_state == GAME_STATE_UPDATING_PLAYFIELD) {
             // Restart the update of cleared playfield tiles.
@@ -114,6 +133,17 @@ void main(void) {
                 game_state = GAME_STATE_LEVEL_UP;
             }
         }
+#if ENABLE_CHEATS
+        else if (game_state == GAME_STATE_LEVEL_DOWN) {
+            // Clear all sprites from the sprite buffer.
+            oam_clear();
+
+            // Just perform a level up.
+            do_level_down();
+        }
+
+        handle_cheat_buttons();
+#endif  // ENABLE_CHEATS
 
 #if DRAW_GRAY_LINE
         // For debugging, render a line indicating how much CPU is used.
@@ -122,12 +152,41 @@ void main(void) {
     }
 }
 
+void init_balls() {
+  for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
+    balls[temp_byte_1].x = rand8() % playfield_pattern_valid_ball_width_in_pixels[get_playfield_pattern()] + playfield_pattern_valid_ball_start_pixel_x[get_playfield_pattern()];
+    balls[temp_byte_1].y = rand8() % playfield_pattern_valid_ball_height_in_pixels[get_playfield_pattern()] + playfield_pattern_valid_ball_start_pixel_y[get_playfield_pattern()];
+    if (rand8() > 0x7f) {
+      balls[temp_byte_1].x_velocity = BALL_SPEED;
+    } else {
+      balls[temp_byte_1].x_velocity = -BALL_SPEED;
+    }
+    if (rand8() > 0x7f) {
+      balls[temp_byte_1].y_velocity = BALL_SPEED;
+    } else {
+      balls[temp_byte_1].y_velocity = -BALL_SPEED;
+    }
+  }
+}
+
 void init_title(void) {
+    // Set the level here just so we can control ball count.
+    current_level = 1;
+
+    // Set the playfield pattern to use.
+    set_playfield_pattern(PLAYFIELD_PATTERN_TITLE_SCREEN);
+
+    // Draw bouncing balls in the playfield section of the title screen.
+    init_balls();
+
     // Load title screen graphics.
     pal_bg(title_bg_palette);
     pal_spr(title_sprite_palette);
     vram_adr(NAMETABLE_A);
     vram_unrle(title_screen);
+
+    // Load the playfield pattern which we show on the title screen.
+    load_playfield();
 
     // By default, select the "1 Player" option.
     set_title_mode(TITLE_1_PLAYER);
@@ -171,6 +230,55 @@ unsigned char title_press_start(void) {
     return FALSE;
 }
 
+#if ENABLE_CHEATS
+void init_cheat_flags(void) {
+  enable_ball_line_collisions = TRUE;
+  enable_losing_lives = TRUE;
+}
+
+void handle_cheat_buttons(void) {
+  // Cheat buttons are prefixed with the select button.
+  if (pads[0] & PAD_SELECT) {
+    // Once a cheat is entered, player needs to stop pressing select.
+    if (get_player_is_cheat_pressed(0)) {
+      return;
+    }
+
+    if ((pads[0] & (PAD_LEFT | PAD_B | PAD_A | PAD_UP | PAD_DOWN | PAD_START)) != 0) {
+      // Remember a cheat keypress is being held with the select button.
+      set_player_is_cheat_pressed(0);
+    }
+
+    if (pads[0] & PAD_LEFT) {
+      // SELECT + LEFT => Re-initialize the ball locations and directions.
+      init_balls();
+    } else if (pads[0] & PAD_B) {
+      // SELECT + B => Enable / Disable ball-line collisions.
+      enable_ball_line_collisions ^= TRUE;
+    } else if (pads[0] & PAD_A) {
+      // SELECT + A => Enable / Disable losing a life on ball-line collision.
+      enable_losing_lives ^= TRUE;
+    } else if (pads[0] & PAD_UP) {
+      // SELECT + UP => Perform level-up
+      game_state = GAME_STATE_LEVEL_UP;
+    } else if (pads[0] & PAD_DOWN) {
+      // SELECT + DOWN => Perform level-down
+      game_state = GAME_STATE_LEVEL_DOWN;
+    } else if (pads[0] & PAD_START) {
+      // SELECT + START => Reset to title
+      // Screen off
+      ppu_off();
+      init_title();
+      // Screen on
+      ppu_on_all();
+    }
+  } else {
+    // Select is not pressed, reset cheat flag.
+    unset_player_is_cheat_pressed(0);
+  }
+}
+#endif  // ENABLE_CHEATS
+
 void title_change_mode(void) {
     if (pads[0] & PAD_SELECT) {
         // Ignore the mode change if player holds the button.
@@ -201,6 +309,9 @@ void init_game(void) {
     current_level = 1;
     lives_count = current_level + 1;
 
+    // Set the current playfield pattern.
+    set_playfield_pattern(FIRST_PLAYFIELD_PATTERN);
+
     // Player initial positions.
     for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
         players[temp_byte_1].x = player_default_x[temp_byte_1];
@@ -212,12 +323,12 @@ void init_game(void) {
         unset_player_is_rotate_pressed(temp_byte_1);
     }
 
-    // Always loads |current_level|
+    // Always loads |get_playfield_pattern()|
     reset_playfield();
 }
 
-void load_playfield(unsigned char playfield_index) {
-    memcpy(&playfield, playfield_patterns[playfield_index], PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT);
+void load_playfield() {
+    memcpy(&playfield, playfield_patterns[get_playfield_pattern()], PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT);
 }
 
 void read_controllers(void) {
@@ -237,20 +348,7 @@ void reset_playfield() {
     unset_line_is_started_flag(1);
 
     // Ball random initial positions and directions.
-    for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
-        balls[temp_byte_1].x = rand8() % (0xff - 0x30) + 0x18;
-        balls[temp_byte_1].y = rand8() % (0xff - 0x70) + 0x20;
-        if (rand8() > 0x7f) {
-            balls[temp_byte_1].x_velocity = BALL_SPEED;
-        } else {
-            balls[temp_byte_1].x_velocity = -BALL_SPEED;
-        }
-        if (rand8() > 0x7f) {
-            balls[temp_byte_1].y_velocity = BALL_SPEED;
-        } else {
-            balls[temp_byte_1].y_velocity = -BALL_SPEED;
-        }
-    }
+    init_balls();
 
     // Load playfield graphics.
     // Note: Screen must be off!
@@ -260,16 +358,41 @@ void reset_playfield() {
     vram_unrle(playfield_screen);
 
     // Load playfield pattern.
-    load_playfield(0);
+    load_playfield();
 
     // Display the level, lives remaining, percentages, etc.
     update_hud();
+}
+
+void do_level_down(void) {
+    // Actually level down the player.
+    current_level--;
+
+    // Set the current playfield pattern.
+    // TODO(boingoing): If the current_level affects the playfield.
+    set_playfield_pattern(FIRST_PLAYFIELD_PATTERN);
+
+    // Turn off the screen.
+    ppu_off();
+
+    // Redraw the playfield and reset the balls while adding one more.
+    reset_playfield();
+
+    // Turn on the screen.
+    ppu_on_all();
+
+    // Reset state to playing the game.
+    game_state = GAME_STATE_PLAYING;
 }
 
 void do_level_up(void) {
     // Actually level up the player.
     current_level++;
     lives_count++;
+
+    // Set the current playfield pattern.
+    // TODO(boingoing): If the current_level affects the playfield.
+    set_playfield_pattern(FIRST_PLAYFIELD_PATTERN);
 
     // Turn off the screen.
     ppu_off();
@@ -285,6 +408,15 @@ void do_level_up(void) {
 }
 
 void change_to_game_over(void) {
+    // Set the level here just so we can control ball count.
+    current_level = 1;
+
+    // Set the playfield pattern to use.
+    set_playfield_pattern(PLAYFIELD_PATTERN_GAME_OVER_SCREEN);
+
+    // Draw bouncing balls in the playfield section of the game over screen.
+    init_balls();
+
     // Fade to black
     pal_fade_to(4, 0);
     // Screen off
@@ -299,7 +431,13 @@ void change_to_game_over(void) {
     // Back to normal brightness
     pal_bright(4);
 
+    // Load the playfield pattern which we show on the game over screen.
+    load_playfield();
+
+    // Default to the Retry option.
     set_game_over_mode(GAME_OVER_RETRY);
+
+    // Transition state to game over.
     game_state = GAME_STATE_GAME_OVER;
 }
 
@@ -332,6 +470,10 @@ unsigned char game_over_press_start(void) {
         if (get_game_over_mode() == GAME_OVER_RETRY) {
             // Reset our lives count back to the default.
             lives_count = current_level + 1;
+
+            // Set the current playfield pattern.
+            // TODO(boingoing): Load a different pattern if the current_level should affect this.
+            set_playfield_pattern(FIRST_PLAYFIELD_PATTERN);
 
             // Screen off
             ppu_off();
@@ -379,7 +521,7 @@ void update_hud(void) {
     write_two_digit_number_to_bg(lives_count, HUD_LIVES_DISPLAY_TILE_X, HUD_LIVES_DISPLAY_TILE_Y);
     write_two_digit_number_to_bg(TARGET_CLEARED_TILE_PERCENTAGE, HUD_TARGET_DISPLAY_TILE_X, HUD_TARGET_DISPLAY_TILE_Y);
 
-    cleared_tile_percentage = (cleared_tile_count * 100) / playfield_pattern_uncleared_tile_counts[0];
+    cleared_tile_percentage = (cleared_tile_count * 100) / playfield_pattern_uncleared_tile_counts[FIRST_PLAYFIELD_PATTERN];
     write_two_digit_number_to_bg(cleared_tile_percentage, HUD_CLEAR_DISPLAY_TILE_X, HUD_CLEAR_DISPLAY_TILE_Y);
 }
 
@@ -528,17 +670,17 @@ void draw_tile_highlight(unsigned char player_index) {
 
 void draw_title_cursor(void) {
     if (get_title_mode() == TITLE_1_PLAYER) {
-        oam_spr(TITLE_CURSOR_1_PLAYER_X, TITLE_CURSOR_1_PLAYER_Y, TILE_INDEX_TILE_HIGHLIGHT, 1);
+        oam_spr(TITLE_CURSOR_1_PLAYER_X, TITLE_CURSOR_1_PLAYER_Y, SPRITE_INDEX_CURSOR, 0);
     } else {
-        oam_spr(TITLE_CURSOR_2_PLAYERS_X, TITLE_CURSOR_2_PLAYERS_Y, TILE_INDEX_TILE_HIGHLIGHT, 1);
+        oam_spr(TITLE_CURSOR_2_PLAYERS_X, TITLE_CURSOR_2_PLAYERS_Y, SPRITE_INDEX_CURSOR, 0);
     }
 }
 
 void draw_game_over_cursor(void) {
     if (get_game_over_mode() == GAME_OVER_RETRY) {
-        oam_spr(GAME_OVER_CURSOR_RETRY_X, GAME_OVER_CURSOR_RETRY_Y, TILE_INDEX_TILE_HIGHLIGHT, 1);
+        oam_spr(GAME_OVER_CURSOR_RETRY_X, GAME_OVER_CURSOR_RETRY_Y, SPRITE_INDEX_CURSOR, 0);
     } else {
-        oam_spr(GAME_OVER_CURSOR_QUIT_X, GAME_OVER_CURSOR_QUIT_Y, TILE_INDEX_TILE_HIGHLIGHT, 1);
+        oam_spr(GAME_OVER_CURSOR_QUIT_X, GAME_OVER_CURSOR_QUIT_Y, SPRITE_INDEX_CURSOR, 0);
     }
 }
 
@@ -838,6 +980,9 @@ void check_ball_line_collisions(void) {
             }
         }
 
+#if ENABLE_CHEATS
+        if (enable_losing_lives == TRUE)
+#endif  // ENABLE_CHEATS
         lives_count--;
 
         if (lives_count == 0) {
