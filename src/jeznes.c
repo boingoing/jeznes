@@ -212,7 +212,7 @@ void init_balls() {
 }
 
 void init_title(void) {
-    // Make sure we only have 2 balls bouncing around on the title screen.
+    // Make sure we only have a fixed count of balls bouncing around on the title screen.
     set_ball_count(TITLE_SCREEN_BALL_COUNT);
 
     // Set the playfield pattern to use.
@@ -246,10 +246,10 @@ unsigned char title_press_start(void) {
         set_player_is_pause_pressed(0);
 
         if (get_title_mode() == TITLE_1_PLAYER) {
-            player_count = 1;
+            set_player_count(1);
         } else {
             // get_title_mode() == TITLE_2_PLAYER
-            player_count = 2;
+            set_player_count(2);
         }
 
         // Fade to black

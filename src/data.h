@@ -15,6 +15,7 @@
 #define set_ball_count(v) (current_ball_count = (v))
 
 #define get_player_count() (player_count)
+#define set_player_count(v) (player_count = (v))
 
 #define get_playfield_pattern() (current_playfield_pattern)
 #define set_playfield_pattern(a) (current_playfield_pattern = (a))
