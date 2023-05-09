@@ -677,9 +677,13 @@ void move_player(unsigned char player_index) {
   }
 }
 
+#define set_temp_ptr(p) (temp_ptr_1 = (p))
+#define get_temp_ptr(type) ((type*)temp_ptr_1)
+
 void move_balls(void) {
-  for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); temp_byte_1++) {
-    move_ball(temp_byte_1);
+  for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
+    set_temp_ptr(&balls[temp_byte_1]);
+    move_ball();
   }
 }
 
@@ -694,12 +698,10 @@ void move_balls(void) {
 
 #define playfield_tile_from_pixel_coords(x,y) (((x) >> 3) + (((y) >> 3) * 32) - PLAYFIELD_FIRST_TILE_INDEX)
 
-void move_ball(unsigned char ball_index) {
-  struct Ball* ball = &balls[ball_index];
-
+void move_ball() {
   // Consider moving right or left first.
-  set_x_velocity(ball->x_velocity);
-  set_x_candidate_pixel_coord(ball->x + get_x_velocity());
+  set_x_velocity(get_temp_ptr(struct Ball)->x_velocity);
+  set_x_candidate_pixel_coord(get_temp_ptr(struct Ball)->x + get_x_velocity());
   temp_byte_4 = get_x_candidate_pixel_coord();
   // Moving right
   if (get_x_velocity() > 0) {
@@ -707,21 +709,21 @@ void move_ball(unsigned char ball_index) {
     temp_byte_4 += 8;
   }
   // Find x-direction candidate playfield tile index.
-  temp_int_1 = playfield_tile_from_pixel_coords(temp_byte_4, ball->y);
+  temp_int_1 = playfield_tile_from_pixel_coords(temp_byte_4, get_temp_ptr(struct Ball)->y);
   // Bounce off a left or right wall tile.
   if (playfield[temp_int_1] == PLAYFIELD_WALL) {
     // Reverse x-direction.
     set_x_velocity(get_x_velocity() * -1);
     // Move the ball such that it's in the non-wall tile opposite the candidate.
-    set_x_candidate_pixel_coord(ball->x + get_x_velocity());
+    set_x_candidate_pixel_coord(get_temp_ptr(struct Ball)->x + get_x_velocity());
     // Update the ball velocity.
-    ball->x_velocity = get_x_velocity();
+    get_temp_ptr(struct Ball)->x_velocity = get_x_velocity();
   }
-  ball->x = get_x_candidate_pixel_coord();
+  get_temp_ptr(struct Ball)->x = get_x_candidate_pixel_coord();
 
   // Consider moving up or down next (we already moved right/left).
-  set_y_velocity(ball->y_velocity);
-  set_y_candidate_pixel_coord(ball->y + get_y_velocity());
+  set_y_velocity(get_temp_ptr(struct Ball)->y_velocity);
+  set_y_candidate_pixel_coord(get_temp_ptr(struct Ball)->y + get_y_velocity());
   temp_byte_4 = get_y_candidate_pixel_coord();
   // Moving down
   if (get_y_velocity() > 0) {
@@ -735,26 +737,27 @@ void move_ball(unsigned char ball_index) {
     // Reverse y-direction.
     set_y_velocity(get_y_velocity() * -1);
     // Move the ball such that it's in the non-wall tile opposite the candidate.
-    set_y_candidate_pixel_coord(ball->y + get_y_velocity());
+    set_y_candidate_pixel_coord(get_temp_ptr(struct Ball)->y + get_y_velocity());
     // Update the ball velocity.
-    ball->y_velocity = get_y_velocity();
+    get_temp_ptr(struct Ball)->y_velocity = get_y_velocity();
   }
-  ball->y = get_y_candidate_pixel_coord();
+  get_temp_ptr(struct Ball)->y = get_y_candidate_pixel_coord();
 
   // Update nearest playfield tile - center of the ball.
   temp_byte_2 = get_x_candidate_pixel_coord() + 4;
   temp_byte_3 = get_y_candidate_pixel_coord() + 4;
-  ball->nearest_playfield_tile = playfield_tile_from_pixel_coords(temp_byte_2, temp_byte_3);
+  get_temp_ptr(struct Ball)->nearest_playfield_tile = playfield_tile_from_pixel_coords(temp_byte_2, temp_byte_3);
 }
 
 void draw_balls(void) {
   temp_byte_2 = get_frame_count();
   temp_byte_2 = (temp_byte_2 >> 2) % 18 + TILE_INDEX_BALL_BASE;
   for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
-    oam_spr(balls[temp_byte_1].x, balls[temp_byte_1].y, temp_byte_2, 0);
+    set_temp_ptr(&balls[temp_byte_1]);
+    oam_spr(get_temp_ptr(struct Ball)->x, get_temp_ptr(struct Ball)->y, temp_byte_2, 0);
 
 #if DRAW_BALL_NEAREST_TILE_HIGHLIGHT
-    temp_int_1 = balls[temp_byte_1].nearest_playfield_tile;
+    temp_int_1 = get_temp_ptr(struct Ball)->nearest_playfield_tile;
     oam_spr(playfield_index_pixel_coord_x(temp_int_1),
             playfield_index_pixel_coord_y(temp_int_1) - 1,
             TILE_INDEX_TILE_HIGHLIGHT, 1);

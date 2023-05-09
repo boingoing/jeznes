@@ -68,7 +68,9 @@ void do_level_down(void);
 void read_controllers(void);
 
 void move_player(unsigned char player_index);
-void move_ball(unsigned char ball_index);
+
+// Moves one ball which needs to have been stored already in |temp_ptr_1|.
+void move_ball();
 
 void move_balls(void);
 void draw_balls(void);
