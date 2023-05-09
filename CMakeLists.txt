@@ -2,11 +2,6 @@ cmake_minimum_required(VERSION 3.16.3)
 
 set(CMAKE_TOOLCHAIN_FILE toolchain/cc65-toolchain.cmake)
 
-find_program (CLANG_TIDY_EXE NAMES "clang-tidy")
-if (CLANG_TIDY_EXE)
-  set (CMAKE_C_CLANG_TIDY clang-tidy)
-endif ()
-
 set (CMAKE_C_STANDARD 11)
 
 project(jeznes C ASM)
