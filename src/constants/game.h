@@ -11,7 +11,8 @@
 #define PLAYER_SPEED 0x2
 
 #define MAX_BALLS 20
-#define BALL_SPEED 0x1
+#define BALL_SPEED_POSITIVE 1
+#define BALL_SPEED_NEGATIVE (-1)
 #define BALL_WIDTH 8
 #define BALL_HEIGHT 8
 

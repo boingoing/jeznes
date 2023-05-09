@@ -83,7 +83,7 @@ int main(void) {
       // Clear all sprites from the sprite buffer.
       oam_clear();
 
-      for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); temp_byte_1++) {
+      for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
         // Respond to player gamepad.
         flip_player_orientation(temp_byte_1);
         start_line(temp_byte_1);
@@ -111,7 +111,9 @@ int main(void) {
 #if ENABLE_CHEATS
       if (enable_ball_line_collisions != FALSE)
 #endif  // ENABLE_CHEATS
+      {
         check_ball_line_collisions();
+      }
 
       // Draw the ball sprites.
       draw_balls();
@@ -209,14 +211,14 @@ void init_balls(void) {
                       [get_playfield_pattern()] +
         playfield_pattern_valid_ball_start_pixel_y[get_playfield_pattern()];
     if (rand2()) {
-      balls[temp_byte_1].x_velocity = BALL_SPEED;
+      balls[temp_byte_1].x_velocity = BALL_SPEED_POSITIVE;
     } else {
-      balls[temp_byte_1].x_velocity = -BALL_SPEED;
+      balls[temp_byte_1].x_velocity = BALL_SPEED_NEGATIVE;
     }
     if (rand2()) {
-      balls[temp_byte_1].y_velocity = BALL_SPEED;
+      balls[temp_byte_1].y_velocity = BALL_SPEED_POSITIVE;
     } else {
-      balls[temp_byte_1].y_velocity = -BALL_SPEED;
+      balls[temp_byte_1].y_velocity = BALL_SPEED_NEGATIVE;
     }
   }
 }
@@ -677,9 +679,6 @@ void move_player(unsigned char player_index) {
   }
 }
 
-#define set_temp_ptr(p) (temp_ptr_1 = (p))
-#define get_temp_ptr(type) ((type*)temp_ptr_1)
-
 void move_balls(void) {
   for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
     set_temp_ptr(&balls[temp_byte_1]);
@@ -687,29 +686,18 @@ void move_balls(void) {
   }
 }
 
-#define get_x_velocity() (temp_signed_byte_1)
-#define set_x_velocity(a) (temp_signed_byte_1 = (a))
-#define get_y_velocity() (temp_signed_byte_2)
-#define set_y_velocity(a) (temp_signed_byte_2 = (a))
-#define get_x_candidate_pixel_coord() (temp_byte_2)
-#define set_x_candidate_pixel_coord(a) (temp_byte_2 = (a))
-#define get_y_candidate_pixel_coord() (temp_byte_3)
-#define set_y_candidate_pixel_coord(a) (temp_byte_3 = (a))
-
-#define playfield_tile_from_pixel_coords(x,y) (((x) >> 3) + (((y) >> 3) * 32) - PLAYFIELD_FIRST_TILE_INDEX)
-
 void move_ball() {
   // Consider moving right or left first.
   set_x_velocity(get_temp_ptr(struct Ball)->x_velocity);
   set_x_candidate_pixel_coord(get_temp_ptr(struct Ball)->x + get_x_velocity());
-  temp_byte_4 = get_x_candidate_pixel_coord();
+  set_x_compare_pixel_coord(get_x_candidate_pixel_coord());
   // Moving right
-  if (get_x_velocity() > 0) {
+  if (get_x_velocity() == BALL_SPEED_POSITIVE) {
     // Balls are 8 pixels wide, compare to the right-edge.
-    temp_byte_4 += 8;
+    set_x_compare_pixel_coord(get_x_compare_pixel_coord() + BALL_WIDTH);
   }
   // Find x-direction candidate playfield tile index.
-  temp_int_1 = playfield_tile_from_pixel_coords(temp_byte_4, get_temp_ptr(struct Ball)->y);
+  temp_int_1 = playfield_tile_from_pixel_coords(get_x_compare_pixel_coord(), get_temp_ptr(struct Ball)->y);
   // Bounce off a left or right wall tile.
   if (playfield[temp_int_1] == PLAYFIELD_WALL) {
     // Reverse x-direction.
@@ -724,14 +712,14 @@ void move_ball() {
   // Consider moving up or down next (we already moved right/left).
   set_y_velocity(get_temp_ptr(struct Ball)->y_velocity);
   set_y_candidate_pixel_coord(get_temp_ptr(struct Ball)->y + get_y_velocity());
-  temp_byte_4 = get_y_candidate_pixel_coord();
+  set_y_compare_pixel_coord(get_y_candidate_pixel_coord());
   // Moving down
-  if (get_y_velocity() > 0) {
+  if (get_y_velocity() == BALL_SPEED_POSITIVE) {
     // Balls are 8 pixels tall, compare to the bottom edge.
-    temp_byte_4 += 8;
+    set_y_compare_pixel_coord(get_y_compare_pixel_coord() + BALL_HEIGHT);
   }
   // Find y-direction candidate playfield tile index.
-  temp_int_2 = playfield_tile_from_pixel_coords(get_x_candidate_pixel_coord(), temp_byte_4);
+  temp_int_2 = playfield_tile_from_pixel_coords(get_x_candidate_pixel_coord(), get_y_compare_pixel_coord());
   // Bounce off a top or bottom wall tile.
   if (playfield[temp_int_2] == PLAYFIELD_WALL) {
     // Reverse y-direction.
@@ -1174,7 +1162,9 @@ void check_ball_line_collisions(void) {
 #if ENABLE_CHEATS
     if (enable_losing_lives == TRUE)
 #endif  // ENABLE_CHEATS
+    {
       lives_count--;
+    }
 
     if (lives_count == 0) {
       // We ran out of lives, move to game over state.
