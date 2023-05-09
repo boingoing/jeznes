@@ -4,6 +4,8 @@ set(CMAKE_TOOLCHAIN_FILE toolchain/cc65-toolchain.cmake)
 
 project(jeznes C ASM)
 
+include_directories (${PROJECT_SOURCE_DIR}/src)
+
 set (SOURCES
   ${PROJECT_SOURCE_DIR}/src/crt0.s
   ${PROJECT_SOURCE_DIR}/src/jeznes.c)

@@ -7,19 +7,20 @@
 #ifndef __JEZNES_FLOOD_FILL_H__
 #define __JEZNES_FLOOD_FILL_H__
 
-#define playfield_index_move_up(i) ((i) - 32)
+#define playfield_index_move_up(i) ((i)-32)
 #define playfield_index_move_down(i) ((i) + 32)
-#define playfield_index_move_left(i) ((i) - 1)
+#define playfield_index_move_left(i) ((i)-1)
 #define playfield_index_move_right(i) ((i) + 1)
 
-#define inside(i) ((playfield[(i)] & (PLAYFIELD_WALL | PLAYFIELD_BITMASK_MARK)) == 0)
+#define inside(i) \
+  ((playfield[(i)] & (PLAYFIELD_WALL | PLAYFIELD_BITMASK_MARK)) == 0)
 
 enum {
-    MOVE_DIRECTION_RIGHT,
-    MOVE_DIRECTION_DOWN,
-    MOVE_DIRECTION_LEFT,
-    MOVE_DIRECTION_UP,
-    MOVE_DIRECTION_DEFAULT = MOVE_DIRECTION_RIGHT
+  MOVE_DIRECTION_RIGHT,
+  MOVE_DIRECTION_DOWN,
+  MOVE_DIRECTION_LEFT,
+  MOVE_DIRECTION_UP,
+  MOVE_DIRECTION_DEFAULT = MOVE_DIRECTION_RIGHT
 };
 
 #define get_cur() (temp_int_1)

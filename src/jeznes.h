@@ -13,7 +13,7 @@ void main(void);
 
 // Initializes the locations and directions of the active balls on the valid
 // ball region of the playfield pattern defined by |current_playfield_pattern|.
-void init_balls();
+void init_balls(void);
 
 void init_title(void);
 void title_change_mode(void);
@@ -35,7 +35,7 @@ void reset_playfield(void);
 
 // Loads the playfield pattern defined by |current_playfield_pattern| into the
 // in-memory playfield.
-void load_playfield();
+void load_playfield(void);
 
 void change_to_game_over(void);
 void game_over_change_mode(void);
@@ -88,6 +88,8 @@ void reset_playfield_mark_bit(void);
 unsigned char __fastcall__ update_cleared_playfield_tiles(void);
 void line_completed(void);
 
-void __fastcall__ set_playfield_tile(unsigned int tile_index, unsigned char playfield_tile_type, unsigned char playfield_bg_tile);
+void __fastcall__ set_playfield_tile(unsigned int tile_index,
+                                     unsigned char playfield_tile_type,
+                                     unsigned char playfield_bg_tile);
 
 #endif  // __JEZNES_JEZNES_H__
