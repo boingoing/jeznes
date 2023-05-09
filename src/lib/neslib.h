@@ -15,7 +15,7 @@
 // previous versions were created since mid-2011, there were many updates
 
 
-
+// NOLINTBEGIN
 
 
 //set bg and spr palettes, data is 32 bytes array
@@ -317,3 +317,4 @@ void __fastcall__ delay(unsigned char frames);
 #define MSB(x)			(((x)>>8))
 #define LSB(x)			(((x)&0xff))
 
+// NOLINTEND

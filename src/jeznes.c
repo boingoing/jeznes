@@ -28,7 +28,7 @@
 // locations in a header? Will this affect performance?
 #include "flood_fill.c"
 
-void main(void) {
+int main(void) {
 #if ENABLE_CHEATS
   init_cheat_flags();
 #endif  // ENABLE_CHEATS
@@ -194,6 +194,8 @@ void main(void) {
     gray_line();
 #endif
   }
+
+  return 0;
 }
 
 void init_balls(void) {
@@ -206,12 +208,12 @@ void init_balls(void) {
         rand8() % playfield_pattern_valid_ball_height_in_pixels
                       [get_playfield_pattern()] +
         playfield_pattern_valid_ball_start_pixel_y[get_playfield_pattern()];
-    if (rand8() > 0x7f) {
+    if (rand2()) {
       balls[temp_byte_1].x_velocity = BALL_SPEED;
     } else {
       balls[temp_byte_1].x_velocity = -BALL_SPEED;
     }
-    if (rand8() > 0x7f) {
+    if (rand2()) {
       balls[temp_byte_1].y_velocity = BALL_SPEED;
     } else {
       balls[temp_byte_1].y_velocity = -BALL_SPEED;
@@ -274,10 +276,10 @@ unsigned char title_press_start(void) {
     pal_bright(4);
 
     return TRUE;
-  } else {
-    unset_player_is_pause_pressed(0);
   }
 
+  // If the button was pressed, we returned above.
+  unset_player_is_pause_pressed(0);
   return FALSE;
 }
 
@@ -350,9 +352,6 @@ void title_change_mode(void) {
 }
 
 void init_game(void) {
-  static unsigned char player_default_x[2] = {0x56, 0x96};
-  static unsigned char player_default_y[2] = {0x46, 0x86};
-
   // Seed the random number generator - it's based on frame count.
   seed_rng();
 
@@ -367,8 +366,8 @@ void init_game(void) {
 
   // Player initial positions.
   for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
-    players[temp_byte_1].x = player_default_x[temp_byte_1];
-    players[temp_byte_1].y = player_default_y[temp_byte_1];
+    players[temp_byte_1].x = playfield_pattern_player_default_x[temp_byte_1];
+    players[temp_byte_1].y = playfield_pattern_player_default_y[temp_byte_1];
     update_nearest_tile(temp_byte_1);
 
     set_player_orientation_flag(temp_byte_1, ORIENTATION_HORIZ);
@@ -566,10 +565,10 @@ unsigned char game_over_press_start(void) {
     }
 
     return TRUE;
-  } else {
-    unset_player_is_pause_pressed(0);
   }
 
+  // If the button was pressed, we returned above.
+  unset_player_is_pause_pressed(0);
   return FALSE;
 }
 
@@ -598,10 +597,10 @@ unsigned char pause_press_start(unsigned char player_index) {
     }
 
     return TRUE;
-  } else {
-    unset_player_is_pause_pressed(player_index);
   }
 
+  // If the button was pressed, we returned above.
+  unset_player_is_pause_pressed(player_index);
   return FALSE;
 }
 
@@ -678,76 +677,87 @@ void move_player(unsigned char player_index) {
   }
 }
 
+#define set_temp_ptr(p) (temp_ptr_1 = (p))
+#define get_temp_ptr(type) ((type*)temp_ptr_1)
+
 void move_balls(void) {
-  for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); temp_byte_1++) {
-    move_ball(temp_byte_1);
+  for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
+    set_temp_ptr(&balls[temp_byte_1]);
+    move_ball();
   }
 }
 
-void move_ball(unsigned char ball_index) {
-  temp_signed_byte_1 = balls[ball_index].x_velocity;
-  temp_byte_2 = balls[ball_index].x;
-  temp_byte_2 += temp_signed_byte_1;
+#define get_x_velocity() (temp_signed_byte_1)
+#define set_x_velocity(a) (temp_signed_byte_1 = (a))
+#define get_y_velocity() (temp_signed_byte_2)
+#define set_y_velocity(a) (temp_signed_byte_2 = (a))
+#define get_x_candidate_pixel_coord() (temp_byte_2)
+#define set_x_candidate_pixel_coord(a) (temp_byte_2 = (a))
+#define get_y_candidate_pixel_coord() (temp_byte_3)
+#define set_y_candidate_pixel_coord(a) (temp_byte_3 = (a))
 
-  // y tile coord
-  temp_byte_5 = balls[ball_index].y >> 3;
-  if (temp_signed_byte_1 > 0) {
-    // Moving right
-    temp_byte_4 = (temp_byte_2 + 7) >> 3;
-    temp_int_1 = temp_byte_4 + 32 * temp_byte_5 - PLAYFIELD_FIRST_TILE_INDEX;
-    temp_byte_4 = (temp_byte_4 << 3) - 8;
-  } else {
-    // Moving left
-    temp_byte_4 = temp_byte_2 >> 3;
-    temp_int_1 = temp_byte_4 + 32 * temp_byte_5 - PLAYFIELD_FIRST_TILE_INDEX;
-    temp_byte_4 = (temp_byte_4 << 3) + 8;
+#define playfield_tile_from_pixel_coords(x,y) (((x) >> 3) + (((y) >> 3) * 32) - PLAYFIELD_FIRST_TILE_INDEX)
+
+void move_ball() {
+  // Consider moving right or left first.
+  set_x_velocity(get_temp_ptr(struct Ball)->x_velocity);
+  set_x_candidate_pixel_coord(get_temp_ptr(struct Ball)->x + get_x_velocity());
+  temp_byte_4 = get_x_candidate_pixel_coord();
+  // Moving right
+  if (get_x_velocity() > 0) {
+    // Balls are 8 pixels wide, compare to the right-edge.
+    temp_byte_4 += 8;
   }
-  // Bounce off a wall tile
+  // Find x-direction candidate playfield tile index.
+  temp_int_1 = playfield_tile_from_pixel_coords(temp_byte_4, get_temp_ptr(struct Ball)->y);
+  // Bounce off a left or right wall tile.
   if (playfield[temp_int_1] == PLAYFIELD_WALL) {
-    balls[ball_index].x_velocity *= -1;
-    temp_byte_2 = temp_byte_4;
+    // Reverse x-direction.
+    set_x_velocity(get_x_velocity() * -1);
+    // Move the ball such that it's in the non-wall tile opposite the candidate.
+    set_x_candidate_pixel_coord(get_temp_ptr(struct Ball)->x + get_x_velocity());
+    // Update the ball velocity.
+    get_temp_ptr(struct Ball)->x_velocity = get_x_velocity();
   }
-  balls[ball_index].x = temp_byte_2;
+  get_temp_ptr(struct Ball)->x = get_x_candidate_pixel_coord();
 
-  temp_signed_byte_1 = balls[ball_index].y_velocity;
-  temp_byte_3 = balls[ball_index].y;
-  temp_byte_3 += temp_signed_byte_1;
-
-  // x tile coord
-  temp_byte_5 = balls[ball_index].x >> 3;
-  if (temp_signed_byte_1 > 0) {
-    // Moving down
-    temp_byte_4 = (temp_byte_3 + 7) >> 3;
-    temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
-    temp_byte_4 = (temp_byte_4 << 3) - 8;
-  } else {
-    // Moving up
-    temp_byte_4 = temp_byte_3 >> 3;
-    temp_int_1 = temp_byte_5 + 32 * temp_byte_4 - PLAYFIELD_FIRST_TILE_INDEX;
-    temp_byte_4 = (temp_byte_4 << 3) + 8;
+  // Consider moving up or down next (we already moved right/left).
+  set_y_velocity(get_temp_ptr(struct Ball)->y_velocity);
+  set_y_candidate_pixel_coord(get_temp_ptr(struct Ball)->y + get_y_velocity());
+  temp_byte_4 = get_y_candidate_pixel_coord();
+  // Moving down
+  if (get_y_velocity() > 0) {
+    // Balls are 8 pixels tall, compare to the bottom edge.
+    temp_byte_4 += 8;
   }
-  // Bounce off a wall tile
-  if (playfield[temp_int_1] == PLAYFIELD_WALL) {
-    balls[ball_index].y_velocity *= -1;
-    temp_byte_3 = temp_byte_4;
+  // Find y-direction candidate playfield tile index.
+  temp_int_2 = playfield_tile_from_pixel_coords(get_x_candidate_pixel_coord(), temp_byte_4);
+  // Bounce off a top or bottom wall tile.
+  if (playfield[temp_int_2] == PLAYFIELD_WALL) {
+    // Reverse y-direction.
+    set_y_velocity(get_y_velocity() * -1);
+    // Move the ball such that it's in the non-wall tile opposite the candidate.
+    set_y_candidate_pixel_coord(get_temp_ptr(struct Ball)->y + get_y_velocity());
+    // Update the ball velocity.
+    get_temp_ptr(struct Ball)->y_velocity = get_y_velocity();
   }
-  balls[ball_index].y = temp_byte_3;
+  get_temp_ptr(struct Ball)->y = get_y_candidate_pixel_coord();
 
-  // Update nearest playfield tile
-  temp_byte_2 = (temp_byte_2 + 4) >> 3;
-  temp_byte_3 = (temp_byte_3 + 4) >> 3;
-  balls[ball_index].nearest_playfield_tile =
-      temp_byte_2 + (temp_byte_3 << 5) - PLAYFIELD_FIRST_TILE_INDEX;
+  // Update nearest playfield tile - center of the ball.
+  temp_byte_2 = get_x_candidate_pixel_coord() + 4;
+  temp_byte_3 = get_y_candidate_pixel_coord() + 4;
+  get_temp_ptr(struct Ball)->nearest_playfield_tile = playfield_tile_from_pixel_coords(temp_byte_2, temp_byte_3);
 }
 
 void draw_balls(void) {
   temp_byte_2 = get_frame_count();
   temp_byte_2 = (temp_byte_2 >> 2) % 18 + TILE_INDEX_BALL_BASE;
   for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
-    oam_spr(balls[temp_byte_1].x, balls[temp_byte_1].y, temp_byte_2, 0);
+    set_temp_ptr(&balls[temp_byte_1]);
+    oam_spr(get_temp_ptr(struct Ball)->x, get_temp_ptr(struct Ball)->y, temp_byte_2, 0);
 
 #if DRAW_BALL_NEAREST_TILE_HIGHLIGHT
-    temp_int_1 = balls[temp_byte_1].nearest_playfield_tile;
+    temp_int_1 = get_temp_ptr(struct Ball)->nearest_playfield_tile;
     oam_spr(playfield_index_pixel_coord_x(temp_int_1),
             playfield_index_pixel_coord_y(temp_int_1) - 1,
             TILE_INDEX_TILE_HIGHLIGHT, 1);

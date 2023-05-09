@@ -132,6 +132,20 @@ const unsigned char playfield_pattern_valid_ball_height_in_pixels[] = {
   0x90
 };
 
+// Default x-coord in pixel-space of the player sprites (1 and 2).
+// TODO(boingoing): Per-playfield if needed.
+const unsigned char playfield_pattern_player_default_x[2] = {
+  0x56,
+  0x96
+};
+
+// Default y-coord in pixel-space of the player sprites (1 and 2).
+// TODO(boingoing): Per-playfield if needed.
+const unsigned char playfield_pattern_player_default_y[2] = {
+  0x46,
+  0x86
+};
+
 // clang-format on
 
 #endif  // __JEZNES_PLAYFIELD_H__

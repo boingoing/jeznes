@@ -8,6 +8,7 @@
 // you shouldn't have to turn the screen off...
 // allowing us to make smooth scrolling games.
 
+// NOLINTBEGIN
 
 void set_vram_buffer(void);
 // sets the vram update to point to the vram_buffer. VRAM_BUF defined in crt0.s
@@ -165,4 +166,4 @@ void gray_line(void);
 void seed_rng(void);
 // get from the frame count. You can use a button (start on title screen) to trigger
 
-
+// NOLINTEND
