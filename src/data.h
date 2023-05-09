@@ -24,6 +24,9 @@
 // Note: Make sure that functions in the same stack don't reuse local temps
 //       by abstracting the usage into these macros.
 
+#define set_temp_ptr(p) (temp_ptr_1 = (p))
+#define get_temp_ptr(type) ((type*)temp_ptr_1)
+
 #define get_playfield_index() (temp_int_3)
 #define set_playfield_index(a) (temp_int_3 = (a))
 #define inc_playfield_index() (++temp_int_3)
@@ -52,5 +55,18 @@
 #define set_negative_line_segment_origin(a) (temp_int_2 = (a))
 #define get_positive_line_segment_origin() (temp_int_2)
 #define set_positive_line_segment_origin(a) (temp_int_2 = (a))
+
+#define get_x_velocity() (temp_signed_byte_1)
+#define set_x_velocity(a) (temp_signed_byte_1 = (a))
+#define get_y_velocity() (temp_signed_byte_2)
+#define set_y_velocity(a) (temp_signed_byte_2 = (a))
+#define get_x_candidate_pixel_coord() (temp_byte_2)
+#define set_x_candidate_pixel_coord(a) (temp_byte_2 = (a))
+#define get_y_candidate_pixel_coord() (temp_byte_3)
+#define set_y_candidate_pixel_coord(a) (temp_byte_3 = (a))
+#define get_x_compare_pixel_coord() (temp_byte_4)
+#define set_x_compare_pixel_coord(a) (temp_byte_4 = (a))
+#define get_y_compare_pixel_coord() (temp_byte_4)
+#define set_y_compare_pixel_coord(a) (temp_byte_4 = (a))
 
 #endif  // __JEZNES_DATA_H__

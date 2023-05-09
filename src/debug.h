@@ -9,7 +9,7 @@
 
 // These macros enable various debugging features and should probably be turned
 // off before release.
-#define DEBUG 1
+#define DEBUG 0
 
 // DEBUG macro gates all the debug features.
 #if DEBUG
