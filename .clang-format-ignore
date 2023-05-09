@@ -1,0 +1,6 @@
+# Skip files in lib
+src/lib/*.*
+
+# Skip ASM files
+src/*.s
+src/**/*.s

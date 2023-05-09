@@ -10,8 +10,10 @@ Checks: 'bugprone*,
          llvm*,
          -*-avoid-c-arrays,
          -bugprone-easily-swappable-parameters,
+         -bugprone-implicit-widening-of-multiplication-result,
          -bugprone-narrowing-conversions,
          -bugprone-reserved-identifier,
+         -bugprone-suspicious-include,
          -cert-dcl37-c,
          -cert-dcl51-cpp,
          -cert-err58-cpp,
@@ -29,4 +31,4 @@ Checks: 'bugprone*,
          -readability-magic-numbers,
          -readability-simplify-boolean-expr'
 WarningsAsErrors: '*'
-HeaderFilterRegex: '.'
+HeaderFilterRegex: '.*'
