@@ -18,6 +18,7 @@
 #include "flood_fill.h"
 #include "lib/nesdoug.h"
 #include "lib/neslib.h"
+#include "scoring.h"
 #include "types.h"
 #include "zeropage.h"
 
@@ -27,6 +28,7 @@
 // TODO(boingoing): Fix this somehow. Define the memory in asm and the named
 // locations in a header? Will this affect performance?
 #include "flood_fill.c"
+#include "scoring.c"
 
 int main(void) {
 #if ENABLE_CHEATS
@@ -361,6 +363,7 @@ void init_game(void) {
   game_state = GAME_STATE_PLAYING;
   current_level = 1;
   lives_count = STARTING_LIVES_COUNT;
+  score = 0;
   set_ball_count(current_level + 1);
 
   // Set the current playfield pattern.
@@ -444,6 +447,9 @@ void do_level_down(void) {
 }
 
 void do_level_up(void) {
+  // Compute bonus gained from current level.
+  add_score_for_level_up();
+
   // Actually level up the player.
   current_level++;
   lives_count++;
@@ -466,6 +472,13 @@ void do_level_up(void) {
 
   // Reset state to playing the game.
   game_state = GAME_STATE_PLAYING;
+}
+
+void game_over_update_hud(void) {
+  write_two_digit_number_to_bg(current_level, GAME_OVER_LEVEL_DISPLAY_TILE_X,
+                               GAME_OVER_LEVEL_DISPLAY_TILE_Y);
+  write_score_to_bg(GAME_OVER_SCORE_DISPLAY_TILE_X,
+                    GAME_OVER_SCORE_DISPLAY_TILE_Y);
 }
 
 void change_to_game_over(void) {
@@ -494,6 +507,9 @@ void change_to_game_over(void) {
 
   // Load the playfield pattern which we show on the game over screen.
   load_playfield();
+
+  // Write the score values to the game over screen.
+  game_over_update_hud();
 
   // Default to the Retry option.
   set_game_over_mode(GAME_OVER_RETRY);
@@ -531,6 +547,10 @@ unsigned char game_over_press_start(void) {
     if (get_game_over_mode() == GAME_OVER_RETRY) {
       // Reset our lives count back to the default.
       lives_count = STARTING_LIVES_COUNT;
+
+      // Reset the score to zero.
+      // TODO(boingoing): Should we leave this alone?
+      score = 0;
 
       // Reset the count of balls for the playfield.
       set_ball_count(current_level + 1);
@@ -614,6 +634,30 @@ void write_two_digit_number_to_bg(unsigned char num, unsigned char tile_x,
                   NTADR_A(tile_x + 1, tile_y));
 }
 
+void write_score_to_bg(unsigned char tile_x, unsigned char tile_y) {
+  temp_int_1 = score;
+  temp_byte_1 = temp_int_1 / 10000;
+  one_vram_buffer(get_tile_alphanumeric_number(temp_byte_1),
+                  NTADR_A(tile_x, tile_y));
+
+  temp_int_1 %= 10000;
+  temp_byte_1 = temp_int_1 / 1000;
+  one_vram_buffer(get_tile_alphanumeric_number(temp_byte_1),
+                  NTADR_A(tile_x + 1, tile_y));
+
+  temp_int_1 %= 1000;
+  temp_byte_1 = temp_int_1 / 100;
+  one_vram_buffer(get_tile_alphanumeric_number(temp_byte_1),
+                  NTADR_A(tile_x + 2, tile_y));
+
+  temp_int_1 %= 100;
+  temp_byte_1 = temp_int_1 / 10;
+  one_vram_buffer(get_tile_alphanumeric_number(temp_byte_1),
+                  NTADR_A(tile_x + 3, tile_y));
+  one_vram_buffer(get_tile_alphanumeric_number(temp_int_1 % 10),
+                  NTADR_A(tile_x + 4, tile_y));
+}
+
 void update_hud(void) {
   write_two_digit_number_to_bg(current_level, HUD_LEVEL_DISPLAY_TILE_X,
                                HUD_LEVEL_DISPLAY_TILE_Y);
@@ -629,6 +673,8 @@ void update_hud(void) {
   write_two_digit_number_to_bg(cleared_tile_percentage,
                                HUD_CLEAR_DISPLAY_TILE_X,
                                HUD_CLEAR_DISPLAY_TILE_Y);
+
+  write_score_to_bg(HUD_SCORE_DISPLAY_TILE_X, HUD_SCORE_DISPLAY_TILE_Y);
 }
 
 void move_player(unsigned char player_index) {
@@ -869,6 +915,8 @@ void update_line(unsigned char line_index) {
           cleared_tile_count++;
           set_playfield_tile(get_current_playfield_index(), PLAYFIELD_WALL,
                              TILE_INDEX_PLAYFIELD_CLEARED);
+          add_score_for_cleared_tiles(1);
+
           // Stop when we reach the origin.
           if (get_current_playfield_index() ==
               get_negative_line_segment_origin()) {
@@ -930,6 +978,8 @@ void update_line(unsigned char line_index) {
           cleared_tile_count++;
           set_playfield_tile(get_current_playfield_index(), PLAYFIELD_WALL,
                              TILE_INDEX_PLAYFIELD_CLEARED);
+          add_score_for_cleared_tiles(1);
+
           // Stop when we reach the origin.
           if (get_current_playfield_index() ==
               get_positive_line_segment_origin()) {
@@ -1292,10 +1342,12 @@ unsigned char update_cleared_playfield_tiles(void) {
 
     // We can only queue about 40 tile updates per v-blank.
     if (temp_byte_3 >= MAX_TILE_UPDATES_PER_FRAME) {
+      add_score_for_cleared_tiles(temp_byte_3);
       return FALSE;
     }
   }
 
+  add_score_for_cleared_tiles(temp_byte_3);
   return TRUE;
 }
 

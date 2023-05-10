@@ -13,6 +13,12 @@
 #define GAME_OVER_CURSOR_QUIT_X 0x70
 #define GAME_OVER_CURSOR_QUIT_Y 0xd0
 
+// Game over screen stat display locations in tile coords.
+#define GAME_OVER_LEVEL_DISPLAY_TILE_X 11
+#define GAME_OVER_LEVEL_DISPLAY_TILE_Y 9
+#define GAME_OVER_SCORE_DISPLAY_TILE_X 12
+#define GAME_OVER_SCORE_DISPLAY_TILE_Y 11
+
 // How many balls should bounce around inside the playfield section of the game
 // over screen.
 #define GAME_OVER_SCREEN_BALL_COUNT 2
