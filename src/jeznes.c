@@ -1291,7 +1291,7 @@ unsigned char update_cleared_playfield_tiles(void) {
                        TILE_INDEX_PLAYFIELD_CLEARED);
 
     // We can only queue about 40 tile updates per v-blank.
-    if (temp_byte_3 >= 40) {
+    if (temp_byte_3 >= MAX_TILE_UPDATES_PER_FRAME) {
       return FALSE;
     }
   }
