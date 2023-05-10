@@ -116,10 +116,10 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
   // (ie: it is not inside).
   // Note: This function does not do bounds checking, we assume the playfield
   //       has a border of wall tiles on all sides.
-  temp_int_4 = get_front();
-  while (inside(temp_int_4)) {
-    set_cur(temp_int_4);
-    temp_int_4 = get_front();
+  set_temp_forward_iterator(get_front());
+  while (inside(get_temp_forward_iterator())) {
+    set_cur(get_temp_forward_iterator());
+    set_temp_forward_iterator(get_front());
   }
 
   goto PAINTER_ALGORITHM_START;
@@ -143,21 +143,21 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
 
   PAINTER_ALGORITHM_START:
     // Count number of non-diagonally adjacent marked playfield tiles.
-    temp_byte_6 = 0;
+    set_adjacent_marked_tile_count(0);
     if (!inside(playfield_index_move_up(get_cur()))) {
-      temp_byte_6++;
+      inc_adjacent_marked_tile_count();
     }
     if (!inside(playfield_index_move_down(get_cur()))) {
-      temp_byte_6++;
+      inc_adjacent_marked_tile_count();
     }
     if (!inside(playfield_index_move_left(get_cur()))) {
-      temp_byte_6++;
+      inc_adjacent_marked_tile_count();
     }
     if (!inside(playfield_index_move_right(get_cur()))) {
-      temp_byte_6++;
+      inc_adjacent_marked_tile_count();
     }
 
-    if (temp_byte_6 != 4) {
+    if (get_adjacent_marked_tile_count() != 4) {
       do {
         // Turn right
         set_cur_dir((get_cur_dir() + 1) % 4);
@@ -168,7 +168,7 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
       } while (!inside(get_front()));
     }
 
-    switch (temp_byte_6) {
+    switch (get_adjacent_marked_tile_count()) {
       case 1:
         if (get_backtrack() == TRUE) {
           set_findloop(TRUE);
