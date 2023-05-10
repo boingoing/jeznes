@@ -38,7 +38,8 @@ unsigned char game_state;
 // Current level when the game is in playing state.
 unsigned char current_level;
 
-// Count of balls displayed on the playfield section of whichever screen is loaded.
+// Count of balls displayed on the playfield section of whichever screen is
+// loaded.
 unsigned char current_ball_count;
 
 // Which playfield pattern is currently being displayed.
@@ -54,13 +55,15 @@ unsigned char lives_count;
 // Note: This is calculated in update_hud() only because it's expensive.
 unsigned char cleared_tile_percentage;
 
-// How many playfield tiles have been cleared. This is used to compute the percentage |cleared_tile_percentage|.
+// How many playfield tiles have been cleared. This is used to compute the
+// percentage |cleared_tile_percentage|.
 unsigned int cleared_tile_count;
 
 // Current score counter.
 unsigned int score;
 
-// Below temps may be used anywhere and should be prefered over function-local storage or passing arguments to function calls.
+// Below temps may be used anywhere and should be prefered over function-local
+// storage or passing arguments to function calls.
 unsigned char temp_byte_1;
 unsigned char temp_byte_2;
 unsigned char temp_byte_3;

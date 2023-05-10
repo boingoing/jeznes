@@ -475,8 +475,10 @@ void do_level_up(void) {
 }
 
 void game_over_update_hud(void) {
-  write_two_digit_number_to_bg(current_level, GAME_OVER_LEVEL_DISPLAY_TILE_X, GAME_OVER_LEVEL_DISPLAY_TILE_Y);
-  write_score_to_bg(GAME_OVER_SCORE_DISPLAY_TILE_X, GAME_OVER_SCORE_DISPLAY_TILE_Y);
+  write_two_digit_number_to_bg(current_level, GAME_OVER_LEVEL_DISPLAY_TILE_X,
+                               GAME_OVER_LEVEL_DISPLAY_TILE_Y);
+  write_score_to_bg(GAME_OVER_SCORE_DISPLAY_TILE_X,
+                    GAME_OVER_SCORE_DISPLAY_TILE_Y);
 }
 
 void change_to_game_over(void) {
