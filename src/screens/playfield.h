@@ -33,6 +33,8 @@
 #define HUD_CLEAR_DISPLAY_TILE_Y 24
 #define HUD_TARGET_DISPLAY_TILE_X 18
 #define HUD_TARGET_DISPLAY_TILE_Y 25
+#define HUD_SCORE_DISPLAY_TILE_X 25
+#define HUD_SCORE_DISPLAY_TILE_Y 25
 
 // Calculate the playfield tile index from (x,y) pixel coords.
 #define playfield_tile_from_pixel_coords(x, y) \

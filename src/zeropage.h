@@ -17,7 +17,7 @@
 // clang-format on
 
 // Placeholder to track how many bytes are unused in the zeropage.
-unsigned char unused_zp_bytes[10];
+unsigned char unused_zp_bytes[8];
 
 // Controller state storage.
 unsigned char pads[MAX_PLAYERS];
@@ -56,6 +56,9 @@ unsigned char cleared_tile_percentage;
 
 // How many playfield tiles have been cleared. This is used to compute the percentage |cleared_tile_percentage|.
 unsigned int cleared_tile_count;
+
+// Current score counter.
+unsigned int score;
 
 // Below temps may be used anywhere and should be prefered over function-local storage or passing arguments to function calls.
 unsigned char temp_byte_1;

@@ -42,6 +42,9 @@ void load_playfield(void);
 void change_to_game_over(void);
 void game_over_change_mode(void);
 
+// Draw the score, level, etc stats on the game over screen.
+void game_over_update_hud(void);
+
 // Handle player start button presses for the game over screen.
 // Returns TRUE if the player did press start.
 unsigned char game_over_press_start(void);
@@ -95,5 +98,10 @@ void line_completed(void);
 void set_playfield_tile(unsigned int tile_index,
                         unsigned char playfield_tile_type,
                         unsigned char playfield_bg_tile);
+
+void write_two_digit_number_to_bg(unsigned char num, unsigned char tile_x,
+                                  unsigned char tile_y);
+
+void write_score_to_bg(unsigned char tile_x, unsigned char tile_y);
 
 #endif  // __JEZNES_JEZNES_H__
