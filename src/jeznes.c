@@ -1286,6 +1286,9 @@ void line_completed(void) {
     compute_playfield_mark_bit_one_ball(i);
   }
 
+  // Grant score for clearing a line segment.
+  add_score_for_cleared_line();
+
   // Reset |playfield_index|, set the game state to updating the playfield,
   // which will cause us to call update_cleared_playfield_tiles() from the
   // beginning next frame. If we need to call it again after that, we will call
