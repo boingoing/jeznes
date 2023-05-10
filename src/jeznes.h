@@ -93,7 +93,7 @@ unsigned char update_cleared_playfield_tiles(void);
 void line_completed(void);
 
 void set_playfield_tile(unsigned int tile_index,
-                                     unsigned char playfield_tile_type,
-                                     unsigned char playfield_bg_tile);
+                        unsigned char playfield_tile_type,
+                        unsigned char playfield_bg_tile);
 
 #endif  // __JEZNES_JEZNES_H__
