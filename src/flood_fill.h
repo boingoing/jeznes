@@ -44,6 +44,13 @@ enum {
 #define get_mark2_null() (temp_signed_byte_2)
 #define set_mark2_null(a) (temp_signed_byte_2 = (a))
 
+#define get_temp_forward_iterator() (temp_int_2)
+#define set_temp_forward_iterator(a) (temp_int_2 = (a))
+
+#define set_adjacent_marked_tile_count(a) (temp_byte_6 = (a))
+#define get_adjacent_marked_tile_count() (temp_byte_6)
+#define inc_adjacent_marked_tile_count() (++temp_byte_6)
+
 // Uses a constant-memory usage implementation of the painters algorithm to
 // walk the playfield starting at the playfield tile where |ball_index| is
 // currently located. Each reachable playfield tile is marked until we run
