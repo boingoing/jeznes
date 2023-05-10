@@ -697,13 +697,15 @@ void move_ball() {
     set_x_compare_pixel_coord(get_x_compare_pixel_coord() + BALL_WIDTH);
   }
   // Find x-direction candidate playfield tile index.
-  temp_int_1 = playfield_tile_from_pixel_coords(get_x_compare_pixel_coord(), get_temp_ptr(struct Ball)->y);
+  temp_int_1 = playfield_tile_from_pixel_coords(get_x_compare_pixel_coord(),
+                                                get_temp_ptr(struct Ball)->y);
   // Bounce off a left or right wall tile.
   if (playfield[temp_int_1] == PLAYFIELD_WALL) {
     // Reverse x-direction.
     set_x_velocity(get_x_velocity() * -1);
     // Move the ball such that it's in the non-wall tile opposite the candidate.
-    set_x_candidate_pixel_coord(get_temp_ptr(struct Ball)->x + get_x_velocity());
+    set_x_candidate_pixel_coord(get_temp_ptr(struct Ball)->x +
+                                get_x_velocity());
     // Update the ball velocity.
     get_temp_ptr(struct Ball)->x_velocity = get_x_velocity();
   }
@@ -719,13 +721,15 @@ void move_ball() {
     set_y_compare_pixel_coord(get_y_compare_pixel_coord() + BALL_HEIGHT);
   }
   // Find y-direction candidate playfield tile index.
-  temp_int_2 = playfield_tile_from_pixel_coords(get_x_candidate_pixel_coord(), get_y_compare_pixel_coord());
+  temp_int_2 = playfield_tile_from_pixel_coords(get_x_candidate_pixel_coord(),
+                                                get_y_compare_pixel_coord());
   // Bounce off a top or bottom wall tile.
   if (playfield[temp_int_2] == PLAYFIELD_WALL) {
     // Reverse y-direction.
     set_y_velocity(get_y_velocity() * -1);
     // Move the ball such that it's in the non-wall tile opposite the candidate.
-    set_y_candidate_pixel_coord(get_temp_ptr(struct Ball)->y + get_y_velocity());
+    set_y_candidate_pixel_coord(get_temp_ptr(struct Ball)->y +
+                                get_y_velocity());
     // Update the ball velocity.
     get_temp_ptr(struct Ball)->y_velocity = get_y_velocity();
   }
@@ -734,7 +738,8 @@ void move_ball() {
   // Update nearest playfield tile - center of the ball.
   temp_byte_2 = get_x_candidate_pixel_coord() + 4;
   temp_byte_3 = get_y_candidate_pixel_coord() + 4;
-  get_temp_ptr(struct Ball)->nearest_playfield_tile = playfield_tile_from_pixel_coords(temp_byte_2, temp_byte_3);
+  get_temp_ptr(struct Ball)->nearest_playfield_tile =
+      playfield_tile_from_pixel_coords(temp_byte_2, temp_byte_3);
 }
 
 void draw_balls(void) {
@@ -742,7 +747,8 @@ void draw_balls(void) {
   temp_byte_2 = (temp_byte_2 >> 2) % 18 + TILE_INDEX_BALL_BASE;
   for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
     set_temp_ptr(&balls[temp_byte_1]);
-    oam_spr(get_temp_ptr(struct Ball)->x, get_temp_ptr(struct Ball)->y, temp_byte_2, 0);
+    oam_spr(get_temp_ptr(struct Ball)->x, get_temp_ptr(struct Ball)->y,
+            temp_byte_2, 0);
 
 #if DRAW_BALL_NEAREST_TILE_HIGHLIGHT
     temp_int_1 = get_temp_ptr(struct Ball)->nearest_playfield_tile;
