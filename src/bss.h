@@ -15,6 +15,7 @@
 
 #include "playfield.h"
 #include "screens/game_over.h"
+#include "screens/level_up.h"
 #include "screens/pause.h"
 #include "screens/playfield.h"
 #include "screens/title.h"

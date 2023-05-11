@@ -21,6 +21,6 @@ void add_score_for_cleared_line(void) {
 }
 
 void add_score_for_level_up(void) {
-  score += lives_count * SCORE_BONUS_PER_REMAINING_LIFE;
-  score += cleared_tile_percentage * SCORE_BONUS_PER_CLEARED_PERCENTAGE;
+  score += get_lives_bonus(lives_count);
+  score += get_cleared_bonus(cleared_tile_percentage);
 }
