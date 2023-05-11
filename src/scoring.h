@@ -12,6 +12,9 @@
 #define SCORE_BONUS_PER_CLEARED_PERCENTAGE 10
 #define SCORE_BONUS_PER_REMAINING_LIFE 20
 
+#define get_cleared_bonus(pct) (SCORE_BONUS_PER_CLEARED_PERCENTAGE * (pct))
+#define get_lives_bonus(c) (SCORE_BONUS_PER_REMAINING_LIFE * (c))
+
 // Adds to the score for |tile_count| number of cleared tiles.
 void add_score_for_cleared_tiles(unsigned char tile_count);
 

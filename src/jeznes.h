@@ -102,6 +102,20 @@ void set_playfield_tile(unsigned int tile_index,
 void write_two_digit_number_to_bg(unsigned char num, unsigned char tile_x,
                                   unsigned char tile_y);
 
-void write_score_to_bg(unsigned char tile_x, unsigned char tile_y);
+void write_score_to_bg(int score, unsigned char tile_x, unsigned char tile_y);
+
+// Load the level up summary screen.
+void change_to_level_up(void);
+
+// Update the score display values for the level up summary screen.
+void update_hud_level_up(void);
+
+// Handle player pressing start on the level up summary screen.
+// Returns TRUE if the player did press start.
+unsigned char press_start_level_up(void);
+
+// Draw the cursor on the level up summary screen.
+// Note: There are no options on this screen, just CONTINUE.
+void draw_cursor_level_up(void);
 
 #endif  // __JEZNES_JEZNES_H__

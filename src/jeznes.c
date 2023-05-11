@@ -136,8 +136,14 @@ int main(void) {
       // Clear all sprites from the sprite buffer.
       oam_clear();
 
-      // Just perform a level up.
-      do_level_up();
+      // Wait for player to press start.
+      if (!press_start_level_up()) {
+        move_balls();
+
+        draw_balls();
+
+        draw_cursor_level_up();
+      }
     } else if (game_state == GAME_STATE_GAME_OVER) {
       // Clear all sprites from the sprite buffer.
       oam_clear();
@@ -178,7 +184,7 @@ int main(void) {
       // If we detect the target percentage has been reached, switch to the
       // level up state instead.
       if (cleared_tile_percentage > TARGET_CLEARED_TILE_PERCENTAGE) {
-        game_state = GAME_STATE_LEVEL_UP;
+        change_to_level_up();
       }
     }
 #if ENABLE_CHEATS
@@ -313,7 +319,7 @@ void handle_cheat_buttons(void) {
       enable_losing_lives ^= TRUE;
     } else if (pads[0] & PAD_UP) {
       // SELECT + UP => Perform level-up
-      game_state = GAME_STATE_LEVEL_UP;
+      do_level_up();
     } else if (pads[0] & PAD_DOWN) {
       // SELECT + DOWN => Perform level-down
       game_state = GAME_STATE_LEVEL_DOWN;
@@ -431,9 +437,6 @@ void do_level_down(void) {
 }
 
 void do_level_up(void) {
-  // Compute bonus gained from current level.
-  add_score_for_level_up();
-
   // Actually level up the player.
   current_level++;
   lives_count++;
@@ -445,23 +448,91 @@ void do_level_up(void) {
   // TODO(boingoing): If the current_level affects the playfield.
   set_playfield_pattern(FIRST_PLAYFIELD_PATTERN);
 
-  // Turn off the screen.
+  // Fade to black
+  pal_fade_to(4, 0);
+  // Screen off
   ppu_off();
 
   // Redraw the playfield and reset the balls while adding one more.
   reset_playfield();
 
-  // Turn on the screen.
+  // Screen on
   ppu_on_all();
+  // Back to normal brightness
+  pal_bright(4);
 
   // Reset state to playing the game.
   game_state = GAME_STATE_PLAYING;
 }
 
+void change_to_level_up(void) {
+  // Reset the count of balls so it isn't variable.
+  set_ball_count(LEVEL_UP_SCREEN_BALL_COUNT);
+
+  // Set the playfield pattern to use.
+  set_playfield_pattern(PLAYFIELD_PATTERN_LEVEL_UP_SCREEN);
+
+  // Draw bouncing balls in the playfield section of the level-up screen.
+  init_balls();
+
+  // Fade to black
+  pal_fade_to(4, 0);
+  // Screen off
+  ppu_off();
+
+  // Load level-up screen graphics.
+  vram_adr(NAMETABLE_A);
+  vram_unrle(level_up_screen);
+
+  // Screen on
+  ppu_on_all();
+  // Back to normal brightness
+  pal_bright(4);
+
+  // Load the playfield pattern which we show on the level-up screen.
+  load_playfield();
+
+  // Compute bonus gained from current level.
+  // Do this now so the correct new score shows up on the level up summary.
+  add_score_for_level_up();
+
+  // Write the score and bonus values to the level-up screen.
+  update_hud_level_up();
+
+  // Transition state to level-up.
+  game_state = GAME_STATE_LEVEL_UP;
+}
+
+void update_hud_level_up(void) {
+  write_two_digit_number_to_bg(current_level, LEVEL_UP_LEVEL_DISPLAY_TILE_X,
+                               LEVEL_UP_LEVEL_DISPLAY_TILE_Y);
+  write_score_to_bg(get_lives_bonus(lives_count), LEVEL_UP_SCORE_DISPLAY_TILE_X,
+                    LEVEL_UP_SCORE_DISPLAY_TILE_Y);
+  write_score_to_bg(get_cleared_bonus(cleared_tile_percentage), LEVEL_UP_SCORE_DISPLAY_TILE_X,
+                    LEVEL_UP_SCORE_DISPLAY_TILE_Y + 2);
+  write_score_to_bg(score, LEVEL_UP_SCORE_DISPLAY_TILE_X,
+                    LEVEL_UP_SCORE_DISPLAY_TILE_Y + 4);
+}
+
+unsigned char press_start_level_up(void) {
+  if (pads_new[0] & PAD_START) {
+    // Load the next level playfield.
+    do_level_up();
+
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+void draw_cursor_level_up(void) {
+  oam_spr(LEVEL_UP_CURSOR_CONTINUE_X, LEVEL_UP_CURSOR_CONTINUE_Y, SPRITE_INDEX_CURSOR, 0);
+}
+
 void game_over_update_hud(void) {
   write_two_digit_number_to_bg(current_level, GAME_OVER_LEVEL_DISPLAY_TILE_X,
                                GAME_OVER_LEVEL_DISPLAY_TILE_Y);
-  write_score_to_bg(GAME_OVER_SCORE_DISPLAY_TILE_X,
+  write_score_to_bg(score, GAME_OVER_SCORE_DISPLAY_TILE_X,
                     GAME_OVER_SCORE_DISPLAY_TILE_Y);
 }
 
@@ -591,27 +662,26 @@ void write_two_digit_number_to_bg(unsigned char num, unsigned char tile_x,
                   NTADR_A(tile_x + 1, tile_y));
 }
 
-void write_score_to_bg(unsigned char tile_x, unsigned char tile_y) {
-  temp_int_1 = score;
-  temp_byte_1 = temp_int_1 / 10000;
+void write_score_to_bg(int score, unsigned char tile_x, unsigned char tile_y) {
+  temp_byte_1 = score / 10000;
   one_vram_buffer(get_tile_alphanumeric_number(temp_byte_1),
                   NTADR_A(tile_x, tile_y));
 
-  temp_int_1 %= 10000;
-  temp_byte_1 = temp_int_1 / 1000;
+  score %= 10000;
+  temp_byte_1 = score / 1000;
   one_vram_buffer(get_tile_alphanumeric_number(temp_byte_1),
                   NTADR_A(tile_x + 1, tile_y));
 
-  temp_int_1 %= 1000;
-  temp_byte_1 = temp_int_1 / 100;
+  score %= 1000;
+  temp_byte_1 = score / 100;
   one_vram_buffer(get_tile_alphanumeric_number(temp_byte_1),
                   NTADR_A(tile_x + 2, tile_y));
 
-  temp_int_1 %= 100;
-  temp_byte_1 = temp_int_1 / 10;
+  score %= 100;
+  temp_byte_1 = score / 10;
   one_vram_buffer(get_tile_alphanumeric_number(temp_byte_1),
                   NTADR_A(tile_x + 3, tile_y));
-  one_vram_buffer(get_tile_alphanumeric_number(temp_int_1 % 10),
+  one_vram_buffer(get_tile_alphanumeric_number(score % 10),
                   NTADR_A(tile_x + 4, tile_y));
 }
 
@@ -631,7 +701,7 @@ void update_hud(void) {
                                HUD_CLEAR_DISPLAY_TILE_X,
                                HUD_CLEAR_DISPLAY_TILE_Y);
 
-  write_score_to_bg(HUD_SCORE_DISPLAY_TILE_X, HUD_SCORE_DISPLAY_TILE_Y);
+  write_score_to_bg(score, HUD_SCORE_DISPLAY_TILE_X, HUD_SCORE_DISPLAY_TILE_Y);
 }
 
 void move_player(unsigned char player_index) {

@@ -7,9 +7,13 @@
 #ifndef __JEZNES_PLAYFIELD_H__
 #define __JEZNES_PLAYFIELD_H__
 
-#define PLAYFIELD_PATTERN_TITLE_SCREEN 0
-#define PLAYFIELD_PATTERN_GAME_OVER_SCREEN 1
-#define FIRST_PLAYFIELD_PATTERN 2
+enum {
+  PLAYFIELD_PATTERN_TITLE_SCREEN = 0,
+  PLAYFIELD_PATTERN_GAME_OVER_SCREEN,
+  PLAYFIELD_PATTERN_LEVEL_UP_SCREEN,
+  PLAYFIELD_PATTERN_1,
+  FIRST_PLAYFIELD_PATTERN = PLAYFIELD_PATTERN_1
+};
 
 // The playfield patterns and arrays here are intended to be human-readable-ish.
 // The patterns are laid-out matching the full screen which they correspond to.
@@ -70,6 +74,32 @@ const unsigned char game_over_screen_pattern[] = {
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 };
 
+// The level up screen includes a playfield section which is this pattern.
+const unsigned char level_up_screen_pattern[] = {
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,
+  1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,
+  1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,
+  1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,
+  1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,
+  1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,
+  1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,
+  1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+};
+
 const unsigned char playfield_pattern_1[] = {
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
   1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,
@@ -98,6 +128,7 @@ const unsigned char playfield_pattern_1[] = {
 const unsigned char * const playfield_patterns[] = {
   title_screen_pattern,
   game_over_screen_pattern,
+  level_up_screen_pattern,
   playfield_pattern_1
 };
 
@@ -105,10 +136,12 @@ const unsigned char * const playfield_patterns[] = {
 const unsigned int playfield_pattern_uncleared_tile_counts[] = {
   0, // Cannot be cleared
   0, // Cannot be cleared
+  0,
   560
 };
 
 const unsigned char playfield_pattern_valid_ball_start_pixel_x[] = {
+  0x28,
   0x28,
   0x28,
   0x18
@@ -117,16 +150,19 @@ const unsigned char playfield_pattern_valid_ball_start_pixel_x[] = {
 const unsigned char playfield_pattern_valid_ball_start_pixel_y[] = {
   0x58,
   0x60,
+  0x60,
   0x20
 };
 
 const unsigned char playfield_pattern_valid_ball_width_in_pixels[] = {
   0xb0,
   0xb0,
+  0xb0,
   0xd0
 };
 
 const unsigned char playfield_pattern_valid_ball_height_in_pixels[] = {
+  0x28,
   0x28,
   0x28,
   0x90
