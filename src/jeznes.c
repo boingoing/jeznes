@@ -230,6 +230,9 @@ void init_title(void) {
   // screen.
   set_ball_count(TITLE_SCREEN_BALL_COUNT);
 
+  // By default set to 1-player so we can read inputs for the title screen.
+  set_player_count(1);
+
   // Set the playfield pattern to use.
   set_playfield_pattern(PLAYFIELD_PATTERN_TITLE_SCREEN);
 
@@ -253,13 +256,7 @@ void init_title(void) {
 }
 
 unsigned char title_press_start(void) {
-  if (pads[0] & PAD_START) {
-    if (get_player_is_pause_pressed(0)) {
-      return FALSE;
-    }
-
-    set_player_is_pause_pressed(0);
-
+  if (pads_new[0] & PAD_START) {
     if (get_title_mode() == TITLE_1_PLAYER) {
       set_player_count(1);
     } else {
@@ -282,8 +279,6 @@ unsigned char title_press_start(void) {
     return TRUE;
   }
 
-  // If the button was pressed, we returned above.
-  unset_player_is_pause_pressed(0);
   return FALSE;
 }
 
@@ -338,20 +333,9 @@ void handle_cheat_buttons(void) {
 #endif  // ENABLE_CHEATS
 
 void title_change_mode(void) {
-  if (pads[0] & PAD_SELECT) {
-    // Ignore the mode change if player holds the button.
-    if (get_player_is_select_pressed(0)) {
-      return;
-    }
-
-    // Track player is holding the button.
-    set_player_is_select_pressed(0);
-
+  if (pads_new[0] & PAD_SELECT) {
     // Toggle game over mode between retry and quit.
     set_title_mode(get_title_mode() ^ 1);
-  } else {
-    // No longer holding down the button.
-    unset_player_is_select_pressed(0);
   }
 }
 
@@ -390,7 +374,7 @@ void load_playfield(void) {
 }
 
 void read_controllers(void) {
-  for (temp_byte_1 = 0; temp_byte_1 < MAX_PLAYERS; ++temp_byte_1) {
+  for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
     pads[temp_byte_1] = pad_poll(temp_byte_1);
     pads_new[temp_byte_1] = get_pad_new(temp_byte_1);
   }
@@ -519,31 +503,14 @@ void change_to_game_over(void) {
 }
 
 void game_over_change_mode(void) {
-  if (pads[0] & PAD_SELECT) {
-    // Ignore the mode change if player holds the button.
-    if (get_player_is_select_pressed(0)) {
-      return;
-    }
-
-    // Track player is holding the button.
-    set_player_is_select_pressed(0);
-
+  if (pads_new[0] & PAD_SELECT) {
     // Toggle game over mode between retry and quit.
     set_game_over_mode(get_game_over_mode() ^ 1);
-  } else {
-    // No longer holding down the button.
-    unset_player_is_select_pressed(0);
   }
 }
 
 unsigned char game_over_press_start(void) {
-  if (pads[0] & PAD_START) {
-    if (get_player_is_pause_pressed(0)) {
-      return FALSE;
-    }
-
-    set_player_is_pause_pressed(0);
-
+  if (pads_new[0] & PAD_START) {
     if (get_game_over_mode() == GAME_OVER_RETRY) {
       // Reset our lives count back to the default.
       lives_count = STARTING_LIVES_COUNT;
@@ -589,8 +556,6 @@ unsigned char game_over_press_start(void) {
     return TRUE;
   }
 
-  // If the button was pressed, we returned above.
-  unset_player_is_pause_pressed(0);
   return FALSE;
 }
 
@@ -598,13 +563,7 @@ unsigned char pause_press_start(unsigned char player_index) {
   // Any player can pause / unpause right now?
   // TODO(boingoing): Track which player initiated the pause and only let that
   // player unpause.
-  if (pads[player_index] & PAD_START) {
-    if (get_player_is_pause_pressed(player_index)) {
-      return FALSE;
-    }
-
-    set_player_is_pause_pressed(player_index);
-
+  if (pads_new[player_index] & PAD_START) {
     if (game_state == GAME_STATE_PLAYING) {
       // Fade the screen a bit
       pal_fade_to(4, 4);
@@ -621,8 +580,6 @@ unsigned char pause_press_start(unsigned char player_index) {
     return TRUE;
   }
 
-  // If the button was pressed, we returned above.
-  unset_player_is_pause_pressed(player_index);
   return FALSE;
 }
 
@@ -1013,16 +970,7 @@ void update_line(unsigned char line_index) {
 }
 
 void start_line(unsigned char player_index) {
-  if (pads[player_index] & PAD_A) {
-    // Do nothing if the player is holding the button and we already handled the
-    // press.
-    if (get_player_is_place_pressed_flag(player_index)) {
-      return;
-    }
-
-    // Keep track that user is pressing this button.
-    set_player_is_place_pressed_flag(player_index);
-
+  if (pads_new[player_index] & PAD_A) {
     // Do nothing if a line is already started for |player_index|.
     if (get_line_is_started_flag(player_index)) {
       return;
@@ -1083,8 +1031,6 @@ void start_line(unsigned char player_index) {
 
     set_line_orientation_flag(player_index, get_line_orientation());
     set_line_is_started_flag(player_index);
-  } else {
-    unset_player_is_place_pressed_flag(player_index);
   }
 }
 
@@ -1233,12 +1179,7 @@ void check_ball_line_collisions(void) {
 }
 
 void flip_player_orientation(unsigned char player_index) {
-  if (pads[player_index] & PAD_B) {
-    if (get_player_is_rotate_pressed(player_index)) {
-      return;
-    }
-
-    set_player_is_rotate_pressed(player_index);
+  if (pads_new[player_index] & PAD_B) {
     set_player_orientation_flag(player_index,
                                 get_player_orientation_flag(player_index) ^ 1);
 
@@ -1255,8 +1196,6 @@ void flip_player_orientation(unsigned char player_index) {
     }
 
     update_nearest_tile(player_index);
-  } else {
-    unset_player_is_rotate_pressed(player_index);
   }
 }
 
