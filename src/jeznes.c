@@ -506,12 +506,12 @@ void change_to_level_up(void) {
 void update_hud_level_up(void) {
   write_two_digit_number_to_bg(current_level, LEVEL_UP_LEVEL_DISPLAY_TILE_X,
                                LEVEL_UP_LEVEL_DISPLAY_TILE_Y);
-  write_score_to_bg(get_lives_bonus(lives_count), LEVEL_UP_SCORE_DISPLAY_TILE_X,
-                    LEVEL_UP_SCORE_DISPLAY_TILE_Y);
-  write_score_to_bg(get_cleared_bonus(cleared_tile_percentage), LEVEL_UP_SCORE_DISPLAY_TILE_X,
-                    LEVEL_UP_SCORE_DISPLAY_TILE_Y + 2);
+  write_score_to_bg(get_lives_bonus(lives_count), LEVEL_UP_LIFE_BONUS_DISPLAY_TILE_X,
+                    LEVEL_UP_LIFE_BONUS_DISPLAY_TILE_Y);
+  write_score_to_bg(get_cleared_bonus(cleared_tile_percentage), LEVEL_UP_CLEAR_BONUS_DISPLAY_TILE_X,
+                    LEVEL_UP_CLEAR_BONUS_DISPLAY_TILE_Y);
   write_score_to_bg(score, LEVEL_UP_SCORE_DISPLAY_TILE_X,
-                    LEVEL_UP_SCORE_DISPLAY_TILE_Y + 4);
+                    LEVEL_UP_SCORE_DISPLAY_TILE_Y);
 }
 
 unsigned char press_start_level_up(void) {
