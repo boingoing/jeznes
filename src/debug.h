@@ -18,7 +18,7 @@
 // screen. The vertical position of this line indicates how much CPU was used
 // by the game loop logic.
 // ie: A line drawn lower down on the screen consumed more CPU.
-#define DRAW_GRAY_LINE 0
+#define DRAW_GRAY_LINE 1
 
 // Draw a highlight tile on the playfield at the nearest tile location to each
 // ball sprite.
