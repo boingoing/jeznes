@@ -99,7 +99,7 @@ int main(void) {
         // Draw the player, the playfield tile highlight, and the in-progress
         // line sprites.
         draw_player();
-        draw_tile_highlight(temp_byte_1);
+        draw_tile_highlight();
         draw_line(temp_byte_1);
 
         // Update the line for this player if there's one in progress.
@@ -843,11 +843,11 @@ void draw_player(void) {
                player_metasprite_list[temp_byte_2]);
 }
 
-void draw_tile_highlight(unsigned char player_index) {
-  if (playfield[players[player_index].nearest_playfield_tile] ==
+void draw_tile_highlight(void) {
+  if (playfield[get_temp_ptr(struct Player)->nearest_playfield_tile] ==
       PLAYFIELD_UNCLEARED) {
-    oam_spr(players[player_index].nearest_tile_x,
-            players[player_index].nearest_tile_y - 1, SPRITE_INDEX_TILE_HIGHLIGHT,
+    oam_spr(get_temp_ptr(struct Player)->nearest_tile_x,
+            get_temp_ptr(struct Player)->nearest_tile_y - 1, SPRITE_INDEX_TILE_HIGHLIGHT,
             1);
   }
 }

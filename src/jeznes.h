@@ -88,7 +88,10 @@ void update_line(unsigned char line_index);
 
 // Draws player stored in |temp_ptr_1|.
 void draw_player(void);
-void draw_tile_highlight(unsigned char player_index);
+
+// Draws the highlight tile under player stored in |temp_ptr_1|.
+void draw_tile_highlight(void);
+
 void draw_line(unsigned char line_index);
 
 void update_hud(void);
