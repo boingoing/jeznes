@@ -75,8 +75,9 @@ void move_player(unsigned char player_index);
 // Moves one ball which needs to have been stored already in |temp_ptr_1|.
 void move_ball();
 
-void move_balls(void);
-void draw_balls(void);
+// Moves each ball into the next position and then draws it.
+void move_and_draw_balls(void);
+
 void check_ball_line_collisions(void);
 
 void start_line(unsigned char player_index);
@@ -85,7 +86,8 @@ void flip_player_orientation(unsigned char player_index);
 void update_nearest_tile(unsigned char player_index);
 void update_line(unsigned char line_index);
 
-void draw_player(unsigned char player_index);
+// Draws player stored in |temp_ptr_1|.
+void draw_player(void);
 void draw_tile_highlight(unsigned char player_index);
 void draw_line(unsigned char line_index);
 

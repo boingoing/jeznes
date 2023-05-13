@@ -76,10 +76,7 @@ int main(void) {
         draw_title_cursor();
 
         // Move the ball positions in the playfield part of the title screen.
-        move_balls();
-
-        // Draw the ball sprites.
-        draw_balls();
+        move_and_draw_balls();
       }
     } else if (game_state == GAME_STATE_PLAYING) {
       // Clear all sprites from the sprite buffer.
@@ -93,12 +90,15 @@ int main(void) {
           continue;
         }
 
+        // Stash a pointer to the player so we don't need to access it via the array everywhere.
+        set_temp_ptr(&players[temp_byte_1]);
+
         // Move the player position in the playfield.
         move_player(temp_byte_1);
 
         // Draw the player, the playfield tile highlight, and the in-progress
         // line sprites.
-        draw_player(temp_byte_1);
+        draw_player();
         draw_tile_highlight(temp_byte_1);
         draw_line(temp_byte_1);
 
@@ -107,7 +107,7 @@ int main(void) {
       }
 
       // Move the ball positions in the playfield.
-      move_balls();
+      move_and_draw_balls();
 
       // Check to see if any balls have collided with any lines.
 #if ENABLE_CHEATS
@@ -116,9 +116,6 @@ int main(void) {
       {
         check_ball_line_collisions();
       }
-
-      // Draw the ball sprites.
-      draw_balls();
     } else if (game_state == GAME_STATE_PAUSED) {
       // Clear all sprites from the sprite buffer.
       oam_clear();
@@ -138,9 +135,8 @@ int main(void) {
 
       // Wait for player to press start.
       if (!press_start_level_up()) {
-        move_balls();
-
-        draw_balls();
+        // Move the ball positions in the playfield part of the level up screen.
+        move_and_draw_balls();
 
         draw_cursor_level_up();
       }
@@ -158,10 +154,7 @@ int main(void) {
 
         // Move the ball positions in the playfield part of the game over
         // screen.
-        move_balls();
-
-        // Draw the ball sprites.
-        draw_balls();
+        move_and_draw_balls();
       }
     } else if (game_state == GAME_STATE_UPDATING_PLAYFIELD) {
       // Restart the update of cleared playfield tiles.
@@ -366,8 +359,6 @@ void init_game(void) {
     update_nearest_tile(temp_byte_1);
 
     set_player_orientation_flag(temp_byte_1, ORIENTATION_HORIZ);
-    unset_player_is_place_pressed_flag(temp_byte_1);
-    unset_player_is_rotate_pressed(temp_byte_1);
   }
 
   // Always loads |get_playfield_pattern()|
@@ -380,9 +371,12 @@ void load_playfield(void) {
 }
 
 void read_controllers(void) {
-  for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
-    pads[temp_byte_1] = pad_poll(temp_byte_1);
-    pads_new[temp_byte_1] = get_pad_new(temp_byte_1);
+  pads[0] = pad_poll(0);
+  pads_new[0] = get_pad_new(0);
+
+  if (get_player_count() == 2) {
+    pads[1] = pad_poll(1);
+    pads_new[1] = get_pad_new(1);
   }
 }
 
@@ -752,10 +746,30 @@ void move_player(unsigned char player_index) {
   }
 }
 
-void move_balls(void) {
+void move_and_draw_balls(void) {
+  temp_byte_5 = get_frame_count();
+
+  // Determine which sprite frame we should use for the balls - they are all drawn with the same animation frame.
+  // get_frame_count() returns [0x0,0xff].
+  // SPRITE_FRAME_COUNT_BALL should be a factor of 256.
+  temp_byte_5 = ((temp_byte_5 >> 2) % SPRITE_FRAME_COUNT_BALL) + SPRITE_INDEX_BALL_BASE;
+
   for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
     set_temp_ptr(&balls[temp_byte_1]);
+
+    // Move ball position.
     move_ball();
+
+    // Draw ball sprite.
+    oam_spr(get_temp_ptr(struct Ball)->x, get_temp_ptr(struct Ball)->y,
+            temp_byte_5, 0);
+
+#if DRAW_BALL_NEAREST_TILE_HIGHLIGHT
+    temp_int_1 = get_temp_ptr(struct Ball)->nearest_playfield_tile;
+    oam_spr(playfield_index_pixel_coord_x(temp_int_1),
+            playfield_index_pixel_coord_y(temp_int_1) - 1,
+            SPRITE_INDEX_TILE_HIGHLIGHT, 1);
+#endif
   }
 }
 
@@ -815,31 +829,17 @@ void move_ball() {
       playfield_tile_from_pixel_coords(temp_byte_2, temp_byte_3);
 }
 
-void draw_balls(void) {
+void draw_player(void) {
+  // Stash player flags byte.
+  temp_byte_3 = get_temp_ptr(struct Player)->flags;
+
   temp_byte_2 = get_frame_count();
-  temp_byte_2 = (temp_byte_2 >> 2) % 18 + TILE_INDEX_BALL_BASE;
-  for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
-    set_temp_ptr(&balls[temp_byte_1]);
-    oam_spr(get_temp_ptr(struct Ball)->x, get_temp_ptr(struct Ball)->y,
-            temp_byte_2, 0);
+  // Default to horizontal sprite.
+  temp_byte_2 = temp_byte_2 >> 3 & 1;
+  // Add 2 to get the vertical sprite.
+  temp_byte_2 += get_player_orientation_flag_from_byte(temp_byte_3) * 2;
 
-#if DRAW_BALL_NEAREST_TILE_HIGHLIGHT
-    temp_int_1 = get_temp_ptr(struct Ball)->nearest_playfield_tile;
-    oam_spr(playfield_index_pixel_coord_x(temp_int_1),
-            playfield_index_pixel_coord_y(temp_int_1) - 1,
-            TILE_INDEX_TILE_HIGHLIGHT, 1);
-#endif
-  }
-}
-
-#define get_player_sprite_frame() (get_frame_count() >> 3 & 1)
-
-void draw_player(unsigned char player_index) {
-  temp_byte_2 = get_player_sprite_frame();
-  if (get_player_orientation_flag(player_index) == ORIENTATION_HORIZ) {
-    temp_byte_2 += 2;
-  }
-  oam_meta_spr(players[player_index].x, players[player_index].y,
+  oam_meta_spr(get_temp_ptr(struct Player)->x, get_temp_ptr(struct Player)->y,
                player_metasprite_list[temp_byte_2]);
 }
 
@@ -847,7 +847,7 @@ void draw_tile_highlight(unsigned char player_index) {
   if (playfield[players[player_index].nearest_playfield_tile] ==
       PLAYFIELD_UNCLEARED) {
     oam_spr(players[player_index].nearest_tile_x,
-            players[player_index].nearest_tile_y - 1, TILE_INDEX_TILE_HIGHLIGHT,
+            players[player_index].nearest_tile_y - 1, SPRITE_INDEX_TILE_HIGHLIGHT,
             1);
   }
 }
@@ -1142,6 +1142,11 @@ void draw_line(unsigned char line_index) {
 }
 
 void check_ball_line_collisions(void) {
+  // There can be no collision when there are no started lines.
+  if (!get_line_is_started_flag(0) && !get_line_is_started_flag(1)) {
+    return;
+  }
+
   for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
     set_current_playfield_index(balls[temp_byte_1].nearest_playfield_tile);
     temp_byte_2 = playfield[get_current_playfield_index()];

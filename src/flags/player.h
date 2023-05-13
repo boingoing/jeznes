@@ -65,8 +65,12 @@
   unset_player_flag((player_index), PLAYER_BITMASK_IS_CHEAT_PRESSED)
 
 // Returns either ORIENTATION_HORIZ or ORIENTATION_VERT
+#define get_player_orientation_flag_from_byte(flags_byte) \
+  ((flags_byte) & PLAYER_BITMASK_ORIENTATION)
+
+// Returns either ORIENTATION_HORIZ or ORIENTATION_VERT
 #define get_player_orientation_flag(player_index) \
-  (players[(player_index)].flags & PLAYER_BITMASK_ORIENTATION)
+  (get_player_orientation_flag_from_byte(players[(player_index)].flags))
 
 // Sets the orientation for |player_index| player to |orientation| which must be
 // either ORIENTATION_HORIZ or ORIENTATION_VERT
