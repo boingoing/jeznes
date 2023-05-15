@@ -83,7 +83,10 @@ void check_ball_line_collisions(void);
 void start_line(unsigned char player_index);
 void flip_player_orientation(unsigned char player_index);
 
-void update_nearest_tile(unsigned char player_index);
+// Update the player nearest tile values for the player stored in |temp_ptr_1|.
+// Should be called when the player sprite moves, changes orientation, etc.
+void update_nearest_tile(void);
+
 void update_line(unsigned char line_index);
 
 // Draws player stored in |temp_ptr_1|.
