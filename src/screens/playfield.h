@@ -56,6 +56,14 @@
 #define get_playfield_bg_tile_line(orientation) \
   (TILE_INDEX_PLAYFIELD_LINE_HORIZ + (orientation))
 
+// Get the bg tile graphic index for the line origin tile.
+// Indicate horizontal or vertical via |orientation| which should be
+// ORIENTATION_HORIZ or ORIENTATION_VERT.
+// Indicate if this is a positive line segment via |is_positive| which
+// must be TRUE/FALSE (0 or 1).
+#define get_playfield_bg_tile_line_origin(orientation, is_positive) \
+  (TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE_ORIGIN + (is_positive) + ((orientation) == ORIENTATION_HORIZ ? 0 : 2))
+
 const char playfield_bg_palette[] = {0x0f, 0x30, 0x16, 0x28, 0x0f, 0x00,
                                      0x27, 0x31, 0x0f, 0x06, 0x16, 0x26,
                                      0x0f, 0x09, 0x19, 0x29};
