@@ -356,7 +356,8 @@ void init_game(void) {
   for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
     players[temp_byte_1].x = playfield_pattern_player_default_x[temp_byte_1];
     players[temp_byte_1].y = playfield_pattern_player_default_y[temp_byte_1];
-    update_nearest_tile(temp_byte_1);
+    set_temp_ptr(&players[temp_byte_1]);
+    update_nearest_tile();
 
     set_player_orientation_flag(temp_byte_1, ORIENTATION_HORIZ);
   }
@@ -702,7 +703,7 @@ void move_player(unsigned char player_index) {
   temp_byte_2 = pads[player_index];
 
   // Quit early if no d-pad buttons are pressed.
-  if (temp_byte_2 & (PAD_LEFT | PAD_RIGHT | PAD_UP | PAD_DOWN) == 0) {
+  if ((temp_byte_2 & (PAD_LEFT | PAD_RIGHT | PAD_UP | PAD_DOWN)) == 0) {
     return;
   }
 
@@ -726,7 +727,7 @@ void move_player(unsigned char player_index) {
     get_temp_ptr(struct Player)->y = MAX(get_pixel_coord_y(), temp_byte_3);
   }
 
-  update_nearest_tile(player_index);
+  update_nearest_tile();
 }
 
 void move_and_draw_balls(void) {
@@ -1253,30 +1254,27 @@ void flip_player_orientation(unsigned char player_index) {
       }
     }
 
-    update_nearest_tile(player_index);
+    set_temp_ptr(&players[temp_byte_1]);
+    update_nearest_tile();
   }
 }
 
-// Don't modify temp_byte_1, temp_byte_2
-void update_nearest_tile(unsigned char player_index) {
-  temp_byte_3 = get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags) * 4;
-  
-  if (get_player_orientation_flag(player_index) == ORIENTATION_VERT) {
-    temp_byte_3 = players[player_index].x + 4;
-    temp_byte_4 = players[player_index].y;
+// Don't modify temp_byte_1
+void update_nearest_tile(void) {
+  temp_byte_2 = get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags);
+
+  // Center of the player meta-sprite in pixel coords.
+  if (temp_byte_2 == ORIENTATION_HORIZ) {
+    temp_byte_3 = get_temp_ptr(struct Player)->x;
+    temp_byte_4 = get_temp_ptr(struct Player)->y + 4;
   } else {
-    temp_byte_3 = players[player_index].x;
-    temp_byte_4 = players[player_index].y + 4;
+    temp_byte_3 = get_temp_ptr(struct Player)->x + 4;
+    temp_byte_4 = get_temp_ptr(struct Player)->y;
   }
-  temp_byte_3 = temp_byte_3 >> 3;
-  temp_byte_4 = temp_byte_4 >> 3;
 
-  players[player_index].nearest_tile_x = temp_byte_3 << 3;
-  players[player_index].nearest_tile_y = temp_byte_4 << 3;
-  players[player_index].nearest_playfield_tile =
-      temp_byte_3 + (temp_byte_4 << 5) - PLAYFIELD_FIRST_TILE_INDEX;
-
-  players[player_index].nearest_playfield_tile = playfield_tile_from_pixel_coords(temp_byte_3, temp_byte_4);
+  get_temp_ptr(struct Player)->nearest_tile_x = (temp_byte_3 >> 3) << 3;
+  get_temp_ptr(struct Player)->nearest_tile_y = (temp_byte_4 >> 3) << 3;
+  get_temp_ptr(struct Player)->nearest_playfield_tile = playfield_tile_from_pixel_coords(temp_byte_3, temp_byte_4);
 }
 
 void line_completed(void) {
