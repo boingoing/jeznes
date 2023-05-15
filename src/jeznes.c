@@ -713,7 +713,11 @@ void move_player(unsigned char player_index) {
     get_temp_ptr(struct Player)->x = MIN(get_pixel_coord_x(), PLAYFIELD_RIGHT_WALL);
   } else if (temp_byte_2 & PAD_LEFT) {
     set_pixel_coord_x(get_temp_ptr(struct Player)->x - PLAYER_SPEED);
-    temp_byte_3 = (PLAYFIELD_LEFT_WALL + 8) - (get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags) * 8);
+    if (get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags) == ORIENTATION_HORIZ) {
+      temp_byte_3 = PLAYFIELD_LEFT_WALL + 8;
+    } else {
+      temp_byte_3 = PLAYFIELD_LEFT_WALL;
+    }
     get_temp_ptr(struct Player)->x = MAX(get_pixel_coord_x(), temp_byte_3);
   }
 
@@ -723,7 +727,11 @@ void move_player(unsigned char player_index) {
     get_temp_ptr(struct Player)->y = MIN(get_pixel_coord_y(), PLAYFIELD_BOTTOM_WALL);
   } else if (temp_byte_2 & PAD_UP) {
     set_pixel_coord_y(get_temp_ptr(struct Player)->y - PLAYER_SPEED);
-    temp_byte_3 = PLAYFIELD_TOP_WALL + (get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags)) * 8;
+    if (get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags) == ORIENTATION_HORIZ) {
+      temp_byte_3 = PLAYFIELD_TOP_WALL;
+    } else {
+      temp_byte_3 = PLAYFIELD_TOP_WALL + 8;
+    }
     get_temp_ptr(struct Player)->y = MAX(get_pixel_coord_y(), temp_byte_3);
   }
 
