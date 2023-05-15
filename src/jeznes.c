@@ -822,14 +822,15 @@ void move_ball() {
 }
 
 void draw_player(void) {
-  // Stash player flags byte.
-  temp_byte_3 = get_temp_ptr(struct Player)->flags;
-
   temp_byte_2 = get_frame_count();
+
   // Default to horizontal sprite.
   temp_byte_2 = temp_byte_2 >> 3 & 1;
+
   // Add 2 to get the vertical sprite.
-  temp_byte_2 += get_player_orientation_flag_from_byte(temp_byte_3) * 2;
+  if (get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags) != ORIENTATION_HORIZ) {
+    temp_byte_2 += 2;
+  }
 
   oam_meta_spr(get_temp_ptr(struct Player)->x, get_temp_ptr(struct Player)->y,
                player_metasprite_list[temp_byte_2]);
