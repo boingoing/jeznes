@@ -18,6 +18,7 @@
 #include "flood_fill.h"
 #include "lib/nesdoug.h"
 #include "lib/neslib.h"
+#include "music/sfx.h"
 #include "scoring.h"
 #include "types.h"
 #include "zeropage.h"
@@ -787,6 +788,10 @@ void move_ball() {
                                 get_x_velocity());
     // Update the ball velocity.
     get_temp_ptr(struct Ball)->x_velocity = get_x_velocity();
+    // Play a sound effect.
+    if (game_state == GAME_STATE_PLAYING) {
+      sfx_play(SFX_BALL_BOUNCE, 0);
+    }
   }
   get_temp_ptr(struct Ball)->x = get_x_candidate_pixel_coord();
 
@@ -811,6 +816,10 @@ void move_ball() {
                                 get_y_velocity());
     // Update the ball velocity.
     get_temp_ptr(struct Ball)->y_velocity = get_y_velocity();
+    // Play a sound effect.
+    if (game_state == GAME_STATE_PLAYING) {
+      sfx_play(SFX_BALL_BOUNCE, 0);
+    }
   }
   get_temp_ptr(struct Ball)->y = get_y_candidate_pixel_coord();
 

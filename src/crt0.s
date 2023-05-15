@@ -265,7 +265,7 @@ music_data:
 
     .if(FT_SFX_ENABLE)
 sounds_data:
-    .include "music/SoundFx.s"
+    .include "music/sfx.s"
     .endif
 
 .segment "SAMPLES"
