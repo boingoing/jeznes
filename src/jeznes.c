@@ -1259,6 +1259,8 @@ void flip_player_orientation(unsigned char player_index) {
 
 // Don't modify temp_byte_1, temp_byte_2
 void update_nearest_tile(unsigned char player_index) {
+  temp_byte_3 = get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags) * 4;
+  
   if (get_player_orientation_flag(player_index) == ORIENTATION_VERT) {
     temp_byte_3 = players[player_index].x + 4;
     temp_byte_4 = players[player_index].y;
@@ -1273,6 +1275,8 @@ void update_nearest_tile(unsigned char player_index) {
   players[player_index].nearest_tile_y = temp_byte_4 << 3;
   players[player_index].nearest_playfield_tile =
       temp_byte_3 + (temp_byte_4 << 5) - PLAYFIELD_FIRST_TILE_INDEX;
+
+  players[player_index].nearest_playfield_tile = playfield_tile_from_pixel_coords(temp_byte_3, temp_byte_4);
 }
 
 void line_completed(void) {
