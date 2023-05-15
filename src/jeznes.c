@@ -1103,6 +1103,8 @@ void start_line(unsigned char player_index) {
 
     set_line_orientation_flag(player_index, get_line_orientation());
     set_line_is_started_flag(player_index);
+
+    sfx_play(SFX_LINE_START, 1);
   }
 }
 
@@ -1274,6 +1276,8 @@ void flip_player_orientation(unsigned char player_index) {
 
     set_temp_ptr(&players[temp_byte_1]);
     update_nearest_tile();
+
+    sfx_play(SFX_PLAYER_ROTATE, 1);
   }
 }
 
