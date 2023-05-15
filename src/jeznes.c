@@ -1063,7 +1063,7 @@ void start_line(unsigned char player_index) {
         get_negative_line_segment_origin(),
         get_playfield_tile_type_line(get_line_orientation(), player_index,
                                      LINE_DIRECTION_NEGATIVE),
-        get_playfield_bg_tile_line(get_line_orientation()));
+        get_playfield_bg_tile_line_origin(get_line_orientation(), FALSE));
 
     // Update the line data for the negative-direction line segment.
     lines[player_index].origin = get_negative_line_segment_origin();
@@ -1083,7 +1083,7 @@ void start_line(unsigned char player_index) {
           get_positive_line_segment_origin(),
           get_playfield_tile_type_line(get_line_orientation(), player_index,
                                        LINE_DIRECTION_POSITIVE),
-          get_playfield_bg_tile_line(get_line_orientation()));
+          get_playfield_bg_tile_line_origin(get_line_orientation(), TRUE));
       unset_line_is_positive_complete_flag(player_index);
     }
 
