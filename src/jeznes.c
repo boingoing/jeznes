@@ -699,51 +699,34 @@ void update_hud(void) {
 }
 
 void move_player(unsigned char player_index) {
-  if (pads[player_index] & PAD_LEFT) {
-    set_pixel_coord_x(players[player_index].x - PLAYER_SPEED);
-    if (get_player_orientation_flag(player_index) == ORIENTATION_VERT) {
-      temp_byte_2 = PLAYFIELD_LEFT_WALL;
-    } else {
-      temp_byte_2 = PLAYFIELD_LEFT_WALL + 8;
-    }
-    if (get_pixel_coord_x() <= temp_byte_2) {
-      players[player_index].x = temp_byte_2;
-    } else {
-      players[player_index].x = get_pixel_coord_x();
-    }
-    update_nearest_tile(player_index);
-  } else if (pads[player_index] & PAD_RIGHT) {
-    set_pixel_coord_x(players[player_index].x + PLAYER_SPEED);
-    if (get_pixel_coord_x() >= PLAYFIELD_RIGHT_WALL) {
-      players[player_index].x = PLAYFIELD_RIGHT_WALL;
-    } else {
-      players[player_index].x = get_pixel_coord_x();
-    }
-    update_nearest_tile(player_index);
+  temp_byte_2 = pads[player_index];
+
+  // Quit early if no d-pad buttons are pressed.
+  if (temp_byte_2 & (PAD_LEFT | PAD_RIGHT | PAD_UP | PAD_DOWN) == 0) {
+    return;
   }
 
-  if (pads[player_index] & PAD_DOWN) {
-    set_pixel_coord_y(players[player_index].y + PLAYER_SPEED);
-    if (get_pixel_coord_y() >= PLAYFIELD_BOTTOM_WALL) {
-      players[player_index].y = PLAYFIELD_BOTTOM_WALL;
-    } else {
-      players[player_index].y = get_pixel_coord_y();
-    }
-    update_nearest_tile(player_index);
-  } else if (pads[player_index] & PAD_UP) {
-    set_pixel_coord_y(players[player_index].y - PLAYER_SPEED);
-    if (get_player_orientation_flag(player_index) == ORIENTATION_VERT) {
-      temp_byte_2 = PLAYFIELD_TOP_WALL + 8;
-    } else {
-      temp_byte_2 = PLAYFIELD_TOP_WALL;
-    }
-    if (get_pixel_coord_y() <= temp_byte_2) {
-      players[player_index].y = temp_byte_2;
-    } else {
-      players[player_index].y = get_pixel_coord_y();
-    }
-    update_nearest_tile(player_index);
+  // Move player left or right (both cannot be pressed at the same time).
+  if (temp_byte_2 & PAD_RIGHT) {
+    set_pixel_coord_x(get_temp_ptr(struct Player)->x + PLAYER_SPEED);
+    get_temp_ptr(struct Player)->x = MIN(get_pixel_coord_x(), PLAYFIELD_RIGHT_WALL);
+  } else if (temp_byte_2 & PAD_LEFT) {
+    set_pixel_coord_x(get_temp_ptr(struct Player)->x - PLAYER_SPEED);
+    temp_byte_3 = (PLAYFIELD_LEFT_WALL + 8) - (get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags) * 8);
+    get_temp_ptr(struct Player)->x = MAX(get_pixel_coord_x(), temp_byte_3);
   }
+
+  // Now move the player up or down (both cannot be pressed at the same time).
+  if (temp_byte_2 & PAD_DOWN) {
+    set_pixel_coord_y(get_temp_ptr(struct Player)->y + PLAYER_SPEED);
+    get_temp_ptr(struct Player)->y = MIN(get_pixel_coord_y(), PLAYFIELD_BOTTOM_WALL);
+  } else if (temp_byte_2 & PAD_UP) {
+    set_pixel_coord_y(get_temp_ptr(struct Player)->y - PLAYER_SPEED);
+    temp_byte_3 = PLAYFIELD_TOP_WALL + (get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags)) * 8;
+    get_temp_ptr(struct Player)->y = MAX(get_pixel_coord_y(), temp_byte_3);
+  }
+
+  update_nearest_tile(player_index);
 }
 
 void move_and_draw_balls(void) {
