@@ -33,6 +33,9 @@
 #define unset_playfield_flag(playfield_index, bitmask) \
   unset_flag(playfield[(playfield_index)], (bitmask))
 
+#define get_playfield_is_marked_flag_from_byte(flags_byte) \
+  get_flag((flags_byte), PLAYFIELD_BITMASK_MARK)
+
 #define get_playfield_is_marked_flag(playfield_index) \
   get_playfield_flag((playfield_index), PLAYFIELD_BITMASK_MARK)
 #define set_playfield_is_marked_flag(playfield_index) \

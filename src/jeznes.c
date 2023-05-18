@@ -1349,13 +1349,20 @@ void set_playfield_tile(unsigned int tile_index,
 unsigned char update_cleared_playfield_tiles(void) {
   temp_byte_3 = 0;
   // Look over all tiles in the playfield and for each uncleared, unmarked tile
-  // change it to cleared
+  // change it to cleared.
   for (; get_playfield_index() < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT;
        inc_playfield_index()) {
 
-    // Skip tiles which are not uncleared (this includes marked tiles)
-    if (playfield[get_playfield_index()] != PLAYFIELD_UNCLEARED) {
-      // While we're here... let's remove all the mark bits, too.
+    temp_byte_4 = playfield[get_playfield_index()];
+    // Skip tiles which are not uncleared. These are walls or cleared tiles and we don't care if they're marked.
+    // TODO(boingoing): What about PLAYFIELD_LINE tiles from the other player?
+    if (get_playfield_tile_type_from_byte(temp_byte_4) != PLAYFIELD_UNCLEARED) {
+      continue;
+    }
+
+    // If the tile was marked, we aren't supposed to clear it. Mark implies there is a ball inside the same region.
+    if (get_playfield_is_marked_flag_from_byte(temp_byte_4)) {
+      // While we're here... let's remove all the mark bits from uncleared tiles. We won't revisit this tile index during this sweep of the playfield.
       unset_playfield_is_marked_flag(get_playfield_index());
       continue;
     }
