@@ -66,7 +66,7 @@
 
 // Returns either ORIENTATION_HORIZ or ORIENTATION_VERT
 #define get_player_orientation_flag_from_byte(flags_byte) \
-  ((flags_byte) & PLAYER_BITMASK_ORIENTATION)
+  ((flags_byte)&PLAYER_BITMASK_ORIENTATION)
 
 // Returns either ORIENTATION_HORIZ or ORIENTATION_VERT
 #define get_player_orientation_flag(player_index) \

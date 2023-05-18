@@ -91,7 +91,8 @@ int main(void) {
           continue;
         }
 
-        // Stash a pointer to the player so we don't need to access it via the array everywhere.
+        // Stash a pointer to the player so we don't need to access it via the
+        // array everywhere.
         set_temp_ptr(&players[temp_byte_1]);
 
         // Move the player position in the playfield.
@@ -499,9 +500,11 @@ void change_to_level_up(void) {
 void update_hud_level_up(void) {
   write_two_digit_number_to_bg(current_level, LEVEL_UP_LEVEL_DISPLAY_TILE_X,
                                LEVEL_UP_LEVEL_DISPLAY_TILE_Y);
-  write_score_to_bg(get_lives_bonus(lives_count), LEVEL_UP_LIFE_BONUS_DISPLAY_TILE_X,
+  write_score_to_bg(get_lives_bonus(lives_count),
+                    LEVEL_UP_LIFE_BONUS_DISPLAY_TILE_X,
                     LEVEL_UP_LIFE_BONUS_DISPLAY_TILE_Y);
-  write_score_to_bg(get_cleared_bonus(cleared_tile_percentage), LEVEL_UP_CLEAR_BONUS_DISPLAY_TILE_X,
+  write_score_to_bg(get_cleared_bonus(cleared_tile_percentage),
+                    LEVEL_UP_CLEAR_BONUS_DISPLAY_TILE_X,
                     LEVEL_UP_CLEAR_BONUS_DISPLAY_TILE_Y);
   write_score_to_bg(score, LEVEL_UP_SCORE_DISPLAY_TILE_X,
                     LEVEL_UP_SCORE_DISPLAY_TILE_Y);
@@ -519,7 +522,8 @@ unsigned char press_start_level_up(void) {
 }
 
 void draw_cursor_level_up(void) {
-  oam_spr(LEVEL_UP_CURSOR_CONTINUE_X, LEVEL_UP_CURSOR_CONTINUE_Y, SPRITE_INDEX_CURSOR, 0);
+  oam_spr(LEVEL_UP_CURSOR_CONTINUE_X, LEVEL_UP_CURSOR_CONTINUE_Y,
+          SPRITE_INDEX_CURSOR, 0);
 }
 
 void game_over_update_hud(void) {
@@ -708,10 +712,12 @@ void move_player(unsigned char player_index) {
   // Move player left or right (both cannot be pressed at the same time).
   if (temp_byte_2 & PAD_RIGHT) {
     set_pixel_coord_x(get_temp_ptr(struct Player)->x + PLAYER_SPEED);
-    get_temp_ptr(struct Player)->x = MIN(get_pixel_coord_x(), PLAYFIELD_RIGHT_WALL);
+    get_temp_ptr(struct Player)->x =
+        MIN(get_pixel_coord_x(), PLAYFIELD_RIGHT_WALL);
   } else if (temp_byte_2 & PAD_LEFT) {
     set_pixel_coord_x(get_temp_ptr(struct Player)->x - PLAYER_SPEED);
-    if (get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags) == ORIENTATION_HORIZ) {
+    if (get_player_orientation_flag_from_byte(
+            get_temp_ptr(struct Player)->flags) == ORIENTATION_HORIZ) {
       temp_byte_3 = PLAYFIELD_LEFT_WALL + 8;
     } else {
       temp_byte_3 = PLAYFIELD_LEFT_WALL;
@@ -722,10 +728,12 @@ void move_player(unsigned char player_index) {
   // Now move the player up or down (both cannot be pressed at the same time).
   if (temp_byte_2 & PAD_DOWN) {
     set_pixel_coord_y(get_temp_ptr(struct Player)->y + PLAYER_SPEED);
-    get_temp_ptr(struct Player)->y = MIN(get_pixel_coord_y(), PLAYFIELD_BOTTOM_WALL);
+    get_temp_ptr(struct Player)->y =
+        MIN(get_pixel_coord_y(), PLAYFIELD_BOTTOM_WALL);
   } else if (temp_byte_2 & PAD_UP) {
     set_pixel_coord_y(get_temp_ptr(struct Player)->y - PLAYER_SPEED);
-    if (get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags) == ORIENTATION_HORIZ) {
+    if (get_player_orientation_flag_from_byte(
+            get_temp_ptr(struct Player)->flags) == ORIENTATION_HORIZ) {
       temp_byte_3 = PLAYFIELD_TOP_WALL;
     } else {
       temp_byte_3 = PLAYFIELD_TOP_WALL + 8;
@@ -739,10 +747,11 @@ void move_player(unsigned char player_index) {
 void move_and_draw_balls(void) {
   temp_byte_5 = get_frame_count();
 
-  // Determine which sprite frame we should use for the balls - they are all drawn with the same animation frame.
-  // get_frame_count() returns [0x0,0xff].
+  // Determine which sprite frame we should use for the balls - they are all
+  // drawn with the same animation frame. get_frame_count() returns [0x0,0xff].
   // SPRITE_FRAME_COUNT_BALL should be a factor of 256.
-  temp_byte_5 = ((temp_byte_5 >> 2) % SPRITE_FRAME_COUNT_BALL) + SPRITE_INDEX_BALL_BASE;
+  temp_byte_5 =
+      ((temp_byte_5 >> 2) % SPRITE_FRAME_COUNT_BALL) + SPRITE_INDEX_BALL_BASE;
 
   for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
     set_temp_ptr(&balls[temp_byte_1]);
@@ -834,7 +843,8 @@ void draw_player(void) {
   temp_byte_2 = temp_byte_2 >> 3 & 1;
 
   // Add 2 to get the vertical sprite.
-  if (get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags) != ORIENTATION_HORIZ) {
+  if (get_player_orientation_flag_from_byte(
+          get_temp_ptr(struct Player)->flags) != ORIENTATION_HORIZ) {
     temp_byte_2 += 2;
   }
 
@@ -846,8 +856,8 @@ void draw_tile_highlight(void) {
   if (playfield[get_temp_ptr(struct Player)->nearest_playfield_tile] ==
       PLAYFIELD_UNCLEARED) {
     oam_spr(get_temp_ptr(struct Player)->nearest_tile_x,
-            get_temp_ptr(struct Player)->nearest_tile_y - 1, SPRITE_INDEX_TILE_HIGHLIGHT,
-            1);
+            get_temp_ptr(struct Player)->nearest_tile_y - 1,
+            SPRITE_INDEX_TILE_HIGHLIGHT, 1);
   }
 }
 
@@ -1148,12 +1158,14 @@ void check_ball_line_collisions(void) {
     return;
   }
 
-  // Run through all the balls and check to see which type of playfield tile they are located in.
+  // Run through all the balls and check to see which type of playfield tile
+  // they are located in.
   for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
     set_current_playfield_index(balls[temp_byte_1].nearest_playfield_tile);
     temp_byte_2 = playfield[get_current_playfield_index()];
 
-    // The ball collides with a line if the playfield tile under the ball is a line tile.
+    // The ball collides with a line if the playfield tile under the ball is a
+    // line tile.
     if (get_playfield_tile_type_from_byte(temp_byte_2) != PLAYFIELD_LINE) {
       // No collision.
       continue;
@@ -1194,11 +1206,13 @@ void check_ball_line_collisions(void) {
 
       // Turn off the negative-direction line segment - the collision stopped
       // it.
-      set_line_is_negative_complete_flag_in_byte(get_temp_ptr(struct Line)->flags);
+      set_line_is_negative_complete_flag_in_byte(
+          get_temp_ptr(struct Line)->flags);
 
       // If the other direction is also complete, reset the is_started flag of
       // the line.
-      if (get_line_is_positive_complete_flag_from_byte(get_temp_ptr(struct Line)->flags)) {
+      if (get_line_is_positive_complete_flag_from_byte(
+              get_temp_ptr(struct Line)->flags)) {
         unset_line_is_started_flag_in_byte(get_temp_ptr(struct Line)->flags);
       }
     } else {
@@ -1231,11 +1245,13 @@ void check_ball_line_collisions(void) {
 
       // Turn off the positive-direction line segment - the collision stopped
       // it.
-      set_line_is_positive_complete_flag_in_byte(get_temp_ptr(struct Line)->flags);
+      set_line_is_positive_complete_flag_in_byte(
+          get_temp_ptr(struct Line)->flags);
 
       // If the other direction is also complete, reset the is_started flag of
       // the line.
-      if (get_line_is_negative_complete_flag_from_byte(get_temp_ptr(struct Line)->flags)) {
+      if (get_line_is_negative_complete_flag_from_byte(
+              get_temp_ptr(struct Line)->flags)) {
         unset_line_is_started_flag_in_byte(get_temp_ptr(struct Line)->flags);
       }
     }
@@ -1283,7 +1299,8 @@ void flip_player_orientation(unsigned char player_index) {
 
 // Don't modify temp_byte_1
 void update_nearest_tile(void) {
-  temp_byte_2 = get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags);
+  temp_byte_2 =
+      get_player_orientation_flag_from_byte(get_temp_ptr(struct Player)->flags);
 
   // Center of the player meta-sprite in pixel coords.
   if (temp_byte_2 == ORIENTATION_HORIZ) {
@@ -1296,7 +1313,8 @@ void update_nearest_tile(void) {
 
   get_temp_ptr(struct Player)->nearest_tile_x = (temp_byte_3 >> 3) << 3;
   get_temp_ptr(struct Player)->nearest_tile_y = (temp_byte_4 >> 3) << 3;
-  get_temp_ptr(struct Player)->nearest_playfield_tile = playfield_tile_from_pixel_coords(temp_byte_3, temp_byte_4);
+  get_temp_ptr(struct Player)->nearest_playfield_tile =
+      playfield_tile_from_pixel_coords(temp_byte_3, temp_byte_4);
 }
 
 void line_completed(void) {
@@ -1350,25 +1368,32 @@ unsigned char update_cleared_playfield_tiles(void) {
   temp_byte_3 = 0;
   // Look over all tiles in the playfield and for each uncleared, unmarked tile
   // change it to cleared.
-  for (; get_playfield_index() < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT; inc_playfield_index()) {
+  for (; get_playfield_index() < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT;
+       inc_playfield_index()) {
     temp_byte_4 = playfield[get_playfield_index()];
-    // Skip tiles which are not uncleared. These are walls or cleared tiles and we don't care if they're marked.
+    // Skip tiles which are not uncleared. These are walls or cleared tiles and
+    // we don't care if they're marked.
     // TODO(boingoing): What about PLAYFIELD_LINE tiles from the other player?
     if (get_playfield_tile_type_from_byte(temp_byte_4) != PLAYFIELD_UNCLEARED) {
       continue;
     }
 
-    // If the tile was marked, we aren't supposed to clear it. Mark implies there is a ball inside the same region.
+    // If the tile was marked, we aren't supposed to clear it. Mark implies
+    // there is a ball inside the same region.
     if (get_playfield_is_marked_flag_from_byte(temp_byte_4)) {
-      // While we're here... let's remove all the mark bits from uncleared tiles. We won't revisit this tile index during this sweep of the playfield.
+      // While we're here... let's remove all the mark bits from uncleared
+      // tiles. We won't revisit this tile index during this sweep of the
+      // playfield.
       unset_playfield_is_marked_flag(get_playfield_index());
       continue;
     }
 
-    // Unmarked, uncleared playfield tile. Let's reset it to cleared and track the count for this sweep as well as all-time for the level.
+    // Unmarked, uncleared playfield tile. Let's reset it to cleared and track
+    // the count for this sweep as well as all-time for the level.
     ++temp_byte_3;
     ++cleared_tile_count;
-    set_playfield_tile(get_playfield_index(), PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
+    set_playfield_tile(get_playfield_index(), PLAYFIELD_WALL,
+                       TILE_INDEX_PLAYFIELD_CLEARED);
 
     // We can only queue about 40 tile updates per v-blank.
     if (temp_byte_3 >= MAX_TILE_UPDATES_PER_FRAME) {
