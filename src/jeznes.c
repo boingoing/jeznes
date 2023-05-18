@@ -1151,10 +1151,12 @@ void check_ball_line_collisions(void) {
     return;
   }
 
+  // Run through all the balls and check to see which type of playfield tile they are located in.
   for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
     set_current_playfield_index(balls[temp_byte_1].nearest_playfield_tile);
     temp_byte_2 = playfield[get_current_playfield_index()];
 
+    // The ball collides with a line if the playfield tile under the ball is a line tile.
     if (get_playfield_tile_type_from_byte(temp_byte_2) != PLAYFIELD_LINE) {
       // No collision.
       continue;
@@ -1164,7 +1166,8 @@ void check_ball_line_collisions(void) {
         get_playfield_line_orientation_flag_from_byte(temp_byte_2));
     set_tile_index_delta(compute_tile_index_delta(get_line_orientation()));
     temp_byte_3 = get_playfield_line_index_flag_from_byte(temp_byte_2);
-    set_negative_line_segment_origin(lines[temp_byte_3].origin);
+    set_temp_ptr(&lines[temp_byte_3]);
+    set_negative_line_segment_origin(get_temp_ptr(struct Line)->origin);
 
     if (get_playfield_line_direction_flag_from_byte(temp_byte_2) ==
         LINE_DIRECTION_NEGATIVE) {
@@ -1173,7 +1176,7 @@ void check_ball_line_collisions(void) {
       // metadata to include the line flags for this tile so we don't need
       // to do anything to the playfield for this tile index.
       set_current_playfield_index(get_negative_line_segment_origin() -
-                                  lines[temp_byte_3].tile_step_count *
+                                  get_temp_ptr(struct Line)->tile_step_count *
                                       get_tile_index_delta());
 
       // Walk back across the line segment (to origin) and reset the playfield
@@ -1194,12 +1197,12 @@ void check_ball_line_collisions(void) {
 
       // Turn off the negative-direction line segment - the collision stopped
       // it.
-      set_line_is_negative_complete_flag(temp_byte_3);
+      set_line_is_negative_complete_flag_in_byte(get_temp_ptr(struct Line)->flags);
 
       // If the other direction is also complete, reset the is_started flag of
       // the line.
-      if (get_line_is_positive_complete_flag(temp_byte_3)) {
-        unset_line_is_started_flag(temp_byte_3);
+      if (get_line_is_positive_complete_flag_from_byte(get_temp_ptr(struct Line)->flags)) {
+        unset_line_is_started_flag_in_byte(get_temp_ptr(struct Line)->flags);
       }
     } else {
       set_positive_line_segment_origin(get_negative_line_segment_origin() +
@@ -1210,7 +1213,7 @@ void check_ball_line_collisions(void) {
       // metadata to include the line flags for this tile so we don't need
       // to do anything to the playfield for this tile index.
       set_current_playfield_index(get_positive_line_segment_origin() +
-                                  lines[temp_byte_3].tile_step_count *
+                                  get_temp_ptr(struct Line)->tile_step_count *
                                       get_tile_index_delta());
 
       // Walk back across the line segment (to origin) and reset the playfield
@@ -1231,12 +1234,12 @@ void check_ball_line_collisions(void) {
 
       // Turn off the positive-direction line segment - the collision stopped
       // it.
-      set_line_is_positive_complete_flag(temp_byte_3);
+      set_line_is_positive_complete_flag_in_byte(get_temp_ptr(struct Line)->flags);
 
       // If the other direction is also complete, reset the is_started flag of
       // the line.
-      if (get_line_is_negative_complete_flag(temp_byte_3)) {
-        unset_line_is_started_flag(temp_byte_3);
+      if (get_line_is_negative_complete_flag_from_byte(get_temp_ptr(struct Line)->flags)) {
+        unset_line_is_started_flag_in_byte(get_temp_ptr(struct Line)->flags);
       }
     }
 
