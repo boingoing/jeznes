@@ -99,7 +99,6 @@ void draw_line(unsigned char line_index);
 
 void update_hud(void);
 
-void reset_playfield_mark_bit(void);
 unsigned char update_cleared_playfield_tiles(void);
 void line_completed(void);
 

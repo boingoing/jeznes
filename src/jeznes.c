@@ -162,9 +162,6 @@ int main(void) {
       if (update_cleared_playfield_tiles() == TRUE) {
         // We might have cleared tiles, let's update the HUD.
         game_state = GAME_STATE_REQUEST_HUD_UPDATE;
-
-        // We finished updating the playfield tiles, let's remove the mark bits.
-        reset_playfield_mark_bit();
       }
     } else if (game_state == GAME_STATE_REQUEST_HUD_UPDATE) {
       // Update the level, lives remaining, percentages, etc.
@@ -1304,8 +1301,6 @@ void update_nearest_tile(void) {
 
 void line_completed(void) {
   unsigned char i;
-  reset_playfield_mark_bit();
-
   for (i = 0; i < get_ball_count(); ++i) {
     compute_playfield_mark_bit_one_ball(i);
   }
@@ -1357,8 +1352,11 @@ unsigned char update_cleared_playfield_tiles(void) {
   // change it to cleared
   for (; get_playfield_index() < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT;
        inc_playfield_index()) {
+
     // Skip tiles which are not uncleared (this includes marked tiles)
     if (playfield[get_playfield_index()] != PLAYFIELD_UNCLEARED) {
+      // While we're here... let's remove all the mark bits, too.
+      unset_playfield_is_marked_flag(get_playfield_index());
       continue;
     }
 
@@ -1376,15 +1374,4 @@ unsigned char update_cleared_playfield_tiles(void) {
 
   add_score_for_cleared_tiles(temp_byte_3);
   return TRUE;
-}
-
-// Reset the mark bit in all playfield tiles.
-//
-// scratch:
-// temp_int_1
-void reset_playfield_mark_bit(void) {
-  for (temp_int_1 = 0; temp_int_1 < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT;
-       ++temp_int_1) {
-    unset_playfield_is_marked_flag(temp_int_1);
-  }
 }
