@@ -1351,7 +1351,6 @@ unsigned char update_cleared_playfield_tiles(void) {
   // Look over all tiles in the playfield and for each uncleared, unmarked tile
   // change it to cleared.
   for (; get_playfield_index() < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT; inc_playfield_index()) {
-
     temp_byte_4 = playfield[get_playfield_index()];
     // Skip tiles which are not uncleared. These are walls or cleared tiles and we don't care if they're marked.
     // TODO(boingoing): What about PLAYFIELD_LINE tiles from the other player?
