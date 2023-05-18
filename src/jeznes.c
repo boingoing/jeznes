@@ -1350,8 +1350,7 @@ unsigned char update_cleared_playfield_tiles(void) {
   temp_byte_3 = 0;
   // Look over all tiles in the playfield and for each uncleared, unmarked tile
   // change it to cleared.
-  for (; get_playfield_index() < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT;
-       inc_playfield_index()) {
+  for (; get_playfield_index() < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT; inc_playfield_index()) {
 
     temp_byte_4 = playfield[get_playfield_index()];
     // Skip tiles which are not uncleared. These are walls or cleared tiles and we don't care if they're marked.
@@ -1367,10 +1366,10 @@ unsigned char update_cleared_playfield_tiles(void) {
       continue;
     }
 
-    temp_byte_3++;
-    cleared_tile_count++;
-    set_playfield_tile(get_playfield_index(), PLAYFIELD_WALL,
-                       TILE_INDEX_PLAYFIELD_CLEARED);
+    // Unmarked, uncleared playfield tile. Let's reset it to cleared and track the count for this sweep as well as all-time for the level.
+    ++temp_byte_3;
+    ++cleared_tile_count;
+    set_playfield_tile(get_playfield_index(), PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
 
     // We can only queue about 40 tile updates per v-blank.
     if (temp_byte_3 >= MAX_TILE_UPDATES_PER_FRAME) {
