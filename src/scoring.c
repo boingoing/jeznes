@@ -16,9 +16,7 @@ void add_score_for_cleared_tiles(unsigned char tile_count) {
   score += tile_count * SCORE_PER_CLEARED_TILE;
 }
 
-void add_score_for_cleared_line(void) {
-  score += SCORE_PER_CLEARED_LINE;
-}
+void add_score_for_cleared_line(void) { score += SCORE_PER_CLEARED_LINE; }
 
 void add_score_for_level_up(void) {
   score += get_lives_bonus(lives_count);

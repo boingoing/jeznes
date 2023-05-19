@@ -25,6 +25,13 @@
 #define unset_line_flag(line_index, bitmask) \
   unset_flag(lines[(line_index)].flags, (bitmask))
 
+#define get_line_is_started_flag_from_byte(flags_byte) \
+  get_flag((flags_byte), LINE_BITMASK_IS_STARTED)
+#define set_line_is_started_flag_in_byte(flags_byte) \
+  set_flag((flags_byte), LINE_BITMASK_IS_STARTED)
+#define unset_line_is_started_flag_in_byte(flags_byte) \
+  unset_flag((flags_byte), LINE_BITMASK_IS_STARTED)
+
 #define get_line_is_started_flag(line_index) \
   get_line_flag((line_index), LINE_BITMASK_IS_STARTED)
 #define set_line_is_started_flag(line_index) \
@@ -32,12 +39,26 @@
 #define unset_line_is_started_flag(line_index) \
   unset_line_flag((line_index), LINE_BITMASK_IS_STARTED)
 
+#define get_line_is_positive_complete_flag_from_byte(flags_byte) \
+  get_flag((flags_byte), LINE_BITMASK_IS_POS_COMPLETE)
+#define set_line_is_positive_complete_flag_in_byte(flags_byte) \
+  set_flag((flags_byte), LINE_BITMASK_IS_POS_COMPLETE)
+#define unset_line_is_positive_complete_flag_in_byte(flags_byte) \
+  unset_flag((flags_byte), LINE_BITMASK_IS_POS_COMPLETE)
+
 #define get_line_is_positive_complete_flag(line_index) \
   get_line_flag((line_index), LINE_BITMASK_IS_POS_COMPLETE)
 #define set_line_is_positive_complete_flag(line_index) \
   set_line_flag((line_index), LINE_BITMASK_IS_POS_COMPLETE)
 #define unset_line_is_positive_complete_flag(line_index) \
   unset_line_flag((line_index), LINE_BITMASK_IS_POS_COMPLETE)
+
+#define get_line_is_negative_complete_flag_from_byte(flags_byte) \
+  get_flag((flags_byte), LINE_BITMASK_IS_NEG_COMPLETE)
+#define set_line_is_negative_complete_flag_in_byte(flags_byte) \
+  set_flag((flags_byte), LINE_BITMASK_IS_NEG_COMPLETE)
+#define unset_line_is_negative_complete_flag_in_byte(flags_byte) \
+  unset_flag((flags_byte), LINE_BITMASK_IS_NEG_COMPLETE)
 
 #define get_line_is_negative_complete_flag(line_index) \
   get_line_flag((line_index), LINE_BITMASK_IS_NEG_COMPLETE)

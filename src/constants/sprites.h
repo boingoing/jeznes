@@ -20,7 +20,8 @@
 
 #define SPRITE_INDEX_CURSOR 0x17
 
-// Sprites for the PAUSE! chars are laid-out sequentially starting at this sprite index.
+// Sprites for the PAUSE! chars are laid-out sequentially starting at this
+// sprite index.
 #define SPRITE_INDEX_PAUSE_BASE 0x23
 
 #endif  // __JEZNES_CONSTANTS_SPRITES_H__
