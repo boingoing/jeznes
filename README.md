@@ -25,6 +25,9 @@ JezzBall shipped for Windows 3.1 in the Microsoft Entertainment Pack. Seems it m
 
 JezNES began as an implementation of JezzBall for the NES.
 
+# Playing
+JezNES is released periodically [here](https://github.com/boingoing/jeznes/releases) as an iNES rom package and should be compatible with any NES emulator and original or clone hardware. It's been tested in Mesen and on hardware via AVS and NT Mini.
+
 # Building
 JezNES may be built via CMAKE and requires cc65. Tested on Ubuntu 22.04 and MacOS.
 
