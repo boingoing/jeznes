@@ -83,33 +83,16 @@ int main(void) {
       // Clear all sprites from the sprite buffer.
       oam_clear();
 
-      for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
-        // Respond to player gamepad.
-        flip_player_orientation(temp_byte_1);
-        start_line(temp_byte_1);
-        if (pause_press_start(temp_byte_1) == TRUE) {
-          continue;
-        }
-
-        // Stash a pointer to the player so we don't need to access it via the
-        // array everywhere.
-        set_temp_ptr(&players[temp_byte_1]);
-
-        // Move the player position in the playfield.
-        move_player(temp_byte_1);
-
-        // Draw the player, the playfield tile highlight, and the in-progress
-        // line sprites.
-        draw_player();
-        draw_tile_highlight();
-        draw_line(temp_byte_1);
-
-        // Update the line for this player if there's one in progress.
-        update_line(temp_byte_1);
-      }
+      // Handle player gamepad input, update the in-progress lines, draw players and lines etc.
+      handle_gameplay_logic_player_and_line();
 
       // Move the ball positions in the playfield.
       move_and_draw_balls();
+
+      // Something above may have changed the game state, let's fall out of this loop in that case.
+      if (game_state != GAME_STATE_PLAYING) {
+        continue;
+      }
 
       // Check to see if any balls have collided with any lines.
 #if ENABLE_CHEATS
@@ -198,6 +181,40 @@ int main(void) {
   }
 
   return 0;
+}
+
+void handle_gameplay_logic_player_and_line(void) {
+  for (temp_byte_1 = 0; temp_byte_1 < get_player_count(); ++temp_byte_1) {
+    // Respond to player gamepad.
+    flip_player_orientation(temp_byte_1);
+    start_line(temp_byte_1);
+    // If the player pressed pause, skip moving and drawing things.
+    if (pause_press_start(temp_byte_1) == TRUE) {
+      return;
+    }
+    // Stash a pointer to the player so we don't need to access it via the
+    // array everywhere.
+    set_temp_ptr(&players[temp_byte_1]);
+
+    // Move the player position in the playfield.
+    move_player(temp_byte_1);
+
+    // Draw the player, the playfield tile highlight, and the in-progress
+    // line sprites.
+    draw_player();
+
+#if DRAW_PLAYER_NEAREST_TILE_HIGHLIGHT
+    draw_tile_highlight();
+#endif  // DRAW_PLAYER_NEAREST_TILE_HIGHLIGHT
+
+    draw_line(temp_byte_1);
+
+    // Update the line for this player if there's one in progress.
+    // If the line completed, let's skip handling the second player because we know the next step may be a couple of frames of clearing playfield tiles.
+    if (update_line(temp_byte_1) == TRUE) {
+      return;
+    }
+  }
 }
 
 void init_balls(void) {
@@ -895,10 +912,10 @@ void draw_pause_sprites(void) {
 // or ORIENTATION_VERT.
 #define compute_tile_index_delta(orientation) ((orientation)*31 + 1)
 
-void update_line(unsigned char line_index) {
+unsigned char update_line(unsigned char line_index) {
   // Do nothing if the line is not started.
   if (!get_line_is_started_flag(line_index)) {
-    return;
+    return FALSE;
   }
 
   set_was_line_segment_completed(FALSE);
@@ -931,7 +948,7 @@ void update_line(unsigned char line_index) {
             get_current_playfield_index(),
             get_playfield_tile_type_line(get_line_orientation(), line_index,
                                          LINE_DIRECTION_NEGATIVE),
-            get_playfield_bg_tile_line(get_line_orientation()));
+            get_playfield_bg_tile_line(get_line_orientation(), LINE_DIRECTION_NEGATIVE));
       }
 
       // Now move the front of the line segment forward by one tile.
@@ -994,7 +1011,7 @@ void update_line(unsigned char line_index) {
             get_current_playfield_index(),
             get_playfield_tile_type_line(get_line_orientation(), line_index,
                                          LINE_DIRECTION_POSITIVE),
-            get_playfield_bg_tile_line(get_line_orientation()));
+            get_playfield_bg_tile_line(get_line_orientation(), LINE_DIRECTION_POSITIVE));
       }
 
       // Now move the front of the line segment forward by one tile.
@@ -1045,6 +1062,7 @@ void update_line(unsigned char line_index) {
 
   if (get_was_line_segment_completed()) {
     line_completed();
+    return TRUE;
   }
 }
 
@@ -1079,7 +1097,7 @@ void start_line(unsigned char player_index) {
         get_negative_line_segment_origin(),
         get_playfield_tile_type_line(get_line_orientation(), player_index,
                                      LINE_DIRECTION_NEGATIVE),
-        get_playfield_bg_tile_line_origin(get_line_orientation(), FALSE));
+        get_playfield_bg_tile_line_origin(get_line_orientation(), LINE_DIRECTION_NEGATIVE));
 
     // Update the line data for the negative-direction line segment.
     lines[player_index].origin = get_negative_line_segment_origin();
@@ -1099,7 +1117,7 @@ void start_line(unsigned char player_index) {
           get_positive_line_segment_origin(),
           get_playfield_tile_type_line(get_line_orientation(), player_index,
                                        LINE_DIRECTION_POSITIVE),
-          get_playfield_bg_tile_line_origin(get_line_orientation(), TRUE));
+          get_playfield_bg_tile_line_origin(get_line_orientation(), LINE_DIRECTION_POSITIVE));
       unset_line_is_positive_complete_flag(player_index);
     }
 
@@ -1147,7 +1165,7 @@ void draw_line(unsigned char line_index) {
               playfield_index_pixel_coord_y(get_current_playfield_index()) - 1,
               get_line_sprite_index(get_line_orientation(),
                                     lines[line_index].current_block_completion),
-              1);
+              3);
     }
   }
 }
