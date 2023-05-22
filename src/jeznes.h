@@ -87,7 +87,8 @@ void flip_player_orientation(unsigned char player_index);
 // Should be called when the player sprite moves, changes orientation, etc.
 void update_nearest_tile(void);
 
-// Update the metadata for the in-progress line at |line_index|. Returns TRUE if the line completed.
+// Update the metadata for the in-progress line at |line_index|. Returns TRUE if
+// the line completed.
 unsigned char update_line(unsigned char line_index);
 
 // Draws player stored in |temp_ptr_1|.
