@@ -989,7 +989,7 @@ unsigned char update_line(unsigned char line_index) {
         set_line_is_negative_complete_flag(line_index);
 
         // When line segments in both directions are complete, the line is done.
-        if (get_line_is_positive_complete_flag(line_index)) {
+        if (get_line_is_positive_complete_flag_from_byte(temp_byte_6)) {
           unset_line_is_started_flag(line_index);
         }
 
