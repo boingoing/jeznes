@@ -23,8 +23,8 @@ enum {
   MOVE_DIRECTION_DEFAULT = MOVE_DIRECTION_RIGHT
 };
 
-#define get_cur() (temp_int_1)
-#define set_cur(a) (temp_int_1 = (a))
+#define get_current_position() (temp_int_1)
+#define set_current_position(a) (temp_int_1 = (a))
 #define get_mark() (temp_int_2)
 #define set_mark(a) (temp_int_2 = (a))
 #define get_mark2() (temp_int_3)
@@ -54,7 +54,7 @@ enum {
 #define reverse_direction() (set_cur_dir((get_cur_dir() + 2) % 4))
 #define turn_right() (set_cur_dir((get_cur_dir() + 1) % 4))
 #define turn_left() (set_cur_dir((get_cur_dir() + 3) % 4))
-#define move_forward() (set_cur(get_front()))
+#define move_forward() (set_current_position(get_front()))
 
 // Uses a constant-memory usage implementation of the painters algorithm to
 // walk the playfield starting at the playfield tile where |ball_index| is
