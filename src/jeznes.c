@@ -986,11 +986,11 @@ unsigned char update_line(unsigned char line_index) {
         }
 
         // Finished the negative-direction line segment.
-        set_line_is_negative_complete_flag(line_index);
+        set_line_is_negative_complete_flag_in_byte(get_temp_ptr(struct Line)->flags);
 
         // When line segments in both directions are complete, the line is done.
         if (get_line_is_positive_complete_flag_from_byte(temp_byte_6)) {
-          unset_line_is_started_flag(line_index);
+          unset_line_is_started_flag_in_byte(get_temp_ptr(struct Line)->flags);
         }
 
         set_was_line_segment_completed(TRUE);
@@ -1050,11 +1050,11 @@ unsigned char update_line(unsigned char line_index) {
         }
 
         // Finished the positive-direction line segment.
-        set_line_is_positive_complete_flag(line_index);
+        set_line_is_positive_complete_flag_in_byte(get_temp_ptr(struct Line)->flags);
 
         // When line segments in both directions are complete, the line is done.
-        if (get_line_is_negative_complete_flag(line_index)) {
-          unset_line_is_started_flag(line_index);
+        if (get_line_is_negative_complete_flag_from_byte(get_temp_ptr(struct Line)->flags)) {
+          unset_line_is_started_flag_in_byte(get_temp_ptr(struct Line)->flags);
         }
 
         set_was_line_segment_completed(TRUE);
