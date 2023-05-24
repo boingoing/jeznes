@@ -125,20 +125,17 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
   goto PAINTER_ALGORITHM_START;
 
   while (1) {
-    // Move forward
-    set_cur(get_front());
+    move_forward();
 
     if (inside(get_right())) {
       if (get_backtrack() == TRUE && get_findloop() == FALSE &&
           (inside(get_front()) || inside(get_left()))) {
         set_findloop(TRUE);
       }
-      // Turn right
-      set_cur_dir((get_cur_dir() + 1) % 4);
+      turn_right();
 
     PAINTER_ALGORITHM_PAINT:
-      // Move forward
-      set_cur(get_front());
+      move_forward();
     }
 
   PAINTER_ALGORITHM_START:
@@ -159,12 +156,10 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
 
     if (get_adjacent_marked_tile_count() != 4) {
       do {
-        // Turn right
-        set_cur_dir((get_cur_dir() + 1) % 4);
+        turn_right();
       } while (inside(get_front()));
       do {
-        // Turn left
-        set_cur_dir((get_cur_dir() + 3) % 4);
+        turn_left();
       } while (!inside(get_front()));
     }
 
@@ -201,8 +196,7 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
             if (get_cur() == get_mark()) {
               if (get_cur_dir() == get_mark_dir()) {
                 set_mark_null(TRUE);
-                // Turn around
-                set_cur_dir((get_cur_dir() + 2) % 4);
+                reverse_direction();
                 set_playfield_is_marked_flag(get_cur());
                 goto PAINTER_ALGORITHM_PAINT;
               } else {
@@ -222,8 +216,7 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
               set_mark_null(TRUE);
               set_mark2_null(TRUE);
               set_backtrack(FALSE);
-              // Turn around
-              set_cur_dir((get_cur_dir() + 2) % 4);
+              reverse_direction();
               set_playfield_is_marked_flag(get_cur());
               goto PAINTER_ALGORITHM_PAINT;
             } else if (get_cur() == get_mark2()) {

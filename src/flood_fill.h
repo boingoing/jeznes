@@ -51,6 +51,11 @@ enum {
 #define get_adjacent_marked_tile_count() (temp_byte_6)
 #define inc_adjacent_marked_tile_count() (++temp_byte_6)
 
+#define reverse_direction() (set_cur_dir((get_cur_dir() + 2) % 4))
+#define turn_right() (set_cur_dir((get_cur_dir() + 1) % 4))
+#define turn_left() (set_cur_dir((get_cur_dir() + 3) % 4))
+#define move_forward() (set_cur(get_front()))
+
 // Uses a constant-memory usage implementation of the painters algorithm to
 // walk the playfield starting at the playfield tile where |ball_index| is
 // currently located. Each reachable playfield tile is marked until we run
