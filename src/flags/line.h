@@ -68,8 +68,12 @@
   unset_line_flag((line_index), LINE_BITMASK_IS_NEG_COMPLETE)
 
 // Returns either ORIENTATION_HORIZ or ORIENTATION_VERT
+#define get_line_orientation_flag_from_byte(flags_byte) \
+  ((flags_byte) & LINE_BITMASK_ORIENTATION)
+
+// Returns either ORIENTATION_HORIZ or ORIENTATION_VERT
 #define get_line_orientation_flag(line_index) \
-  (lines[(line_index)].flags & LINE_BITMASK_ORIENTATION)
+  (get_line_orientation_flag_from_byte(lines[(line_index)].flags))
 
 // Sets the orientation for |line_index| line to |orientation| which must be
 // either ORIENTATION_HORIZ or ORIENTATION_VERT

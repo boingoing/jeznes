@@ -97,7 +97,8 @@ void draw_player(void);
 // Draws the highlight tile under player stored in |temp_ptr_1|.
 void draw_tile_highlight(void);
 
-void draw_line(unsigned char line_index);
+// Draws an in-progress line stored in |temp_ptr_1|.
+void draw_line(void);
 
 void handle_gameplay_logic_player_and_line(void);
 

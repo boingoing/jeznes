@@ -209,7 +209,9 @@ void handle_gameplay_logic_player_and_line(void) {
     draw_tile_highlight();
 #endif  // DRAW_PLAYER_NEAREST_TILE_HIGHLIGHT
 
-    draw_line(temp_byte_1);
+    set_temp_ptr(&lines[temp_byte_1]);
+
+    draw_line();
 
     // Update the line for this player if there's one in progress.
     // If the line completed, let's skip handling the second player because we
@@ -1140,15 +1142,17 @@ void start_line(unsigned char player_index) {
   }
 }
 
-void draw_line(unsigned char line_index) {
-  if (get_line_is_started_flag(line_index)) {
-    set_line_orientation(get_line_orientation_flag(line_index));
-    set_tile_index_delta(compute_tile_index_delta(get_line_orientation()));
-    set_negative_line_segment_origin(lines[line_index].origin);
+void draw_line(void) {
+  temp_byte_3 = get_temp_ptr(struct Line)->flags;
 
-    if (!get_line_is_negative_complete_flag(line_index)) {
+  if (get_line_is_started_flag_from_byte(temp_byte_3)) {
+    set_line_orientation(get_line_orientation_flag_from_byte(temp_byte_3));
+    set_tile_index_delta(compute_tile_index_delta(get_line_orientation()));
+    set_negative_line_segment_origin(get_temp_ptr(struct Line)->origin);
+
+    if (!get_line_is_negative_complete_flag_from_byte(temp_byte_3)) {
       set_current_playfield_index(get_negative_line_segment_origin() -
-                                  lines[line_index].tile_step_count *
+                                  get_temp_ptr(struct Line)->tile_step_count *
                                       get_tile_index_delta());
 
       // Negative-direction line segment front tile sprite needs to be flipped
@@ -1158,20 +1162,20 @@ void draw_line(unsigned char line_index) {
       oam_spr(playfield_index_pixel_coord_x(get_current_playfield_index()),
               playfield_index_pixel_coord_y(get_current_playfield_index()) - 1,
               get_line_sprite_index(get_line_orientation(),
-                                    lines[line_index].current_block_completion),
+                                    get_temp_ptr(struct Line)->current_block_completion),
               1 | temp_byte_2);
     }
 
-    if (!get_line_is_positive_complete_flag(line_index)) {
+    if (!get_line_is_positive_complete_flag_from_byte(temp_byte_3)) {
       set_positive_line_segment_origin(get_negative_line_segment_origin() +
                                        get_tile_index_delta());
       set_current_playfield_index(get_positive_line_segment_origin() +
-                                  lines[line_index].tile_step_count *
+                                  get_temp_ptr(struct Line)->tile_step_count *
                                       get_tile_index_delta());
       oam_spr(playfield_index_pixel_coord_x(get_current_playfield_index()),
               playfield_index_pixel_coord_y(get_current_playfield_index()) - 1,
               get_line_sprite_index(get_line_orientation(),
-                                    lines[line_index].current_block_completion),
+                                    get_temp_ptr(struct Line)->current_block_completion),
               3);
     }
   }
