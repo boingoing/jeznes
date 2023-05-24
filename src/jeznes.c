@@ -986,7 +986,8 @@ unsigned char update_line(unsigned char line_index) {
         }
 
         // Finished the negative-direction line segment.
-        set_line_is_negative_complete_flag_in_byte(get_temp_ptr(struct Line)->flags);
+        set_line_is_negative_complete_flag_in_byte(
+            get_temp_ptr(struct Line)->flags);
 
         // When line segments in both directions are complete, the line is done.
         if (get_line_is_positive_complete_flag_from_byte(temp_byte_6)) {
@@ -1050,10 +1051,12 @@ unsigned char update_line(unsigned char line_index) {
         }
 
         // Finished the positive-direction line segment.
-        set_line_is_positive_complete_flag_in_byte(get_temp_ptr(struct Line)->flags);
+        set_line_is_positive_complete_flag_in_byte(
+            get_temp_ptr(struct Line)->flags);
 
         // When line segments in both directions are complete, the line is done.
-        if (get_line_is_negative_complete_flag_from_byte(get_temp_ptr(struct Line)->flags)) {
+        if (get_line_is_negative_complete_flag_from_byte(
+                get_temp_ptr(struct Line)->flags)) {
           unset_line_is_started_flag_in_byte(get_temp_ptr(struct Line)->flags);
         }
 
@@ -1163,8 +1166,9 @@ void draw_line(void) {
       temp_byte_2 = OAM_FLIP_H + OAM_FLIP_H * get_line_orientation();
       oam_spr(playfield_index_pixel_coord_x(get_current_playfield_index()),
               playfield_index_pixel_coord_y(get_current_playfield_index()) - 1,
-              get_line_sprite_index(get_line_orientation(),
-                                    get_temp_ptr(struct Line)->current_block_completion),
+              get_line_sprite_index(
+                  get_line_orientation(),
+                  get_temp_ptr(struct Line)->current_block_completion),
               1 | temp_byte_2);
     }
 
@@ -1176,8 +1180,9 @@ void draw_line(void) {
                                       get_tile_index_delta());
       oam_spr(playfield_index_pixel_coord_x(get_current_playfield_index()),
               playfield_index_pixel_coord_y(get_current_playfield_index()) - 1,
-              get_line_sprite_index(get_line_orientation(),
-                                    get_temp_ptr(struct Line)->current_block_completion),
+              get_line_sprite_index(
+                  get_line_orientation(),
+                  get_temp_ptr(struct Line)->current_block_completion),
               3);
     }
   }
