@@ -918,8 +918,10 @@ void draw_pause_sprites(void) {
 #define compute_tile_index_delta(orientation) ((orientation)*31 + 1)
 
 unsigned char update_line(unsigned char line_index) {
+  temp_byte_6 = get_temp_ptr(struct Line)->flags;
+
   // Do nothing if the line is not started.
-  if (!get_line_is_started_flag(line_index)) {
+  if (!get_line_is_started_flag_from_byte(temp_byte_6)) {
     return FALSE;
   }
 
@@ -930,25 +932,25 @@ unsigned char update_line(unsigned char line_index) {
   // The tile is 8 pixels wide and we draw one line of pixels at a time.
   // When we've reached completion of the tile, move the front of both
   // line segments forward in their directions.
-  if (lines[line_index].current_block_completion == 8) {
-    set_line_orientation(get_line_orientation_flag(line_index));
+  if (get_temp_ptr(struct Line)->current_block_completion == 8) {
+    set_line_orientation(get_line_orientation_flag_from_byte(temp_byte_6));
     set_tile_index_delta(compute_tile_index_delta(get_line_orientation()));
-    set_negative_line_segment_origin(lines[line_index].origin);
+    set_negative_line_segment_origin(get_temp_ptr(struct Line)->origin);
 
     // Try and move the front of the negative-direction line segment forward
     // and complete the line segment if it's reached a wall.
-    if (!get_line_is_negative_complete_flag(line_index)) {
+    if (!get_line_is_negative_complete_flag_from_byte(temp_byte_6)) {
       // Before moving the line segment forward, update the metadata for the
       // tile we're moving from.
       set_current_playfield_index(get_negative_line_segment_origin() -
-                                  lines[line_index].tile_step_count *
+                                  get_temp_ptr(struct Line)->tile_step_count *
                                       get_tile_index_delta());
 
       // While it was the front of the line segment, current playfield tile was
       // being drawn as a sprite. Now that it's complete, update the playfield
       // and bg tile. Note: The origin tile already has the playfield flags (and
       // bg tile) set. We can ignore that one (when tile_step_count == 0).
-      if (lines[line_index].tile_step_count != 0) {
+      if (get_temp_ptr(struct Line)->tile_step_count != 0) {
         set_playfield_tile(
             get_current_playfield_index(),
             get_playfield_tile_type_line(get_line_orientation(), line_index,
@@ -996,7 +998,7 @@ unsigned char update_line(unsigned char line_index) {
     }
 
     // Now do the positive direction.
-    if (!get_line_is_positive_complete_flag(line_index)) {
+    if (!get_line_is_positive_complete_flag_from_byte(temp_byte_6)) {
       // Calculate positive-direction line segment origin based
       // on negative-direction line segment origin.
       set_positive_line_segment_origin(get_negative_line_segment_origin() +
@@ -1005,14 +1007,14 @@ unsigned char update_line(unsigned char line_index) {
       // Before moving the line segment forward, update the metadata for the
       // tile we're moving from.
       set_current_playfield_index(get_positive_line_segment_origin() +
-                                  lines[line_index].tile_step_count *
+                                  get_temp_ptr(struct Line)->tile_step_count *
                                       get_tile_index_delta());
 
       // While it was the front of the line segment, current playfield tile was
       // being drawn as a sprite. Now that it's complete, update the playfield
       // and bg tile. Note: The origin tile already has the playfield flags (and
       // bg tile) set. We can ignore that one (when tile_step_count == 0).
-      if (lines[line_index].tile_step_count != 0) {
+      if (get_temp_ptr(struct Line)->tile_step_count != 0) {
         set_playfield_tile(
             get_current_playfield_index(),
             get_playfield_tile_type_line(get_line_orientation(), line_index,
@@ -1059,11 +1061,11 @@ unsigned char update_line(unsigned char line_index) {
       }
     }
 
-    lines[line_index].current_block_completion = 0;
-    lines[line_index].tile_step_count++;
+    get_temp_ptr(struct Line)->current_block_completion = 0;
+    get_temp_ptr(struct Line)->tile_step_count++;
   } else {
     if (get_frame_count() % 2 == 0) {
-      ++lines[line_index].current_block_completion;
+      ++get_temp_ptr(struct Line)->current_block_completion;
     }
   }
 
