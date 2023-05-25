@@ -21,7 +21,7 @@
 
 // How many balls should bounce around inside the playfield section of the game
 // over screen.
-#define GAME_OVER_SCREEN_BALL_COUNT 2
+#define GAME_OVER_SCREEN_BALL_COUNT 4
 
 // Game over screen RLE graphics data.
 const unsigned char game_over_screen[] = {

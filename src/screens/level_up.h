@@ -23,7 +23,7 @@
 
 // How many balls should bounce around inside the playfield section of the level
 // up screen.
-#define LEVEL_UP_SCREEN_BALL_COUNT 2
+#define LEVEL_UP_SCREEN_BALL_COUNT 4
 
 // Level up screen RLE graphics data.
 const unsigned char level_up_screen[] = {
