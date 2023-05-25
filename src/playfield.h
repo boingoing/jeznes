@@ -149,8 +149,8 @@ const unsigned char playfield_pattern_valid_ball_start_pixel_x[] = {
 
 const unsigned char playfield_pattern_valid_ball_start_pixel_y[] = {
   0x58,
-  0x60,
-  0x60,
+  0x68,
+  0x68,
   0x20
 };
 
