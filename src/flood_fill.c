@@ -17,89 +17,89 @@
 int get_front() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
-      return playfield_index_move_right(get_cur());
+      return playfield_index_move_right(get_current_position());
     case MOVE_DIRECTION_LEFT:
-      return playfield_index_move_left(get_cur());
+      return playfield_index_move_left(get_current_position());
     case MOVE_DIRECTION_DOWN:
-      return playfield_index_move_down(get_cur());
+      return playfield_index_move_down(get_current_position());
     case MOVE_DIRECTION_UP:
-      return playfield_index_move_up(get_cur());
+      return playfield_index_move_up(get_current_position());
   }
 }
 
 int get_back() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
-      return playfield_index_move_left(get_cur());
+      return playfield_index_move_left(get_current_position());
     case MOVE_DIRECTION_LEFT:
-      return playfield_index_move_right(get_cur());
+      return playfield_index_move_right(get_current_position());
     case MOVE_DIRECTION_DOWN:
-      return playfield_index_move_up(get_cur());
+      return playfield_index_move_up(get_current_position());
     case MOVE_DIRECTION_UP:
-      return playfield_index_move_down(get_cur());
+      return playfield_index_move_down(get_current_position());
   }
 }
 
 int get_right() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
-      return playfield_index_move_down(get_cur());
+      return playfield_index_move_down(get_current_position());
     case MOVE_DIRECTION_LEFT:
-      return playfield_index_move_up(get_cur());
+      return playfield_index_move_up(get_current_position());
     case MOVE_DIRECTION_DOWN:
-      return playfield_index_move_left(get_cur());
+      return playfield_index_move_left(get_current_position());
     case MOVE_DIRECTION_UP:
-      return playfield_index_move_right(get_cur());
+      return playfield_index_move_right(get_current_position());
   }
 }
 
 int get_left() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
-      return playfield_index_move_up(get_cur());
+      return playfield_index_move_up(get_current_position());
     case MOVE_DIRECTION_LEFT:
-      return playfield_index_move_down(get_cur());
+      return playfield_index_move_down(get_current_position());
     case MOVE_DIRECTION_DOWN:
-      return playfield_index_move_right(get_cur());
+      return playfield_index_move_right(get_current_position());
     case MOVE_DIRECTION_UP:
-      return playfield_index_move_left(get_cur());
+      return playfield_index_move_left(get_current_position());
   }
 }
 
 int get_front_left() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
-      return playfield_index_move_right(playfield_index_move_up(get_cur()));
+      return playfield_index_move_right(playfield_index_move_up(get_current_position()));
     case MOVE_DIRECTION_LEFT:
-      return playfield_index_move_left(playfield_index_move_down(get_cur()));
+      return playfield_index_move_left(playfield_index_move_down(get_current_position()));
     case MOVE_DIRECTION_DOWN:
-      return playfield_index_move_down(playfield_index_move_right(get_cur()));
+      return playfield_index_move_down(playfield_index_move_right(get_current_position()));
     case MOVE_DIRECTION_UP:
-      return playfield_index_move_up(playfield_index_move_left(get_cur()));
+      return playfield_index_move_up(playfield_index_move_left(get_current_position()));
   }
 }
 
 int get_back_left() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
-      return playfield_index_move_left(playfield_index_move_up(get_cur()));
+      return playfield_index_move_left(playfield_index_move_up(get_current_position()));
     case MOVE_DIRECTION_LEFT:
-      return playfield_index_move_right(playfield_index_move_down(get_cur()));
+      return playfield_index_move_right(playfield_index_move_down(get_current_position()));
     case MOVE_DIRECTION_DOWN:
-      return playfield_index_move_up(playfield_index_move_right(get_cur()));
+      return playfield_index_move_up(playfield_index_move_right(get_current_position()));
     case MOVE_DIRECTION_UP:
-      return playfield_index_move_down(playfield_index_move_left(get_cur()));
+      return playfield_index_move_down(playfield_index_move_left(get_current_position()));
   }
 }
 
 void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
   // Set cur to starting playfield tile
-  set_cur(balls[ball_index].nearest_playfield_tile);
+  set_current_position(balls[ball_index].nearest_playfield_tile);
 
   // If the playfield tile where |ball_index| is located has already been
   // marked, another ball is in the same region of the playfield as
   // |ball_index|. There's no point in remarking the region.
-  if (!inside(get_cur())) {
+  if (!inside(get_current_position())) {
     return;
   }
 
@@ -118,53 +118,48 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
   //       has a border of wall tiles on all sides.
   set_temp_forward_iterator(get_front());
   while (inside(get_temp_forward_iterator())) {
-    set_cur(get_temp_forward_iterator());
+    set_current_position(get_temp_forward_iterator());
     set_temp_forward_iterator(get_front());
   }
 
   goto PAINTER_ALGORITHM_START;
 
   while (1) {
-    // Move forward
-    set_cur(get_front());
+    move_forward();
 
     if (inside(get_right())) {
       if (get_backtrack() == TRUE && get_findloop() == FALSE &&
           (inside(get_front()) || inside(get_left()))) {
         set_findloop(TRUE);
       }
-      // Turn right
-      set_cur_dir((get_cur_dir() + 1) % 4);
+      turn_right();
 
     PAINTER_ALGORITHM_PAINT:
-      // Move forward
-      set_cur(get_front());
+      move_forward();
     }
 
   PAINTER_ALGORITHM_START:
     // Count number of non-diagonally adjacent marked playfield tiles.
     set_adjacent_marked_tile_count(0);
-    if (!inside(playfield_index_move_up(get_cur()))) {
+    if (!inside(playfield_index_move_up(get_current_position()))) {
       inc_adjacent_marked_tile_count();
     }
-    if (!inside(playfield_index_move_down(get_cur()))) {
+    if (!inside(playfield_index_move_down(get_current_position()))) {
       inc_adjacent_marked_tile_count();
     }
-    if (!inside(playfield_index_move_left(get_cur()))) {
+    if (!inside(playfield_index_move_left(get_current_position()))) {
       inc_adjacent_marked_tile_count();
     }
-    if (!inside(playfield_index_move_right(get_cur()))) {
+    if (!inside(playfield_index_move_right(get_current_position()))) {
       inc_adjacent_marked_tile_count();
     }
 
     if (get_adjacent_marked_tile_count() != 4) {
       do {
-        // Turn right
-        set_cur_dir((get_cur_dir() + 1) % 4);
+        turn_right();
       } while (inside(get_front()));
       do {
-        // Turn left
-        set_cur_dir((get_cur_dir() + 3) % 4);
+        turn_left();
       } while (!inside(get_front()));
     }
 
@@ -178,7 +173,7 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
           }
         } else if (inside(get_front_left()) && inside(get_back_left())) {
           set_mark_null(TRUE);
-          set_playfield_is_marked_flag(get_cur());
+          set_playfield_is_marked_flag(get_current_position());
           goto PAINTER_ALGORITHM_PAINT;
         }
         break;
@@ -186,11 +181,11 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
         if (!inside(get_back())) {
           if (inside(get_front_left())) {
             set_mark_null(TRUE);
-            set_playfield_is_marked_flag(get_cur());
+            set_playfield_is_marked_flag(get_current_position());
             goto PAINTER_ALGORITHM_PAINT;
           }
         } else if (get_mark_null() == TRUE) {
-          set_mark(get_cur());
+          set_mark(get_current_position());
           set_mark_null(FALSE);
           set_mark_dir(get_cur_dir());
           set_mark2_null(TRUE);
@@ -198,12 +193,11 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
           set_backtrack(FALSE);
         } else {
           if (get_mark2_null() == TRUE) {
-            if (get_cur() == get_mark()) {
+            if (get_current_position() == get_mark()) {
               if (get_cur_dir() == get_mark_dir()) {
                 set_mark_null(TRUE);
-                // Turn around
-                set_cur_dir((get_cur_dir() + 2) % 4);
-                set_playfield_is_marked_flag(get_cur());
+                reverse_direction();
+                set_playfield_is_marked_flag(get_current_position());
                 goto PAINTER_ALGORITHM_PAINT;
               } else {
                 set_backtrack(TRUE);
@@ -211,23 +205,22 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
                 set_cur_dir(get_mark_dir());
               }
             } else if (get_findloop() == TRUE) {
-              set_mark2(get_cur());
+              set_mark2(get_current_position());
               set_mark2_null(FALSE);
               set_mark2_dir(get_cur_dir());
             }
           } else {
-            if (get_cur() == get_mark()) {
-              set_cur(get_mark2());
+            if (get_current_position() == get_mark()) {
+              set_current_position(get_mark2());
               set_cur_dir(get_mark2_dir());
               set_mark_null(TRUE);
               set_mark2_null(TRUE);
               set_backtrack(FALSE);
-              // Turn around
-              set_cur_dir((get_cur_dir() + 2) % 4);
-              set_playfield_is_marked_flag(get_cur());
+              reverse_direction();
+              set_playfield_is_marked_flag(get_current_position());
               goto PAINTER_ALGORITHM_PAINT;
-            } else if (get_cur() == get_mark2()) {
-              set_mark(get_cur());
+            } else if (get_current_position() == get_mark2()) {
+              set_mark(get_current_position());
               set_mark_null(FALSE);
               set_cur_dir(get_mark2_dir());
               set_mark_dir(get_mark2_dir());
@@ -238,11 +231,11 @@ void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
         break;
       case 3:
         set_mark_null(TRUE);
-        set_playfield_is_marked_flag(get_cur());
+        set_playfield_is_marked_flag(get_current_position());
         goto PAINTER_ALGORITHM_PAINT;
         break;
       case 4:
-        set_playfield_is_marked_flag(get_cur());
+        set_playfield_is_marked_flag(get_current_position());
         return;
     }
   }
