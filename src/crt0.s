@@ -254,14 +254,14 @@ detectNTSC:
 
     .include "lib/neslib.s"
     .include "lib/nesdoug.s"
-    .include "music/famitone2.s"
+    .include "music/famitone5.s"
     
     
     
 .segment "RODATA"
 
 music_data:
-    .include "music/TestMusic3.s"
+    .include "music/music.s"
 
     .if(FT_SFX_ENABLE)
 sounds_data:

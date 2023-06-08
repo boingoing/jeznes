@@ -18,6 +18,7 @@
 #include "flood_fill.h"
 #include "lib/nesdoug.h"
 #include "lib/neslib.h"
+#include "music/music.h"
 #include "music/sfx.h"
 #include "scoring.h"
 #include "types.h"
@@ -273,6 +274,9 @@ void init_title(void) {
 
   // Starting or returning to the title screen.
   game_state = GAME_STATE_TITLE;
+
+  // Make sure we aren't playing any music.
+  music_stop();
 }
 
 unsigned char title_press_start(void) {
@@ -385,6 +389,8 @@ void init_game(void) {
 
   // Always loads |get_playfield_pattern()|
   reset_playfield();
+
+  music_play(MUSIC_JAZZ);
 }
 
 void load_playfield(void) {
@@ -479,6 +485,9 @@ void do_level_up(void) {
 
   // Reset state to playing the game.
   game_state = GAME_STATE_PLAYING;
+
+  // Unpause the music for the playfield.
+  music_pause(FALSE);
 }
 
 void change_to_level_up(void) {
@@ -517,6 +526,9 @@ void change_to_level_up(void) {
 
   // Transition state to level-up.
   game_state = GAME_STATE_LEVEL_UP;
+
+  // Pause the playfield music while on the level up screen.
+  music_pause(TRUE);
 }
 
 void update_hud_level_up(void) {
@@ -626,6 +638,9 @@ unsigned char game_over_press_start(void) {
       ppu_on_all();
 
       game_state = GAME_STATE_PLAYING;
+
+      // Restart playing the music.
+      music_pause(FALSE);
     } else {
       // get_game_over_mode() == GAME_OVER_QUIT
 
@@ -659,12 +674,18 @@ unsigned char pause_press_start(unsigned char player_index) {
       pal_fade_to(4, 4);
 
       game_state = GAME_STATE_PAUSED;
+
+      // Pause the music, too.
+      music_pause(TRUE);
     } else {
       // game_state == GAME_STATE_PAUSED
       // Back to normal brightness
       pal_bright(4);
 
       game_state = GAME_STATE_PLAYING;
+
+      // Unpause the music, too.
+      music_pause(FALSE);
     }
 
     return TRUE;
