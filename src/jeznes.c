@@ -387,9 +387,10 @@ void init_game(void) {
     set_player_orientation_flag(temp_byte_1, ORIENTATION_HORIZ);
   }
 
-  // Always loads |get_playfield_pattern()|
+  // Always loads |get_playfield_pattern()|.
   reset_playfield();
 
+  // Start playing the in-game music.
   music_play(MUSIC_JAZZ);
 }
 
