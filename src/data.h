@@ -56,17 +56,30 @@
 #define get_positive_line_segment_origin() (temp_int_2)
 #define set_positive_line_segment_origin(a) (temp_int_2 = (a))
 
-#define get_x_velocity() (temp_signed_byte_1)
-#define set_x_velocity(a) (temp_signed_byte_1 = (a))
-#define get_y_velocity() (temp_signed_byte_2)
-#define set_y_velocity(a) (temp_signed_byte_2 = (a))
+#define get_flags_byte() (temp_byte_6)
+#define set_flags_byte(a) (temp_byte_6 = (a))
+
+#define get_x_direction() (temp_byte_5)
+#define set_x_direction(a) (temp_byte_5 = (a))
+#define get_y_direction() (temp_byte_5)
+#define set_y_direction(a) (temp_byte_5 = (a))
+
 #define get_x_candidate_pixel_coord() (temp_byte_2)
 #define set_x_candidate_pixel_coord(a) (temp_byte_2 = (a))
+#define inc_x_candidate_pixel_coord() (++temp_byte_2)
+#define dec_x_candidate_pixel_coord() (--temp_byte_2)
+
 #define get_y_candidate_pixel_coord() (temp_byte_3)
 #define set_y_candidate_pixel_coord(a) (temp_byte_3 = (a))
+#define inc_y_candidate_pixel_coord() (++temp_byte_3)
+#define dec_y_candidate_pixel_coord() (--temp_byte_3)
+
 #define get_x_compare_pixel_coord() (temp_byte_4)
 #define set_x_compare_pixel_coord(a) (temp_byte_4 = (a))
 #define get_y_compare_pixel_coord() (temp_byte_4)
 #define set_y_compare_pixel_coord(a) (temp_byte_4 = (a))
+
+#define get_playfield_tile_value() (temp_byte_4)
+#define set_playfield_tile_value(a) (temp_byte_4 = (a))
 
 #endif  // __JEZNES_DATA_H__
