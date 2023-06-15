@@ -70,9 +70,8 @@ unsigned char temp_byte_3;
 unsigned char temp_byte_4;
 unsigned char temp_byte_5;
 unsigned char temp_byte_6;
-
-signed char temp_signed_byte_1;
-signed char temp_signed_byte_2;
+unsigned char temp_byte_7;
+unsigned char temp_byte_8;
 
 int temp_int_1;
 int temp_int_2;
