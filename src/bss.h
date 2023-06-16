@@ -21,6 +21,33 @@
 #include "screens/title.h"
 #include "sprites.h"
 
+// Current level when the game is in playing state.
+unsigned char current_level;
+
+// Count of balls displayed on the playfield section of whichever screen is
+// loaded.
+unsigned char current_ball_count;
+
+// Which playfield pattern is currently being displayed.
+unsigned char current_playfield_pattern;
+
+// Number of players currently playing.
+unsigned char player_count;
+
+// Count of lives remaining.
+unsigned char lives_count;
+
+// Percentage of the playfield which has been cleared.
+// Note: This is calculated in update_hud() only because it's expensive.
+unsigned char cleared_tile_percentage;
+
+// How many playfield tiles have been cleared. This is used to compute the
+// percentage |cleared_tile_percentage|.
+unsigned int cleared_tile_count;
+
+// Current score counter.
+unsigned int score;
+
 unsigned char playfield[PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT];
 
 #if ENABLE_CHEATS

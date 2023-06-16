@@ -68,10 +68,10 @@ NAME_UPD_ENABLE:     .res 1
 PAL_UPDATE:         .res 1
 PAL_BG_PTR:         .res 2
 PAL_SPR_PTR:         .res 2
-SCROLL_X:             .res 1
-SCROLL_Y:             .res 1
-SCROLL_X1:             .res 1
-SCROLL_Y1:             .res 1
+;SCROLL_X:             .res 1
+;SCROLL_Y:             .res 1
+;SCROLL_X1:             .res 1
+;SCROLL_Y1:             .res 1
 PAD_STATE:             .res 2        ;one byte per controller
 PAD_STATEP:         .res 2
 PAD_STATET:         .res 2
@@ -81,18 +81,41 @@ PPU_MASK_VAR:         .res 1
 RAND_SEED:             .res 2
 FT_TEMP:             .res 3
 
-TEMP:                 .res 11
+MUSIC_PLAY:			.res 1
+ft_music_addr:		.res 2
+
+BUF_4000:			.res 1
+BUF_4001:			.res 1
+BUF_4002:			.res 1
+BUF_4003:			.res 1
+BUF_4004:			.res 1
+BUF_4005:			.res 1
+BUF_4006:			.res 1
+BUF_4007:			.res 1
+BUF_4008:			.res 1
+BUF_4009:			.res 1
+BUF_400A:			.res 1
+BUF_400B:			.res 1
+BUF_400C:			.res 1
+BUF_400D:			.res 1
+BUF_400E:			.res 1
+BUF_400F:			.res 1
+
+PREV_4003:			.res 1
+PREV_4007:			.res 1
+
+TEMP:                 .res 10
 SPRID:                .res 1
 
 PAD_BUF        =TEMP+1
 
 PTR            =TEMP    ;word
 LEN            =TEMP+2    ;word
-NEXTSPR        =TEMP+4
-SCRX        =TEMP+5
-SCRY        =TEMP+6
-SRC            =TEMP+7    ;word
-DST            =TEMP+9    ;word
+;NEXTSPR        =TEMP+4 ; NEXTSPR removed
+SCRX        =TEMP+4
+SCRY        =TEMP+5
+SRC            =TEMP+6    ;word
+DST            =TEMP+8    ;word
 
 RLE_LOW        =TEMP
 RLE_HIGH    =TEMP+1
@@ -101,8 +124,8 @@ RLE_BYTE    =TEMP+3
 
 ;nesdoug code requires
 VRAM_INDEX:            .res 1
-META_PTR:            .res 2
-DATA_PTR:            .res 2
+;META_PTR:            .res 2 ; META_PTR removed
+;DATA_PTR:            .res 2 ; DATA_PTR removed
 
 
 
@@ -229,10 +252,16 @@ detectNTSC:
     ldx #0
     jsr _set_vram_update
 
-    ldx #<music_data
-    ldy #>music_data
-    lda <NTSC_MODE
-    jsr FamiToneInit
+    lda #$ff				;previous pulse period MSB, to not write it when not changed
+    sta PREV_4003
+    sta PREV_4007
+
+    jsr _music_stop
+
+    ; ldx #<music_data
+    ; ldy #>music_data
+    ; lda <NTSC_MODE
+    ; jsr FamiToneInit
 
     .if(FT_SFX_ENABLE)
     ldx #<sounds_data
@@ -253,26 +282,32 @@ detectNTSC:
     .include "lib/neslib.s"
     .include "lib/nesdoug.s"
     .include "music/famitone5.s"
-    
-    
-    
+    .include "lib/ft_drv/driver.s"
+
 .segment "RODATA"
 
 music_data:
     .include "music/music.s"
 
-    .if(FT_SFX_ENABLE)
-sounds_data:
-    .include "music/sfx.s"
-    .endif
+music_dummy_data:
+    .byte $0D,$00,$0D,$00,$0D,$00,$0D,$00,$00,$10,$0E,$B8,$0B,$0F,$00,$16
+    .byte $00,$01,$40,$06,$96,$00,$18,$00,$22,$00,$22,$00,$22,$00,$22,$00
+    .byte $22,$00,$00,$3F
 
-.segment "SAMPLES"
-;    .incbin "music_dpcm.bin"
+.if(FT_SFX_ENABLE)
+sounds_data:
+  .include "music/sfx.s"
+.endif
+
+.segment "DMC"
+.if(FT_DPCM_ENABLE)
+	.incbin "../music/samples.bin"
+.endif
 
 .segment "VECTORS"
-    .word nmi     ;$fffa vblank nmi
-    .word start   ;$fffc reset
-    .word irq     ;$fffe irq / brk
+  .word nmi     ;$fffa vblank nmi
+  .word start   ;$fffc reset
+  .word irq     ;$fffe irq / brk
 
-.segment "CHARS"
-    .incbin "../graphics/graphics.chr"
+.segment "CHR"
+  .incbin "../graphics/graphics.chr"

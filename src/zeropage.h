@@ -17,7 +17,7 @@
 // clang-format on
 
 // Placeholder to track how many bytes are unused in the zeropage.
-unsigned char unused_zp_bytes[8];
+unsigned char unused_zp_bytes[5];
 
 // Controller state storage.
 unsigned char pads[MAX_PLAYERS];
@@ -35,33 +35,6 @@ struct Line lines[MAX_PLAYERS];
 // Which state the game is in (ie: playing, paused, title screen, etc).
 unsigned char game_state;
 
-// Current level when the game is in playing state.
-unsigned char current_level;
-
-// Count of balls displayed on the playfield section of whichever screen is
-// loaded.
-unsigned char current_ball_count;
-
-// Which playfield pattern is currently being displayed.
-unsigned char current_playfield_pattern;
-
-// Number of players currently playing.
-unsigned char player_count;
-
-// Count of lives remaining.
-unsigned char lives_count;
-
-// Percentage of the playfield which has been cleared.
-// Note: This is calculated in update_hud() only because it's expensive.
-unsigned char cleared_tile_percentage;
-
-// How many playfield tiles have been cleared. This is used to compute the
-// percentage |cleared_tile_percentage|.
-unsigned int cleared_tile_count;
-
-// Current score counter.
-unsigned int score;
-
 // Below temps may be used anywhere and should be prefered over function-local
 // storage or passing arguments to function calls.
 unsigned char temp_byte_1;
@@ -70,9 +43,8 @@ unsigned char temp_byte_3;
 unsigned char temp_byte_4;
 unsigned char temp_byte_5;
 unsigned char temp_byte_6;
-
-signed char temp_signed_byte_1;
-signed char temp_signed_byte_2;
+unsigned char temp_byte_7;
+unsigned char temp_byte_8;
 
 int temp_int_1;
 int temp_int_2;

@@ -59,10 +59,10 @@
 #define get_flags_byte() (temp_byte_6)
 #define set_flags_byte(a) (temp_byte_6 = (a))
 
-#define get_x_direction() (temp_byte_5)
-#define set_x_direction(a) (temp_byte_5 = (a))
-#define get_y_direction() (temp_byte_5)
-#define set_y_direction(a) (temp_byte_5 = (a))
+#define get_x_direction() (temp_byte_7)
+#define set_x_direction(a) (temp_byte_7 = (a))
+#define get_y_direction() (temp_byte_7)
+#define set_y_direction(a) (temp_byte_7 = (a))
 
 #define get_x_candidate_pixel_coord() (temp_byte_2)
 #define set_x_candidate_pixel_coord(a) (temp_byte_2 = (a))

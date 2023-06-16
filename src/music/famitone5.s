@@ -1810,7 +1810,7 @@ FamiToneSfxInit:
 	clc
 	adc #FT_SFX_STRUCT_SIZE
 	tax
-	cpx #FT_SFX_STRUCT_SIZE*FT_SFX_STREAMS
+	cpx #FT_SFX_CH0+FT_SFX_STRUCT_SIZE*FT_SFX_STREAMS
 	bne @set_channels
 
 	rts
@@ -2055,10 +2055,10 @@ Multiply:
 	asl a
 	ora multiple1
 	tax
-	lda ft_volume_table, x
+	lda ft_volume_table5, x
 	rts
 			
-ft_volume_table:
+ft_volume_table5:
 	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	.byte 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 	.byte 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2
