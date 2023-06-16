@@ -12,12 +12,14 @@
 #include "constants/tiles.h"
 #include "data.h"
 #include "debug.h"
+#include "flags/ball.h"
 #include "flags/line.h"
 #include "flags/player.h"
 #include "flags/playfield.h"
 #include "flood_fill.h"
 #include "lib/nesdoug.h"
 #include "lib/neslib.h"
+#include "music/music.h"
 #include "music/sfx.h"
 #include "scoring.h"
 #include "types.h"
@@ -232,15 +234,12 @@ void init_balls(void) {
         rand8() % playfield_pattern_valid_ball_height_in_pixels
                       [get_playfield_pattern()] +
         playfield_pattern_valid_ball_start_pixel_y[get_playfield_pattern()];
+
     if (rand2()) {
-      balls[temp_byte_1].x_velocity = BALL_SPEED_POSITIVE;
-    } else {
-      balls[temp_byte_1].x_velocity = BALL_SPEED_NEGATIVE;
+      set_ball_x_direction(temp_byte_1);
     }
     if (rand2()) {
-      balls[temp_byte_1].y_velocity = BALL_SPEED_POSITIVE;
-    } else {
-      balls[temp_byte_1].y_velocity = BALL_SPEED_NEGATIVE;
+      set_ball_y_direction(temp_byte_1);
     }
   }
 }
@@ -273,6 +272,9 @@ void init_title(void) {
 
   // Starting or returning to the title screen.
   game_state = GAME_STATE_TITLE;
+
+  // Make sure we aren't playing any music.
+  music_stop();
 }
 
 unsigned char title_press_start(void) {
@@ -383,8 +385,11 @@ void init_game(void) {
     set_player_orientation_flag(temp_byte_1, ORIENTATION_HORIZ);
   }
 
-  // Always loads |get_playfield_pattern()|
+  // Always loads |get_playfield_pattern()|.
   reset_playfield();
+
+  // Start playing the in-game music.
+  music_play(MUSIC_JAZZ);
 }
 
 void load_playfield(void) {
@@ -479,6 +484,9 @@ void do_level_up(void) {
 
   // Reset state to playing the game.
   game_state = GAME_STATE_PLAYING;
+
+  // Unpause the music for the playfield.
+  music_pause(FALSE);
 }
 
 void change_to_level_up(void) {
@@ -517,6 +525,9 @@ void change_to_level_up(void) {
 
   // Transition state to level-up.
   game_state = GAME_STATE_LEVEL_UP;
+
+  // Pause the playfield music while on the level up screen.
+  music_pause(TRUE);
 }
 
 void update_hud_level_up(void) {
@@ -626,6 +637,9 @@ unsigned char game_over_press_start(void) {
       ppu_on_all();
 
       game_state = GAME_STATE_PLAYING;
+
+      // Restart playing the music.
+      music_pause(FALSE);
     } else {
       // get_game_over_mode() == GAME_OVER_QUIT
 
@@ -659,12 +673,18 @@ unsigned char pause_press_start(unsigned char player_index) {
       pal_fade_to(4, 4);
 
       game_state = GAME_STATE_PAUSED;
+
+      // Pause the music, too.
+      music_pause(TRUE);
     } else {
       // game_state == GAME_STATE_PAUSED
       // Back to normal brightness
       pal_bright(4);
 
       game_state = GAME_STATE_PLAYING;
+
+      // Unpause the music, too.
+      music_pause(FALSE);
     }
 
     return TRUE;
@@ -795,67 +815,106 @@ void move_and_draw_balls(void) {
 }
 
 void move_ball() {
+  // Stash flags byte.
+  set_flags_byte(get_temp_ptr(struct Ball)->flags);
+  // Keep track of candidate new pixel coord.
+  set_x_candidate_pixel_coord(get_temp_ptr(struct Ball)->x);
+  set_y_candidate_pixel_coord(get_temp_ptr(struct Ball)->y);
+
   // Consider moving right or left first.
-  set_x_velocity(get_temp_ptr(struct Ball)->x_velocity);
-  set_x_candidate_pixel_coord(get_temp_ptr(struct Ball)->x + get_x_velocity());
-  set_x_compare_pixel_coord(get_x_candidate_pixel_coord());
-  // Moving right
-  if (get_x_velocity() == BALL_SPEED_POSITIVE) {
+  set_x_direction(get_ball_x_direction_flag_from_byte(get_flags_byte()));
+  if (get_x_direction() == BALL_DIRECTION_POSITIVE) {
+    // Moving right..
+    // TODO: If ball velocity is >1 we need to rethink this.
+    inc_x_candidate_pixel_coord();
     // Balls are 8 pixels wide, compare to the right-edge.
-    set_x_compare_pixel_coord(get_x_compare_pixel_coord() + BALL_WIDTH);
+    set_x_compare_pixel_coord(get_x_candidate_pixel_coord() + BALL_WIDTH);
+  } else {
+    // Moving left..
+    // TODO: If ball velocity is >1 we need to rethink this.
+    dec_x_candidate_pixel_coord();
+    // Compare to left-edge.
+    set_x_compare_pixel_coord(get_x_candidate_pixel_coord());
   }
   // Find x-direction candidate playfield tile index.
-  temp_int_1 = playfield_tile_from_pixel_coords(get_x_compare_pixel_coord(),
-                                                get_temp_ptr(struct Ball)->y);
+  set_current_playfield_index(playfield_tile_from_pixel_coords(get_x_compare_pixel_coord(), get_y_candidate_pixel_coord()));
+  set_playfield_tile_value(playfield[get_current_playfield_index()]);
   // Bounce off a left or right wall tile.
-  if (playfield[temp_int_1] == PLAYFIELD_WALL) {
+  if (get_playfield_tile_value() == PLAYFIELD_WALL) {
     // Reverse x-direction.
-    set_x_velocity(get_x_velocity() * -1);
+    set_x_direction(get_x_direction() ^ 1);
+    set_ball_x_direction_flag_in_byte(get_flags_byte(), get_x_direction());
     // Move the ball such that it's in the non-wall tile opposite the candidate.
-    set_x_candidate_pixel_coord(get_temp_ptr(struct Ball)->x +
-                                get_x_velocity());
-    // Update the ball velocity.
-    get_temp_ptr(struct Ball)->x_velocity = get_x_velocity();
+    if (get_x_direction() == BALL_DIRECTION_POSITIVE) {
+      // We dec'd the candidate pixel coord above so now inc it twice to move in the opposite direction.
+      // TODO: If ball velocity is >1 we need to rethink this.
+      inc_x_candidate_pixel_coord();
+      inc_x_candidate_pixel_coord();
+    } else {
+      // We inc'd the candidate pixel coord above so now dec it twice to move in the opposite direction.
+      // TODO: If ball velocity is >1 we need to rethink this.
+      dec_x_candidate_pixel_coord();
+      dec_x_candidate_pixel_coord();
+    }
+    // Update the ball direction flag.
+    get_temp_ptr(struct Ball)->flags = get_flags_byte();
     // Play a sound effect.
     if (game_state == GAME_STATE_PLAYING) {
       sfx_play(SFX_BALL_BOUNCE, 0);
     }
   }
+  // Update ball x-coord in pixel space.
   get_temp_ptr(struct Ball)->x = get_x_candidate_pixel_coord();
 
   // Consider moving up or down next (we already moved right/left).
-  set_y_velocity(get_temp_ptr(struct Ball)->y_velocity);
-  set_y_candidate_pixel_coord(get_temp_ptr(struct Ball)->y + get_y_velocity());
-  set_y_compare_pixel_coord(get_y_candidate_pixel_coord());
-  // Moving down
-  if (get_y_velocity() == BALL_SPEED_POSITIVE) {
+  set_y_direction(get_ball_y_direction_flag_from_byte(get_flags_byte()));
+  if (get_y_direction() == BALL_DIRECTION_POSITIVE) {
+    // Moving down..
+    // TODO: If ball velocity is >1 we need to rethink this.
+    inc_y_candidate_pixel_coord();
     // Balls are 8 pixels tall, compare to the bottom edge.
-    set_y_compare_pixel_coord(get_y_compare_pixel_coord() + BALL_HEIGHT);
+    set_y_compare_pixel_coord(get_y_candidate_pixel_coord() + BALL_HEIGHT);
+  } else {
+    // Moving up..
+    // TODO: If ball velocity is >1 we need to rethink this.
+    dec_y_candidate_pixel_coord();
+    // Compare to top edge.
+    set_y_compare_pixel_coord(get_y_candidate_pixel_coord());
   }
   // Find y-direction candidate playfield tile index.
-  temp_int_2 = playfield_tile_from_pixel_coords(get_x_candidate_pixel_coord(),
-                                                get_y_compare_pixel_coord());
+  set_current_playfield_index(playfield_tile_from_pixel_coords(get_x_candidate_pixel_coord(), get_y_compare_pixel_coord()));
+  set_playfield_tile_value(playfield[get_current_playfield_index()]);
   // Bounce off a top or bottom wall tile.
-  if (playfield[temp_int_2] == PLAYFIELD_WALL) {
+  if (get_playfield_tile_value() == PLAYFIELD_WALL) {
     // Reverse y-direction.
-    set_y_velocity(get_y_velocity() * -1);
+    set_y_direction(get_y_direction() ^ 1);
+    set_ball_y_direction_flag_in_byte(get_flags_byte(), get_y_direction());
     // Move the ball such that it's in the non-wall tile opposite the candidate.
-    set_y_candidate_pixel_coord(get_temp_ptr(struct Ball)->y +
-                                get_y_velocity());
-    // Update the ball velocity.
-    get_temp_ptr(struct Ball)->y_velocity = get_y_velocity();
+    if (get_y_direction() == BALL_DIRECTION_POSITIVE) {
+      // We dec'd the candidate pixel coord above so now inc it twice to move in the opposite direction.
+      // TODO: If ball velocity is >1 we need to rethink this.
+      inc_y_candidate_pixel_coord();
+      inc_y_candidate_pixel_coord();
+    } else {
+      // We inc'd the candidate pixel coord above so now dec it twice to move in the opposite direction.
+      // TODO: If ball velocity is >1 we need to rethink this.
+      dec_y_candidate_pixel_coord();
+      dec_y_candidate_pixel_coord();
+    }
+    // Update the ball direction flag.
+    get_temp_ptr(struct Ball)->flags = get_flags_byte();
     // Play a sound effect.
     if (game_state == GAME_STATE_PLAYING) {
       sfx_play(SFX_BALL_BOUNCE, 0);
     }
   }
+  // Update ball y-coord in pixel space.
   get_temp_ptr(struct Ball)->y = get_y_candidate_pixel_coord();
 
   // Update nearest playfield tile - center of the ball.
-  temp_byte_2 = get_x_candidate_pixel_coord() + 4;
-  temp_byte_3 = get_y_candidate_pixel_coord() + 4;
-  get_temp_ptr(struct Ball)->nearest_playfield_tile =
-      playfield_tile_from_pixel_coords(temp_byte_2, temp_byte_3);
+  set_x_candidate_pixel_coord(get_x_candidate_pixel_coord() + 4);
+  set_y_candidate_pixel_coord(get_y_candidate_pixel_coord() + 4);
+  get_temp_ptr(struct Ball)->nearest_playfield_tile = playfield_tile_from_pixel_coords(get_x_candidate_pixel_coord(), get_y_candidate_pixel_coord());
 }
 
 void draw_player(void) {

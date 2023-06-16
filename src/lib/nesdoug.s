@@ -276,7 +276,7 @@ _pal_fade_to:
 	
 ;void __fastcall__ set_scroll_x(unsigned int x);	
 _set_scroll_x:
-	sta <SCROLL_X
+	;sta <SCROLL_X ; SCROLL_X removed
 	txa
 	and #$01
 	sta <TEMP
@@ -291,7 +291,7 @@ _set_scroll_x:
 	
 ;void __fastcall__ set_scroll_y(unsigned int y);	
 _set_scroll_y:
-	sta <SCROLL_Y
+	;sta <SCROLL_Y ; SCROLL_Y removed
 	txa
 	and #$01
 	asl a
@@ -413,8 +413,8 @@ _get_at_addr:
 
 ;void __fastcall__ set_data_pointer(const char * data);
 _set_data_pointer:
-	sta DATA_PTR
-	stx DATA_PTR+1
+	;sta DATA_PTR ; DATA_PTR removed
+	;stx DATA_PTR+1 ; DATA_PTR removed
 	rts
 
 	
@@ -422,8 +422,8 @@ _set_data_pointer:
 	
 ;void __fastcall__ set_mt_pointer(const char * metatiles);	
 _set_mt_pointer:
-	sta META_PTR
-	stx META_PTR+1
+	;sta META_PTR ; META_PTR removed
+	;stx META_PTR+1 ; META_PTR removed
 	rts
 	
 	
@@ -435,10 +435,10 @@ _buffer_4_mt:
 
 	and #$ee ;sanitize, x and y should be even
 	tay
-	lda (DATA_PTR), y
+	;lda (DATA_PTR), y ; DATA_PTR removed
 	sta TEMP+2
 	iny
-	lda (DATA_PTR), y
+	;lda (DATA_PTR), y ; DATA_PTR removed
 	sta TEMP+3
 		tya
 		clc
@@ -446,10 +446,10 @@ _buffer_4_mt:
 			cmp #$f0 ;too far, data set only 240 bytes
 			bcs @skip
 		tay
-	lda (DATA_PTR), y
+	;lda (DATA_PTR), y ; DATA_PTR removed
 	sta TEMP+4
 	iny
-	lda (DATA_PTR), y
+	;lda (DATA_PTR), y ; DATA_PTR removed
 	sta TEMP+5
 @skip:	
 ;metatiles are in TEMP+2 - TEMP+5 now
@@ -482,16 +482,17 @@ _buffer_4_mt:
 		
 	jsr @sub2 ;gets y is which metatile
 	
-	lda (META_PTR), y
+	lda #$00
+  ;lda (META_PTR), y ; META_PTR removed
 	sta VRAM_BUF+3,x ;		buffer the 4 tiles
 	iny
-	lda (META_PTR), y
+	;lda (META_PTR), y ; META_PTR removed
 	sta VRAM_BUF+4,x
 	iny
-	lda (META_PTR), y
+	;lda (META_PTR), y ; META_PTR removed
 	sta VRAM_BUF+10,x
 	iny
-	lda (META_PTR), y
+	;lda (META_PTR), y ; META_PTR removed
 	sta VRAM_BUF+11,x
 	jsr @sub4 ;get attrib bits, shift into place
 	
@@ -504,16 +505,17 @@ _buffer_4_mt:
 	
 	inc TEMP+6 ;count and index
 	jsr @sub2
-	lda (META_PTR), y
+  lda #$00
+	;lda (META_PTR), y ; META_PTR removed
 	sta VRAM_BUF+5,x ;		buffer the 4 tiles
 	iny
-	lda (META_PTR), y
+	;lda (META_PTR), y ; META_PTR removed
 	sta VRAM_BUF+6,x
 	iny
-	lda (META_PTR), y
+	;lda (META_PTR), y ; META_PTR removed
 	sta VRAM_BUF+12,x
 	iny
-	lda (META_PTR), y
+	;lda (META_PTR), y ; META_PTR removed
 	sta VRAM_BUF+13,x
 	jsr @sub4
 	
@@ -624,7 +626,8 @@ _buffer_4_mt:
 	
 @sub4: ;get attrib bits, roll them in place
 	iny
-	lda (META_PTR), y ;5th byte = attribute
+  lda #$00
+	;lda (META_PTR), y ;5th byte = attribute ; META_PTR removed
 	and #3 ;just need 2 bits
 	ror a ;bit to carry
 	ror TEMP+10 ;shift carry in
@@ -669,16 +672,17 @@ _buffer_1_mt:
 	clc
 	adc TEMP+2 ;multiply 5
 	tay
-	lda (META_PTR), y ;tile
+  lda #$00
+	;lda (META_PTR), y ;tile ; META_PTR removed
 	sta VRAM_BUF+3,x
 	iny
-	lda (META_PTR), y ;tile
+	;lda (META_PTR), y ;tile ; META_PTR removed
 	sta VRAM_BUF+4,x
 	iny
-	lda (META_PTR), y ;tile
+	;lda (META_PTR), y ;tile ; META_PTR removed
 	sta VRAM_BUF+8,x
 	iny
-	lda (META_PTR), y ;tile
+	;lda (META_PTR), y ;tile ; META_PTR removed
 	sta VRAM_BUF+9,x
 	
 	txa

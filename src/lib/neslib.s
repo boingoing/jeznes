@@ -10,7 +10,9 @@
 ;minor change %%, added ldx #0 to functions returning char
 ;removed sprid from c functions to speed them up
 
-
+;for jeznes 6/14/2023
+;modified to work with the FamiTracker music driver
+;based on Shiru's example (ft_drv)
 
 	.export _pal_all,_pal_bg,_pal_spr,_pal_col,_pal_clear
 	.export _pal_bright,_pal_spr_bright,_pal_bg_bright
@@ -113,9 +115,9 @@ nmi:
 	sta PPU_ADDR
 	sta PPU_ADDR
 
-	lda <SCROLL_X
+  ;lda <SCROLL_X ; SCROLL_X removed
 	sta PPU_SCROLL
-	lda <SCROLL_Y
+	;lda <SCROLL_Y ; SCROLL_Y removed
 	sta PPU_SCROLL
 
 	lda <PPU_CTRL_VAR
@@ -136,7 +138,91 @@ nmi:
 
 @skipNtsc:
 
+	;play music, the code is modified to put data into output buffer instead of APU registers
+
+	lda <MUSIC_PLAY
+	ror
+	bcc :+
+	jsr ft_music_play
+	jmp :++
+:
+	lda #$30			;mute channels when music does not play
+	sta <BUF_4000
+	sta <BUF_4004
+	sta <BUF_400C
+	lda #$00
+	sta <BUF_4008
+:
+
+	;process all sound effect streams
+	
+	.if(FT_SFX_ENABLE)
+	
+	.if FT_SFX_STREAMS>0
+	ldx #FT_SFX_CH0
 	jsr FamiToneUpdate
+	.endif
+	.if FT_SFX_STREAMS>1
+	ldx #FT_SFX_CH1
+	jsr FamiToneUpdate
+	.endif
+	.if FT_SFX_STREAMS>2
+	ldx #FT_SFX_CH2
+	jsr FamiToneUpdate
+	.endif
+	.if FT_SFX_STREAMS>3
+	ldx #FT_SFX_CH3
+	jsr FamiToneUpdate
+	.endif
+	
+	.endif
+
+	;send data from the output buffer to the APU
+
+	lda <BUF_4000
+	sta $4000
+	lda <BUF_4001
+	sta $4001
+	lda <BUF_4002
+	sta $4002
+
+	lda <BUF_4003
+	cmp <PREV_4003
+	beq :+
+	sta <PREV_4003
+	sta $4003
+:
+
+	lda <BUF_4004
+	sta $4004
+	lda <BUF_4005
+	sta $4005
+	lda <BUF_4006
+	sta $4006
+
+	lda <BUF_4007
+	cmp <PREV_4007
+	beq :+
+	sta <PREV_4007
+	sta $4007
+:
+
+	lda <BUF_4008
+	sta $4008
+	lda <BUF_4009
+	sta $4009
+	lda <BUF_400A
+	sta $400A
+	lda <BUF_400B
+	sta $400B
+	lda <BUF_400C
+	sta $400C
+	lda <BUF_400D
+	sta $400D
+	lda <BUF_400E
+	sta $400E
+	lda <BUF_400F
+	sta $400F
 
 	pla
 	tay
@@ -622,7 +708,7 @@ _scroll:
 	lda <TEMP
 	cmp #240
 	bcs @1
-	sta <SCROLL_Y
+	;sta <SCROLL_Y ; SCROLL_Y removed
 	lda #0
 	sta <TEMP
 	beq @2	;bra
@@ -632,14 +718,14 @@ _scroll:
 	sec
 	lda <TEMP
 	sbc #240
-	sta <SCROLL_Y
+	;sta <SCROLL_Y ; SCROLL_Y removed
 	lda #2
 	sta <TEMP
 
 @2:
 
 	jsr popax
-	sta <SCROLL_X
+	;sta <SCROLL_X ; SCROLL_X removed
 	txa
 	and #$01
 	ora <TEMP
@@ -657,7 +743,7 @@ _scroll:
 _split:
 
 ;	jsr popax
-	sta <SCROLL_X1
+	;sta <SCROLL_X1 ; SCROLL_X1 removed
 	txa
 	and #$01
 	sta <TEMP
@@ -676,7 +762,7 @@ _split:
 	bit PPU_STATUS
 	bvc @4
 
-	lda <SCROLL_X1
+	;lda <SCROLL_X1 ; SCROLL_X1 removed
 	sta PPU_SCROLL
 	lda #0
 	sta PPU_SCROLL
@@ -804,19 +890,48 @@ _vram_write:
 
 ;void __fastcall__ music_play(unsigned char song);
 
-_music_play=FamiToneMusicPlay
+_music_play:
+
+	ldx #<music_data
+	stx <ft_music_addr+0
+	ldx #>music_data
+	stx <ft_music_addr+1
+
+	ldx <NTSC_MODE
+	jsr ft_music_init
+	
+	lda #1
+	sta <MUSIC_PLAY
+	rts
 
 
 
 ;void __fastcall__ music_stop(void);
 
-_music_stop=FamiToneMusicStop
+_music_stop:
+
+	ldx #<music_dummy_data
+	stx <ft_music_addr+0
+	ldx #>music_dummy_data
+	stx <ft_music_addr+1
+	
+	lda #0
+	ldx <NTSC_MODE
+	jsr ft_music_init
+	
+	lda #0
+	sta <MUSIC_PLAY
+	rts
 
 
 
 ;void __fastcall__ music_pause(unsigned char pause);
 
-_music_pause=FamiToneMusicPause
+_music_pause:
+
+	inc <MUSIC_PLAY
+	
+	rts
 
 
 

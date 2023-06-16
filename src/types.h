@@ -28,6 +28,11 @@ enum { GAME_OVER_RETRY, GAME_OVER_QUIT };
 
 enum { TITLE_1_PLAYER, TITLE_2_PLAYERS };
 
+enum {
+  BALL_DIRECTION_POSITIVE = 0,
+  BALL_DIRECTION_NEGATIVE,
+};
+
 struct Player {
   // Player metasprite location in pixel-coords
   unsigned char x;
@@ -49,11 +54,11 @@ struct Ball {
   unsigned char x;
   unsigned char y;
 
-  signed char x_velocity;
-  signed char y_velocity;
-
   // Playfield tile index for nearest tile
   int nearest_playfield_tile;
+
+  // Hold bit-flags used to track state of this ball.
+  unsigned char flags;
 };
 
 struct Line {
