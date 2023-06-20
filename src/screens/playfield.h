@@ -38,7 +38,7 @@
 
 // Calculate the playfield tile index from (x,y) pixel coords.
 #define playfield_tile_from_pixel_coords(x, y) \
-  (((x) >> 3) + (((y) >> 3) * 32) - PLAYFIELD_FIRST_TILE_INDEX)
+  (((x) >> 3) + (((y) >> 3) << 5) - PLAYFIELD_FIRST_TILE_INDEX)
 
 // Calculate the playfield tile position in (x,y) of the playfield tile |i|.
 #define playfield_index_x(i) ((i) % 32)
