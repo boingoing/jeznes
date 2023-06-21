@@ -14,7 +14,7 @@
 #include "types.h"
 #include "zeropage.h"
 
-int get_front() {
+unsigned int get_front() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
       return playfield_index_move_right(get_current_position());
@@ -27,7 +27,7 @@ int get_front() {
   }
 }
 
-int get_back() {
+unsigned int get_back() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
       return playfield_index_move_left(get_current_position());
@@ -40,7 +40,7 @@ int get_back() {
   }
 }
 
-int get_right() {
+unsigned int get_right() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
       return playfield_index_move_down(get_current_position());
@@ -53,7 +53,7 @@ int get_right() {
   }
 }
 
-int get_left() {
+unsigned int get_left() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
       return playfield_index_move_up(get_current_position());
@@ -66,7 +66,7 @@ int get_left() {
   }
 }
 
-int get_front_left() {
+unsigned int get_front_left() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
       return playfield_index_move_right(playfield_index_move_up(get_current_position()));
@@ -79,7 +79,7 @@ int get_front_left() {
   }
 }
 
-int get_back_left() {
+unsigned int get_back_left() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
       return playfield_index_move_left(playfield_index_move_up(get_current_position()));

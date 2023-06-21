@@ -72,10 +72,11 @@ unsigned char temp_byte_5;
 unsigned char temp_byte_6;
 unsigned char temp_byte_7;
 unsigned char temp_byte_8;
+unsigned char temp_byte_9;
 
-int temp_int_1;
-int temp_int_2;
-int temp_int_3;
+unsigned int temp_int_1;
+unsigned int temp_int_2;
+unsigned int temp_int_3;
 
 void* temp_ptr_1;
 
