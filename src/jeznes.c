@@ -683,7 +683,8 @@ void write_two_digit_number_to_bg(unsigned char num, unsigned char tile_x,
                   NTADR_A(tile_x + 1, tile_y));
 }
 
-void write_score_to_bg(unsigned int score, unsigned char tile_x, unsigned char tile_y) {
+void write_score_to_bg(unsigned int score, unsigned char tile_x,
+                       unsigned char tile_y) {
   temp_byte_1 = score / 10000;
   one_vram_buffer(get_tile_alphanumeric_number(temp_byte_1),
                   NTADR_A(tile_x, tile_y));
@@ -788,11 +789,12 @@ void move_and_draw_balls(void) {
             temp_byte_5, 0);
 
 #if DRAW_BALL_NEAREST_TILE_HIGHLIGHT
-  // Calculate nearest playfield tile - center of the ball in sprite-coords.
-  temp_int_1 = playfield_tile_from_pixel_coords(get_temp_ptr(struct Ball)->x + 4, get_temp_ptr(struct Ball)->y + 4);
-  oam_spr(playfield_index_pixel_coord_x(temp_int_1),
-          playfield_index_pixel_coord_y(temp_int_1) - 1,
-          SPRITE_INDEX_TILE_HIGHLIGHT, 1);
+    // Calculate nearest playfield tile - center of the ball in sprite-coords.
+    temp_int_1 = playfield_tile_from_pixel_coords(
+        get_temp_ptr(struct Ball)->x + 4, get_temp_ptr(struct Ball)->y + 4);
+    oam_spr(playfield_index_pixel_coord_x(temp_int_1),
+            playfield_index_pixel_coord_y(temp_int_1) - 1,
+            SPRITE_INDEX_TILE_HIGHLIGHT, 1);
 #endif
   }
 }
@@ -820,17 +822,20 @@ void move_ball() {
     set_x_compare_pixel_coord(get_x_candidate_pixel_coord());
   }
   // Find x-direction candidate playfield tile index.
-  set_current_playfield_index(playfield_tile_from_pixel_coords(get_x_compare_pixel_coord(), get_y_candidate_pixel_coord()));
+  set_current_playfield_index(playfield_tile_from_pixel_coords(
+      get_x_compare_pixel_coord(), get_y_candidate_pixel_coord()));
   set_playfield_tile_value(playfield[get_current_playfield_index()]);
   // Bounce off a left or right wall tile.
   if (get_playfield_tile_value() == PLAYFIELD_WALL) {
     // Move the ball such that it's in the non-wall tile opposite the candidate.
     if (get_x_direction() == BALL_DIRECTION_POSITIVE) {
-      // We inc'd the candidate pixel coord above so now dec it to move in the opposite direction.
+      // We inc'd the candidate pixel coord above so now dec it to move in the
+      // opposite direction.
       // TODO: If ball velocity is >1 we need to rethink this.
       dec_x_candidate_pixel_coord();
     } else {
-      // We dec'd the candidate pixel coord above so now inc it to move in the opposite direction.
+      // We dec'd the candidate pixel coord above so now inc it to move in the
+      // opposite direction.
       // TODO: If ball velocity is >1 we need to rethink this.
       inc_x_candidate_pixel_coord();
     }
@@ -862,17 +867,20 @@ void move_ball() {
     set_y_compare_pixel_coord(get_y_candidate_pixel_coord());
   }
   // Find y-direction candidate playfield tile index.
-  set_current_playfield_index(playfield_tile_from_pixel_coords(get_x_candidate_pixel_coord(), get_y_compare_pixel_coord()));
+  set_current_playfield_index(playfield_tile_from_pixel_coords(
+      get_x_candidate_pixel_coord(), get_y_compare_pixel_coord()));
   set_playfield_tile_value(playfield[get_current_playfield_index()]);
   // Bounce off a top or bottom wall tile.
   if (get_playfield_tile_value() == PLAYFIELD_WALL) {
     // Move the ball such that it's in the non-wall tile opposite the candidate.
     if (get_y_direction() == BALL_DIRECTION_POSITIVE) {
-      // We inc'd the candidate pixel coord above so now dec it to move in the opposite direction.
+      // We inc'd the candidate pixel coord above so now dec it to move in the
+      // opposite direction.
       // TODO: If ball velocity is >1 we need to rethink this.
       dec_y_candidate_pixel_coord();
     } else {
-      // We dec'd the candidate pixel coord above so now inc it to move in the opposite direction.
+      // We dec'd the candidate pixel coord above so now inc it to move in the
+      // opposite direction.
       // TODO: If ball velocity is >1 we need to rethink this.
       inc_y_candidate_pixel_coord();
     }
@@ -1229,14 +1237,18 @@ void check_ball_line_collisions(void) {
   // they are located in.
   for (temp_byte_1 = 0; temp_byte_1 < get_ball_count(); ++temp_byte_1) {
     set_temp_ptr(&balls[temp_byte_1]);
-// Update nearest playfield tile - center of the ball.
-// We could do this when the ball is moved but that happens to every ball every frame and we only need this value when we're checking for collisions. So do it on-demand.
-set_x_candidate_pixel_coord(get_temp_ptr(struct Ball)->x);
-set_x_candidate_pixel_coord(get_x_candidate_pixel_coord() + 4);
-set_y_candidate_pixel_coord(get_temp_ptr(struct Ball)->y);
-set_y_candidate_pixel_coord(get_y_candidate_pixel_coord() + 4);
-set_current_playfield_index(playfield_tile_from_pixel_coords(get_x_candidate_pixel_coord(), get_y_candidate_pixel_coord()));
-get_temp_ptr(struct Ball)->nearest_playfield_tile = get_current_playfield_index();
+    // Update nearest playfield tile - center of the ball.
+    // We could do this when the ball is moved but that happens to every ball
+    // every frame and we only need this value when we're checking for
+    // collisions. So do it on-demand.
+    set_x_candidate_pixel_coord(get_temp_ptr(struct Ball)->x);
+    set_x_candidate_pixel_coord(get_x_candidate_pixel_coord() + 4);
+    set_y_candidate_pixel_coord(get_temp_ptr(struct Ball)->y);
+    set_y_candidate_pixel_coord(get_y_candidate_pixel_coord() + 4);
+    set_current_playfield_index(playfield_tile_from_pixel_coords(
+        get_x_candidate_pixel_coord(), get_y_candidate_pixel_coord()));
+    get_temp_ptr(struct Ball)->nearest_playfield_tile =
+        get_current_playfield_index();
     temp_byte_2 = playfield[get_current_playfield_index()];
 
     // The ball collides with a line if the playfield tile under the ball is a

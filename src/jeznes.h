@@ -114,7 +114,8 @@ void set_playfield_tile(unsigned int tile_index,
 void write_two_digit_number_to_bg(unsigned char num, unsigned char tile_x,
                                   unsigned char tile_y);
 
-void write_score_to_bg(unsigned int score, unsigned char tile_x, unsigned char tile_y);
+void write_score_to_bg(unsigned int score, unsigned char tile_x,
+                       unsigned char tile_y);
 
 // Load the level up summary screen.
 void change_to_level_up(void);

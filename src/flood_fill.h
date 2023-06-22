@@ -24,24 +24,24 @@ enum {
 };
 
 unsigned char reverse_direction_table[] = {
-  MOVE_DIRECTION_LEFT,
-  MOVE_DIRECTION_UP,
-  MOVE_DIRECTION_RIGHT,
-  MOVE_DIRECTION_DOWN,
+    MOVE_DIRECTION_LEFT,
+    MOVE_DIRECTION_UP,
+    MOVE_DIRECTION_RIGHT,
+    MOVE_DIRECTION_DOWN,
 };
 
 unsigned char turn_right_table[] = {
-  MOVE_DIRECTION_DOWN,
-  MOVE_DIRECTION_LEFT,
-  MOVE_DIRECTION_UP,
-  MOVE_DIRECTION_RIGHT,
+    MOVE_DIRECTION_DOWN,
+    MOVE_DIRECTION_LEFT,
+    MOVE_DIRECTION_UP,
+    MOVE_DIRECTION_RIGHT,
 };
 
 unsigned char turn_left_table[] = {
-  MOVE_DIRECTION_UP,
-  MOVE_DIRECTION_RIGHT,
-  MOVE_DIRECTION_DOWN,
-  MOVE_DIRECTION_LEFT,
+    MOVE_DIRECTION_UP,
+    MOVE_DIRECTION_RIGHT,
+    MOVE_DIRECTION_DOWN,
+    MOVE_DIRECTION_LEFT,
 };
 
 #define get_current_position() (temp_int_1)
@@ -72,7 +72,8 @@ unsigned char turn_left_table[] = {
 #define get_adjacent_marked_tile_count() (temp_byte_6)
 #define inc_adjacent_marked_tile_count() (++temp_byte_6)
 
-#define reverse_direction() (set_cur_dir(reverse_direction_table[get_cur_dir()]))
+#define reverse_direction() \
+  (set_cur_dir(reverse_direction_table[get_cur_dir()]))
 #define turn_right() (set_cur_dir(turn_right_table[get_cur_dir()]))
 #define turn_left() (set_cur_dir(turn_left_table[get_cur_dir()]))
 #define move_forward() (set_current_position(get_front()))
