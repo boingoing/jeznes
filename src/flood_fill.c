@@ -14,7 +14,43 @@
 #include "types.h"
 #include "zeropage.h"
 
-unsigned int get_front() {
+#define get_front() \
+    (get_cur_dir() == MOVE_DIRECTION_RIGHT ? playfield_index_move_right(get_current_position()) \
+    : get_cur_dir() == MOVE_DIRECTION_LEFT ? playfield_index_move_left(get_current_position()) \
+    : get_cur_dir() == MOVE_DIRECTION_DOWN ? playfield_index_move_down(get_current_position()) \
+    : playfield_index_move_up(get_current_position()))
+
+#define get_back() \
+    (get_cur_dir() == MOVE_DIRECTION_RIGHT ? playfield_index_move_left(get_current_position()) \
+    : get_cur_dir() == MOVE_DIRECTION_LEFT ? playfield_index_move_right(get_current_position()) \
+    : get_cur_dir() == MOVE_DIRECTION_DOWN ? playfield_index_move_up(get_current_position()) \
+    : playfield_index_move_down(get_current_position()))
+
+#define get_right() \
+    (get_cur_dir() == MOVE_DIRECTION_RIGHT ? playfield_index_move_down(get_current_position()) \
+    : get_cur_dir() == MOVE_DIRECTION_LEFT ? playfield_index_move_up(get_current_position()) \
+    : get_cur_dir() == MOVE_DIRECTION_DOWN ? playfield_index_move_left(get_current_position()) \
+    : playfield_index_move_right(get_current_position()))
+
+#define get_left() \
+    (get_cur_dir() == MOVE_DIRECTION_RIGHT ? playfield_index_move_up(get_current_position()) \
+    : get_cur_dir() == MOVE_DIRECTION_LEFT ? playfield_index_move_down(get_current_position()) \
+    : get_cur_dir() == MOVE_DIRECTION_DOWN ? playfield_index_move_right(get_current_position()) \
+    : playfield_index_move_left(get_current_position()))
+
+#define get_front_left() \
+    (get_cur_dir() == MOVE_DIRECTION_RIGHT ? playfield_index_move_right(playfield_index_move_up(get_current_position())) \
+    : get_cur_dir() == MOVE_DIRECTION_LEFT ? playfield_index_move_left(playfield_index_move_down(get_current_position())) \
+    : get_cur_dir() == MOVE_DIRECTION_DOWN ? playfield_index_move_down(playfield_index_move_right(get_current_position())) \
+    : playfield_index_move_up(playfield_index_move_left(get_current_position())))
+
+#define get_back_left() \
+    (get_cur_dir() == MOVE_DIRECTION_RIGHT ? playfield_index_move_left(playfield_index_move_up(get_current_position())) \
+    : get_cur_dir() == MOVE_DIRECTION_LEFT ? playfield_index_move_right(playfield_index_move_down(get_current_position())) \
+    : get_cur_dir() == MOVE_DIRECTION_DOWN ? playfield_index_move_up(playfield_index_move_right(get_current_position())) \
+    : playfield_index_move_down(playfield_index_move_left(get_current_position())))
+
+unsigned int get_front2() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
       return playfield_index_move_right(get_current_position());
@@ -27,7 +63,7 @@ unsigned int get_front() {
   }
 }
 
-unsigned int get_back() {
+unsigned int get_back2() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
       return playfield_index_move_left(get_current_position());
@@ -40,7 +76,7 @@ unsigned int get_back() {
   }
 }
 
-unsigned int get_right() {
+unsigned int get_right2() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
       return playfield_index_move_down(get_current_position());
@@ -53,7 +89,7 @@ unsigned int get_right() {
   }
 }
 
-unsigned int get_left() {
+unsigned int get_left2() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
       return playfield_index_move_up(get_current_position());
@@ -66,7 +102,7 @@ unsigned int get_left() {
   }
 }
 
-unsigned int get_front_left() {
+unsigned int get_front_left2() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
       return playfield_index_move_right(
@@ -83,7 +119,7 @@ unsigned int get_front_left() {
   }
 }
 
-unsigned int get_back_left() {
+unsigned int get_back_left2() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
       return playfield_index_move_left(
