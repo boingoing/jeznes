@@ -69,26 +69,34 @@ unsigned int get_left() {
 unsigned int get_front_left() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
-      return playfield_index_move_right(playfield_index_move_up(get_current_position()));
+      return playfield_index_move_right(
+          playfield_index_move_up(get_current_position()));
     case MOVE_DIRECTION_LEFT:
-      return playfield_index_move_left(playfield_index_move_down(get_current_position()));
+      return playfield_index_move_left(
+          playfield_index_move_down(get_current_position()));
     case MOVE_DIRECTION_DOWN:
-      return playfield_index_move_down(playfield_index_move_right(get_current_position()));
+      return playfield_index_move_down(
+          playfield_index_move_right(get_current_position()));
     case MOVE_DIRECTION_UP:
-      return playfield_index_move_up(playfield_index_move_left(get_current_position()));
+      return playfield_index_move_up(
+          playfield_index_move_left(get_current_position()));
   }
 }
 
 unsigned int get_back_left() {
   switch (get_cur_dir()) {
     case MOVE_DIRECTION_RIGHT:
-      return playfield_index_move_left(playfield_index_move_up(get_current_position()));
+      return playfield_index_move_left(
+          playfield_index_move_up(get_current_position()));
     case MOVE_DIRECTION_LEFT:
-      return playfield_index_move_right(playfield_index_move_down(get_current_position()));
+      return playfield_index_move_right(
+          playfield_index_move_down(get_current_position()));
     case MOVE_DIRECTION_DOWN:
-      return playfield_index_move_up(playfield_index_move_right(get_current_position()));
+      return playfield_index_move_up(
+          playfield_index_move_right(get_current_position()));
     case MOVE_DIRECTION_UP:
-      return playfield_index_move_down(playfield_index_move_left(get_current_position()));
+      return playfield_index_move_down(
+          playfield_index_move_left(get_current_position()));
   }
 }
 

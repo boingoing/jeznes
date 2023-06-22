@@ -39,22 +39,24 @@
 #define get_ball_x_direction_flag_from_byte(flags_byte) \
   ((flags_byte)&BALL_BITMASK_DIRECTION_X)
 
-// Sets the ball x-direction |direction| which must be either BALL_DIRECTION_POSITIVE or BALL_DIRECTION_NEGATIVE
+// Sets the ball x-direction |direction| which must be either
+// BALL_DIRECTION_POSITIVE or BALL_DIRECTION_NEGATIVE
 #define set_ball_x_direction_flag_in_byte(flags_byte, direction) \
   ((flags_byte) = (flags_byte) & (~BALL_BIT_DIRECTION_X | (direction)))
 
 // Returns either BALL_DIRECTION_POSITIVE or BALL_DIRECTION_NEGATIVE
 #define get_ball_y_direction_flag_from_byte(flags_byte) \
-  (((flags_byte)&BALL_BITMASK_DIRECTION_Y)>>BALL_BIT_DIRECTION_Y)
+  (((flags_byte)&BALL_BITMASK_DIRECTION_Y) >> BALL_BIT_DIRECTION_Y)
 
-// Sets the ball y-direction |direction| which must be either BALL_DIRECTION_POSITIVE or BALL_DIRECTION_NEGATIVE
+// Sets the ball y-direction |direction| which must be either
+// BALL_DIRECTION_POSITIVE or BALL_DIRECTION_NEGATIVE
 #define set_ball_y_direction_flag_in_byte(flags_byte, direction) \
-  ((flags_byte) = (flags_byte) & (~BALL_BIT_DIRECTION_Y | (direction<<BALL_BIT_DIRECTION_Y)))
+  ((flags_byte) = (flags_byte) & (~BALL_BIT_DIRECTION_Y |        \
+                                  (direction << BALL_BIT_DIRECTION_Y)))
 
-#define flip_ball_x_direction_flag_in_byte(flags_byte) \
-  ((flags_byte) ^= 1)
+#define flip_ball_x_direction_flag_in_byte(flags_byte) ((flags_byte) ^= 1)
 
 #define flip_ball_y_direction_flag_in_byte(flags_byte) \
-  ((flags_byte) ^= (1<<BALL_BIT_DIRECTION_Y))
+  ((flags_byte) ^= (1 << BALL_BIT_DIRECTION_Y))
 
 #endif  // __JEZNES_FLAGS_BALL_H__
