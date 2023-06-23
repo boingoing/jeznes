@@ -7,14 +7,14 @@
 #ifndef __JEZNES_FLOOD_FILL_H__
 #define __JEZNES_FLOOD_FILL_H__
 
-#define playfield_index_move_up(i) ((i) -32)
+#define playfield_index_move_up(i) ((i)-32)
 #define playfield_index_move_down(i) ((i) + 32)
-#define playfield_index_move_left(i) ((i) -1)
+#define playfield_index_move_left(i) ((i)-1)
 #define playfield_index_move_right(i) ((i) + 1)
 
-#define playfield_index_move_right_up(i) ((i) -31)
+#define playfield_index_move_right_up(i) ((i)-31)
 #define playfield_index_move_left_down(i) ((i) + 31)
-#define playfield_index_move_left_up(i) ((i) -33)
+#define playfield_index_move_left_up(i) ((i)-33)
 #define playfield_index_move_right_down(i) ((i) + 33)
 
 #define inside(i) \
@@ -83,41 +83,59 @@ const unsigned char turn_left_table[] = {
 #define turn_left() (set_cur_dir(turn_left_table[get_cur_dir()]))
 #define move_forward() (set_current_position(get_front()))
 
-#define get_front() \
-    (get_cur_dir() == MOVE_DIRECTION_RIGHT ? playfield_index_move_right(get_current_position()) \
-    : get_cur_dir() == MOVE_DIRECTION_LEFT ? playfield_index_move_left(get_current_position()) \
-    : get_cur_dir() == MOVE_DIRECTION_DOWN ? playfield_index_move_down(get_current_position()) \
-    : playfield_index_move_up(get_current_position()))
+#define get_front()                                         \
+  (get_cur_dir() == MOVE_DIRECTION_RIGHT                    \
+       ? playfield_index_move_right(get_current_position()) \
+   : get_cur_dir() == MOVE_DIRECTION_LEFT                   \
+       ? playfield_index_move_left(get_current_position())  \
+   : get_cur_dir() == MOVE_DIRECTION_DOWN                   \
+       ? playfield_index_move_down(get_current_position())  \
+       : playfield_index_move_up(get_current_position()))
 
-#define get_back() \
-    (get_cur_dir() == MOVE_DIRECTION_RIGHT ? playfield_index_move_left(get_current_position()) \
-    : get_cur_dir() == MOVE_DIRECTION_LEFT ? playfield_index_move_right(get_current_position()) \
-    : get_cur_dir() == MOVE_DIRECTION_DOWN ? playfield_index_move_up(get_current_position()) \
-    : playfield_index_move_down(get_current_position()))
+#define get_back()                                          \
+  (get_cur_dir() == MOVE_DIRECTION_RIGHT                    \
+       ? playfield_index_move_left(get_current_position())  \
+   : get_cur_dir() == MOVE_DIRECTION_LEFT                   \
+       ? playfield_index_move_right(get_current_position()) \
+   : get_cur_dir() == MOVE_DIRECTION_DOWN                   \
+       ? playfield_index_move_up(get_current_position())    \
+       : playfield_index_move_down(get_current_position()))
 
-#define get_right() \
-    (get_cur_dir() == MOVE_DIRECTION_RIGHT ? playfield_index_move_down(get_current_position()) \
-    : get_cur_dir() == MOVE_DIRECTION_LEFT ? playfield_index_move_up(get_current_position()) \
-    : get_cur_dir() == MOVE_DIRECTION_DOWN ? playfield_index_move_left(get_current_position()) \
-    : playfield_index_move_right(get_current_position()))
+#define get_right()                                        \
+  (get_cur_dir() == MOVE_DIRECTION_RIGHT                   \
+       ? playfield_index_move_down(get_current_position()) \
+   : get_cur_dir() == MOVE_DIRECTION_LEFT                  \
+       ? playfield_index_move_up(get_current_position())   \
+   : get_cur_dir() == MOVE_DIRECTION_DOWN                  \
+       ? playfield_index_move_left(get_current_position()) \
+       : playfield_index_move_right(get_current_position()))
 
-#define get_left() \
-    (get_cur_dir() == MOVE_DIRECTION_RIGHT ? playfield_index_move_up(get_current_position()) \
-    : get_cur_dir() == MOVE_DIRECTION_LEFT ? playfield_index_move_down(get_current_position()) \
-    : get_cur_dir() == MOVE_DIRECTION_DOWN ? playfield_index_move_right(get_current_position()) \
-    : playfield_index_move_left(get_current_position()))
+#define get_left()                                          \
+  (get_cur_dir() == MOVE_DIRECTION_RIGHT                    \
+       ? playfield_index_move_up(get_current_position())    \
+   : get_cur_dir() == MOVE_DIRECTION_LEFT                   \
+       ? playfield_index_move_down(get_current_position())  \
+   : get_cur_dir() == MOVE_DIRECTION_DOWN                   \
+       ? playfield_index_move_right(get_current_position()) \
+       : playfield_index_move_left(get_current_position()))
 
-#define get_front_left() \
-    (get_cur_dir() == MOVE_DIRECTION_RIGHT ? playfield_index_move_right_up(get_current_position()) \
-    : get_cur_dir() == MOVE_DIRECTION_LEFT ? playfield_index_move_left_down(get_current_position()) \
-    : get_cur_dir() == MOVE_DIRECTION_DOWN ? playfield_index_move_right_down(get_current_position()) \
-    : playfield_index_move_left_up(get_current_position()))
+#define get_front_left()                                         \
+  (get_cur_dir() == MOVE_DIRECTION_RIGHT                         \
+       ? playfield_index_move_right_up(get_current_position())   \
+   : get_cur_dir() == MOVE_DIRECTION_LEFT                        \
+       ? playfield_index_move_left_down(get_current_position())  \
+   : get_cur_dir() == MOVE_DIRECTION_DOWN                        \
+       ? playfield_index_move_right_down(get_current_position()) \
+       : playfield_index_move_left_up(get_current_position()))
 
-#define get_back_left() \
-    (get_cur_dir() == MOVE_DIRECTION_RIGHT ? playfield_index_move_left_up(get_current_position()) \
-    : get_cur_dir() == MOVE_DIRECTION_LEFT ? playfield_index_move_right_down(get_current_position()) \
-    : get_cur_dir() == MOVE_DIRECTION_DOWN ? playfield_index_move_right_up(get_current_position()) \
-    : playfield_index_move_left_down(get_current_position()))
+#define get_back_left()                                          \
+  (get_cur_dir() == MOVE_DIRECTION_RIGHT                         \
+       ? playfield_index_move_left_up(get_current_position())    \
+   : get_cur_dir() == MOVE_DIRECTION_LEFT                        \
+       ? playfield_index_move_right_down(get_current_position()) \
+   : get_cur_dir() == MOVE_DIRECTION_DOWN                        \
+       ? playfield_index_move_right_up(get_current_position())   \
+       : playfield_index_move_left_down(get_current_position()))
 
 // Uses a constant-memory usage implementation of the painters algorithm to
 // walk the playfield starting at the playfield tile where |ball_index| is
