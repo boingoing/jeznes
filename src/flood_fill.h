@@ -137,12 +137,10 @@ const unsigned char turn_left_table[] = {
        ? playfield_index_move_right_up(get_current_position())   \
        : playfield_index_move_left_down(get_current_position()))
 
-// Uses a constant-memory usage implementation of the painters algorithm to
-// walk the playfield starting at the playfield tile where |ball_index| is
-// currently located. Each reachable playfield tile is marked until we run
-// out of unmarked playfield tiles to walk to.
-// When this function returns, the region in which |ball_index| is bound will
-// be made up entirely of marked playfield tiles.
-void __fastcall__ compute_playfield_mark_bit_one_ball(unsigned char ball_index);
+// Uses a constant-memory usage implementation of the painters algorithm to walk the playfield starting at the playfield tile returned via |get_current_position()|.
+// Be sure to set the current position via |set_current_position()| before calling this function.
+// Each reachable playfield tile is marked until we run out of unmarked playfield tiles to walk to.
+// When this function returns, the region in which |get_current_position()| is located will be made up entirely of marked playfield tiles.
+void compute_playfield_mark_bit_one_region(void);
 
 #endif  // __JEZNES_FLOOD_FILL_H__

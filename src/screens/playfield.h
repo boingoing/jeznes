@@ -40,6 +40,14 @@
 #define playfield_tile_from_pixel_coords(x, y) \
   (((x) >> 3) + (((y) >> 3) << 5) - PLAYFIELD_FIRST_TILE_INDEX)
 
+const unsigned char playfield_pixel_coord_x[] = {
+  0,8,16,24,32,40,48,56,64,72,80,88,96,104,112,120,128,136,144,152,160,168,176,184,192,200,208,216,224,232,240,248,
+};
+
+const unsigned char playfield_pixel_coord_y[] = {
+  8,16,24,32,40,48,56,64,72,80,88,96,104,112,120,128,136,144,152,160,168,176,
+};
+
 // Calculate the playfield tile position in (x,y) of the playfield tile |i|.
 #define playfield_index_x(i) ((i) % 32)
 #define playfield_index_y(i) ((i) >> 5)

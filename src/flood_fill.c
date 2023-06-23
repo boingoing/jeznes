@@ -14,13 +14,8 @@
 #include "types.h"
 #include "zeropage.h"
 
-void compute_playfield_mark_bit_one_ball(unsigned char ball_index) {
-  // Set cur to starting playfield tile
-  set_current_position(balls[ball_index].nearest_playfield_tile);
-
-  // If the playfield tile where |ball_index| is located has already been
-  // marked, another ball is in the same region of the playfield as
-  // |ball_index|. There's no point in remarking the region.
+void compute_playfield_mark_bit_one_region(void) {
+  // If the playfield tile at |get_current_position()| is marked, the region containing the tile has already been marked. There's no point in remarking the region.
   if (!inside(get_current_position())) {
     return;
   }

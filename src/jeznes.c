@@ -1406,7 +1406,8 @@ void update_nearest_tile(void) {
 
 void line_completed(void) {
   for (temp_byte_9 = 0; temp_byte_9 < get_ball_count(); ++temp_byte_9) {
-    compute_playfield_mark_bit_one_ball(temp_byte_9);
+    set_current_position(balls[temp_byte_9].nearest_playfield_tile);
+    compute_playfield_mark_bit_one_region();
   }
 
   // Grant score for clearing a line segment.
@@ -1417,6 +1418,8 @@ void line_completed(void) {
   // beginning next frame. If we need to call it again after that, we will call
   // it in restartable mode.
   set_playfield_index(0);
+  temp_byte_6 = 0;
+  temp_byte_9 = 0;
   game_state = GAME_STATE_UPDATING_PLAYFIELD;
 }
 
@@ -1454,40 +1457,55 @@ unsigned char update_cleared_playfield_tiles(void) {
   temp_byte_3 = 0;
   // Look over all tiles in the playfield and for each uncleared, unmarked tile
   // change it to cleared.
-  for (; get_playfield_index() < PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT;
-       inc_playfield_index()) {
-    temp_byte_4 = playfield[get_playfield_index()];
-    // Skip tiles which are not uncleared. These are walls or cleared tiles and
-    // we don't care if they're marked.
-    // TODO(boingoing): What about PLAYFIELD_LINE tiles from the other player?
-    if (get_playfield_tile_type_from_byte(temp_byte_4) != PLAYFIELD_UNCLEARED) {
-      continue;
+  for (; temp_byte_6 < PLAYFIELD_HEIGHT; ++temp_byte_6) {
+    for (; temp_byte_9 < PLAYFIELD_WIDTH; ++temp_byte_9) {
+      set_playfield_tile_value(playfield[get_playfield_index()]);
+
+      // Skip tiles which are not uncleared. These are walls or cleared tiles and
+      // we don't care if they're marked.
+      // TODO(boingoing): What about PLAYFIELD_LINE tiles from the other player?
+      if (get_playfield_tile_type_from_byte(get_playfield_tile_value()) != PLAYFIELD_UNCLEARED) {
+        goto UPDATE_LOOP_END;
+      }
+
+      // If the tile was marked, we aren't supposed to clear it. Mark implies
+      // there is a ball inside the same region.
+      if (get_playfield_is_marked_flag_from_byte(get_playfield_tile_value())) {
+        // While we're here... let's remove all the mark bits from uncleared
+        // tiles. We won't revisit this tile index during this sweep of the
+        // playfield.
+        unset_playfield_is_marked_flag(get_playfield_index());
+        goto UPDATE_LOOP_END;
+      }
+
+      // Unmarked, uncleared playfield tile. Let's reset it to cleared and track
+      // the count for this sweep as well as all-time for the level.
+      ++temp_byte_3;
+      //set_playfield_tile(get_playfield_index(), PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
+      
+  // Update the playfield in-memory structure.
+  playfield[get_playfield_index()] = PLAYFIELD_WALL;
+  // Set the bg tile graphic
+  one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, playfield_pixel_coord_x[temp_byte_9], playfield_pixel_coord_y[temp_byte_6]));
+
+      // We can only queue about 40 tile updates per v-blank.
+      if (temp_byte_3 == MAX_TILE_UPDATES_PER_FRAME) {
+        add_score_for_cleared_tiles(temp_byte_3);
+        cleared_tile_count += temp_byte_3;
+        inc_playfield_index();
+        return FALSE;
+      }
+
+      UPDATE_LOOP_END:
+      // Playfield index is an int but we're looping based on two bytes above. Increment the index manually.
+      inc_playfield_index();
     }
 
-    // If the tile was marked, we aren't supposed to clear it. Mark implies
-    // there is a ball inside the same region.
-    if (get_playfield_is_marked_flag_from_byte(temp_byte_4)) {
-      // While we're here... let's remove all the mark bits from uncleared
-      // tiles. We won't revisit this tile index during this sweep of the
-      // playfield.
-      unset_playfield_is_marked_flag(get_playfield_index());
-      continue;
-    }
-
-    // Unmarked, uncleared playfield tile. Let's reset it to cleared and track
-    // the count for this sweep as well as all-time for the level.
-    ++temp_byte_3;
-    ++cleared_tile_count;
-    set_playfield_tile(get_playfield_index(), PLAYFIELD_WALL,
-                       TILE_INDEX_PLAYFIELD_CLEARED);
-
-    // We can only queue about 40 tile updates per v-blank.
-    if (temp_byte_3 >= MAX_TILE_UPDATES_PER_FRAME) {
-      add_score_for_cleared_tiles(temp_byte_3);
-      return FALSE;
-    }
+    // To support restarting mid-row, don't reset the x-coord unless we're finishing a row.
+    temp_byte_9 = 0;
   }
 
   add_score_for_cleared_tiles(temp_byte_3);
+  cleared_tile_count += temp_byte_3;
   return TRUE;
 }
