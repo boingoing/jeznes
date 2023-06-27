@@ -1417,7 +1417,7 @@ void line_completed(void) {
   // which will cause us to call update_cleared_playfield_tiles() from the
   // beginning next frame. If we need to call it again after that, we will call
   // it in restartable mode.
-  set_playfield_index(0);
+  set_temp_ptr(playfield);
   temp_byte_6 = 0;
   temp_byte_9 = 0;
   game_state = GAME_STATE_UPDATING_PLAYFIELD;
@@ -1455,11 +1455,14 @@ void set_playfield_tile(unsigned int tile_index,
 // temp_byte_3
 unsigned char update_cleared_playfield_tiles(void) {
   temp_byte_3 = 0;
+  if (temp_byte_6 == 0 && temp_byte_9 == 0) {
+    set_temp_ptr(playfield);
+  }
   // Look over all tiles in the playfield and for each uncleared, unmarked tile
   // change it to cleared.
   for (; temp_byte_6 < PLAYFIELD_HEIGHT; ++temp_byte_6) {
     for (; temp_byte_9 < PLAYFIELD_WIDTH; ++temp_byte_9) {
-      set_playfield_tile_value(playfield[get_playfield_index()]);
+      set_playfield_tile_value(*get_temp_ptr(unsigned char));
 
       // Skip tiles which are not uncleared. These are walls or cleared tiles and
       // we don't care if they're marked.
@@ -1474,7 +1477,8 @@ unsigned char update_cleared_playfield_tiles(void) {
         // While we're here... let's remove all the mark bits from uncleared
         // tiles. We won't revisit this tile index during this sweep of the
         // playfield.
-        unset_playfield_is_marked_flag(get_playfield_index());
+        //unset_playfield_is_marked_flag(get_playfield_index());
+        *get_temp_ptr(unsigned char) &= ~(1<<4);
         goto UPDATE_LOOP_END;
       }
 
@@ -1484,7 +1488,7 @@ unsigned char update_cleared_playfield_tiles(void) {
       //set_playfield_tile(get_playfield_index(), PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
       
   // Update the playfield in-memory structure.
-  playfield[get_playfield_index()] = PLAYFIELD_WALL;
+  *get_temp_ptr(unsigned char) = PLAYFIELD_WALL;
   // Set the bg tile graphic
   one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_ppu_addr(0, playfield_pixel_coord_x[temp_byte_9], playfield_pixel_coord_y[temp_byte_6]));
 
@@ -1492,13 +1496,15 @@ unsigned char update_cleared_playfield_tiles(void) {
       if (temp_byte_3 == MAX_TILE_UPDATES_PER_FRAME) {
         add_score_for_cleared_tiles(temp_byte_3);
         cleared_tile_count += temp_byte_3;
-        inc_playfield_index();
+        //inc_playfield_index();
+        ++temp_ptr_1;
         return FALSE;
       }
 
       UPDATE_LOOP_END:
       // Playfield index is an int but we're looping based on two bytes above. Increment the index manually.
-      inc_playfield_index();
+      //inc_playfield_index();
+      ++temp_ptr_1;
     }
 
     // To support restarting mid-row, don't reset the x-coord unless we're finishing a row.
