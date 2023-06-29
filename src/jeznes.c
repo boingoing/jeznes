@@ -1453,11 +1453,8 @@ unsigned char update_cleared_playfield_tiles(void) {
   if (temp_byte_6 == TRUE) {
     // Keep pointer to the playfield in-memory structure.
     set_temp_ptr(playfield);
-    //temp_int_3 = get_temp_ptr(unsigned char) + 704;
     // First ppu address of the playfield tiles.
     temp_int_2 = get_ppu_addr(0, playfield_pixel_coord_x[0], playfield_pixel_coord_y[0]);
-    // Last+1 ppu address of the playfield tiles.
-    //temp_int_3 = get_ppu_addr(0, playfield_pixel_coord_x[PLAYFIELD_WIDTH-1], playfield_pixel_coord_y[PLAYFIELD_HEIGHT-1]) + 1;
     // Turn off the initialization flag for subsequent sweeps.
     temp_byte_6 = FALSE;
   }
@@ -1495,10 +1492,10 @@ unsigned char update_cleared_playfield_tiles(void) {
     // Update the playfield in-memory structure.
     *get_temp_ptr(unsigned char) = PLAYFIELD_WALL;
     // Calculate the ppu addr for the current tile.
-    temp_int_1 = temp_ptr_1 - playfield;
-    temp_int_1 += temp_int_2;
+    //temp_int_1 = temp_int_2 + temp_ptr_1 - playfield;
+    //temp_int_1 += temp_int_2;
     // Set the bg tile graphic
-    one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, temp_int_1);
+    one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, temp_int_2 + temp_ptr_1 - playfield);
 
     // We can only queue about 40 tile updates per v-blank.
     if (temp_byte_3 == MAX_TILE_UPDATES_PER_FRAME) {

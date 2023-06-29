@@ -24,7 +24,7 @@
 // Note: Make sure that functions in the same stack don't reuse local temps
 //       by abstracting the usage into these macros.
 
-#define set_temp_ptr(p) (temp_ptr_1 = (p))
+#define set_temp_ptr(p) (temp_ptr_1 = (unsigned char*)(p))
 #define get_temp_ptr(type) ((type*)temp_ptr_1)
 
 #define get_playfield_index() (temp_int_3)
