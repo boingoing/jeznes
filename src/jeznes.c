@@ -1453,20 +1453,23 @@ unsigned char update_cleared_playfield_tiles(void) {
   if (temp_byte_6 == TRUE) {
     // Keep pointer to the playfield in-memory structure.
     set_temp_ptr(playfield);
+    temp_int_3 = get_temp_ptr(unsigned char) + 704;
     // First ppu address of the playfield tiles.
     temp_int_2 = get_ppu_addr(0, playfield_pixel_coord_x[0], playfield_pixel_coord_y[0]);
     // Last+1 ppu address of the playfield tiles.
-    temp_int_3 = get_ppu_addr(0, playfield_pixel_coord_x[PLAYFIELD_WIDTH-1], playfield_pixel_coord_y[PLAYFIELD_HEIGHT-1]) + 1;
+    //temp_int_3 = get_ppu_addr(0, playfield_pixel_coord_x[PLAYFIELD_WIDTH-1], playfield_pixel_coord_y[PLAYFIELD_HEIGHT-1]) + 1;
     // Turn off the initialization flag for subsequent sweeps.
     temp_byte_6 = FALSE;
   }
 
   // Reset per-sweep cleared counter.
   temp_byte_3 = 0;
+  // Reset counter of skipped ppu address inc's.
+  temp_byte_9 = 0;
 
   // Look over all tiles in the playfield and for each uncleared, unmarked tile
   // change it to cleared.
-  for (; temp_int_2 < temp_int_3; ++temp_int_2) {
+  for (; get_temp_ptr(unsigned char) != (unsigned char*)temp_int_3; ++temp_ptr_1) {
     set_playfield_tile_value(*get_temp_ptr(unsigned char));
 
     // Skip tiles which are not uncleared. These are walls or cleared tiles and
@@ -1490,12 +1493,15 @@ unsigned char update_cleared_playfield_tiles(void) {
     // Unmarked, uncleared playfield tile. Let's reset it to cleared and track
     // the count for this sweep as well as all-time for the level.
     ++temp_byte_3;
-    //set_playfield_tile(get_playfield_index(), PLAYFIELD_WALL, TILE_INDEX_PLAYFIELD_CLEARED);
-    
-// Update the playfield in-memory structure.
-*get_temp_ptr(unsigned char) = PLAYFIELD_WALL;
-// Set the bg tile graphic
-one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, temp_int_2);
+
+    // Update the playfield in-memory structure.
+    *get_temp_ptr(unsigned char) = PLAYFIELD_WALL;
+    // Fix ppu address to include skipped inc's.
+    temp_int_2 += temp_byte_9;
+    // Reset count of skipped ppu address inc's.
+    temp_byte_9 = 0;
+    // Set the bg tile graphic
+    one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, temp_int_2);
 
     // We can only queue about 40 tile updates per v-blank.
     if (temp_byte_3 == MAX_TILE_UPDATES_PER_FRAME) {
@@ -1507,7 +1513,13 @@ one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, temp_int_2);
     }
 
     UPDATE_LOOP_END:
-    ++temp_ptr_1;
+    ++temp_byte_9;
+
+    // Avoid overflow.
+    if (temp_byte_9 == 0xff) {
+      temp_int_2 += 0xff;
+      temp_byte_9 = 0;
+    }
   }
 
   add_score_for_cleared_tiles(temp_byte_3);
