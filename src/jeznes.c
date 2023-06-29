@@ -1464,8 +1464,6 @@ unsigned char update_cleared_playfield_tiles(void) {
 
   // Reset per-sweep cleared counter.
   temp_byte_3 = 0;
-  // Reset counter of skipped ppu address inc's.
-  temp_byte_9 = 0;
 
   // Look over all tiles in the playfield and for each uncleared, unmarked tile
   // change it to cleared.
@@ -1496,10 +1494,6 @@ unsigned char update_cleared_playfield_tiles(void) {
 
     // Update the playfield in-memory structure.
     *get_temp_ptr(unsigned char) = PLAYFIELD_WALL;
-    // Fix ppu address to include skipped inc's.
-    temp_int_2 += temp_byte_9;
-    // Reset count of skipped ppu address inc's.
-    temp_byte_9 = 0;
     // Set the bg tile graphic
     one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, temp_int_2);
 
@@ -1513,13 +1507,7 @@ unsigned char update_cleared_playfield_tiles(void) {
     }
 
     UPDATE_LOOP_END:
-    ++temp_byte_9;
-
-    // Avoid overflow.
-    if (temp_byte_9 == 0xff) {
-      temp_int_2 += 0xff;
-      temp_byte_9 = 0;
-    }
+    ++temp_int_2;
   }
 
   add_score_for_cleared_tiles(temp_byte_3);
