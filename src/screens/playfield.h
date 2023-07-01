@@ -42,12 +42,15 @@
 
 // Map of playfield x-coordinate index [0,31] to x-coordinate in pixel-space
 const unsigned char playfield_pixel_coord_x[] = {
-  0,8,16,24,32,40,48,56,64,72,80,88,96,104,112,120,128,136,144,152,160,168,176,184,192,200,208,216,224,232,240,248,
+    0,   8,   16,  24,  32,  40,  48,  56,  64,  72,  80,
+    88,  96,  104, 112, 120, 128, 136, 144, 152, 160, 168,
+    176, 184, 192, 200, 208, 216, 224, 232, 240, 248,
 };
 
 // Map of playfield y-coordinate index [0,21] to y-coordinate in pixel-space
 const unsigned char playfield_pixel_coord_y[] = {
-  8,16,24,32,40,48,56,64,72,80,88,96,104,112,120,128,136,144,152,160,168,176,
+    8,  16,  24,  32,  40,  48,  56,  64,  72,  80,  88,
+    96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176,
 };
 
 // Calculate the playfield tile position in (x,y) of the playfield tile |i|.

@@ -1449,12 +1449,14 @@ void set_playfield_tile(unsigned int tile_index,
 //       TRUE when all vram updates are queued and FALSE if there are additonal
 //       vram updates pending.
 unsigned char update_cleared_playfield_tiles(void) {
-  // If this is the first sweep over the playfield, we need to init the counters.
+  // If this is the first sweep over the playfield, we need to init the
+  // counters.
   if (get_should_initialize_clear_sweep() == TRUE) {
     // Keep pointer to the playfield in-memory structure.
     set_temp_ptr(playfield);
     // First ppu address of the playfield tiles.
-    set_temp_ppu_address(get_ppu_addr(0, playfield_pixel_coord_x[0], playfield_pixel_coord_y[0]));
+    set_temp_ppu_address(get_ppu_addr(0, playfield_pixel_coord_x[0],
+                                      playfield_pixel_coord_y[0]));
     // Turn off the initialization flag for subsequent sweeps.
     set_should_initialize_clear_sweep(FALSE);
   }
@@ -1464,13 +1466,16 @@ unsigned char update_cleared_playfield_tiles(void) {
 
   // Look over all tiles in the playfield and for each uncleared, unmarked tile
   // change it to cleared.
-  for (; get_temp_ptr(unsigned char) != (unsigned char*)(playfield + PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT); ++temp_ptr_1) {
+  for (; get_temp_ptr(unsigned char) !=
+         (unsigned char*)(playfield + PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT);
+       ++temp_ptr_1) {
     set_playfield_tile_value(*get_temp_ptr(unsigned char));
 
     // Skip tiles which are not uncleared. These are walls or cleared tiles and
     // we don't care if they're marked.
     // TODO(boingoing): What about PLAYFIELD_LINE tiles from the other player?
-    if (get_playfield_tile_type_from_byte(get_playfield_tile_value()) != PLAYFIELD_UNCLEARED) {
+    if (get_playfield_tile_type_from_byte(get_playfield_tile_value()) !=
+        PLAYFIELD_UNCLEARED) {
       continue;
     }
 
@@ -1492,7 +1497,8 @@ unsigned char update_cleared_playfield_tiles(void) {
     *get_temp_ptr(unsigned char) = PLAYFIELD_WALL;
 
     // Calculate the ppu addr for the current tile and set the bg tile graphic.
-    one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_temp_ppu_address() + temp_ptr_1 - playfield);
+    one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED,
+                    get_temp_ppu_address() + temp_ptr_1 - playfield);
 
     // We can only queue about 40 tile updates per v-blank.
     if (temp_byte_3 == MAX_TILE_UPDATES_PER_FRAME) {

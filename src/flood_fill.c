@@ -15,7 +15,9 @@
 #include "zeropage.h"
 
 void compute_playfield_mark_bit_one_region(void) {
-  // If the playfield tile at |get_current_position()| is marked, the region containing the tile has already been marked. There's no point in remarking the region.
+  // If the playfield tile at |get_current_position()| is marked, the region
+  // containing the tile has already been marked. There's no point in remarking
+  // the region.
   if (!inside(get_current_position())) {
     return;
   }
