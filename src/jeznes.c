@@ -1464,7 +1464,7 @@ unsigned char update_cleared_playfield_tiles(void) {
 
   // Look over all tiles in the playfield and for each uncleared, unmarked tile
   // change it to cleared.
-  for (; get_temp_ptr(unsigned char) != (unsigned char*)(playfield + 704); ++temp_ptr_1) {
+  for (; get_temp_ptr(unsigned char) != (unsigned char*)(playfield + PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT); ++temp_ptr_1) {
     set_playfield_tile_value(*get_temp_ptr(unsigned char));
 
     // Skip tiles which are not uncleared. These are walls or cleared tiles and
@@ -1480,8 +1480,7 @@ unsigned char update_cleared_playfield_tiles(void) {
       // While we're here... let's remove all the mark bits from uncleared
       // tiles. We won't revisit this tile index during this sweep of the
       // playfield.
-      //unset_playfield_is_marked_flag(get_playfield_index());
-      *get_temp_ptr(unsigned char) &= ~(1<<4);
+      *get_temp_ptr(unsigned char) &= ~(PLAYFIELD_BITMASK_MARK);
       continue;
     }
 
@@ -1491,10 +1490,8 @@ unsigned char update_cleared_playfield_tiles(void) {
 
     // Update the playfield in-memory structure.
     *get_temp_ptr(unsigned char) = PLAYFIELD_WALL;
-    // Calculate the ppu addr for the current tile.
-    //temp_int_1 = temp_int_2 + temp_ptr_1 - playfield;
-    //temp_int_1 += temp_int_2;
-    // Set the bg tile graphic
+
+    // Calculate the ppu addr for the current tile and set the bg tile graphic.
     one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, temp_int_2 + temp_ptr_1 - playfield);
 
     // We can only queue about 40 tile updates per v-blank.
