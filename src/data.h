@@ -24,12 +24,18 @@
 // Note: Make sure that functions in the same stack don't reuse local temps
 //       by abstracting the usage into these macros.
 
-#define set_temp_ptr(p) (temp_ptr_1 = (p))
+#define set_temp_ptr(p) (temp_ptr_1 = (unsigned char*)(p))
 #define get_temp_ptr(type) ((type*)temp_ptr_1)
 
 #define get_playfield_index() (temp_int_3)
 #define set_playfield_index(a) (temp_int_3 = (a))
 #define inc_playfield_index() (++temp_int_3)
+
+#define get_should_initialize_clear_sweep() (temp_byte_6)
+#define set_should_initialize_clear_sweep(a) (temp_byte_6 = (a))
+
+#define get_temp_ppu_address() (temp_int_2)
+#define set_temp_ppu_address(a) (temp_int_2 = (a))
 
 #define get_game_over_mode() (temp_byte_6)
 #define set_game_over_mode(a) (temp_byte_6 = (a))

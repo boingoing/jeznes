@@ -78,6 +78,6 @@ unsigned int temp_int_1;
 unsigned int temp_int_2;
 unsigned int temp_int_3;
 
-void* temp_ptr_1;
+unsigned char* temp_ptr_1;
 
 #endif  // __JEZNES_ZEROPAGE_H__
