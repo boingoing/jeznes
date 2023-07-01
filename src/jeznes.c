@@ -1413,11 +1413,11 @@ void line_completed(void) {
   // Grant score for clearing a line segment.
   add_score_for_cleared_line();
 
-  // Reset |playfield_index|, set the game state to updating the playfield,
-  // which will cause us to call update_cleared_playfield_tiles() from the
+  // Set the game state to updating the playfield and re-initialize the sweep.
+  // This will cause us to call update_cleared_playfield_tiles() from the
   // beginning next frame. If we need to call it again after that, we will call
   // it in restartable mode.
-  temp_byte_6 = TRUE;
+  set_should_initialize_clear_sweep(TRUE);
   game_state = GAME_STATE_UPDATING_PLAYFIELD;
 }
 
@@ -1443,20 +1443,20 @@ void set_playfield_tile(unsigned int tile_index,
 // all uncleared tiles have been updated. Note: This function can potentially
 // queue more vram updates than are allowed during the next v-blank.
 //       For that reason, it is restartable.
-//       The current playfield_index needs to be reset to zero once at the
-//       beginning of the operation. Otherwise, calling this function will
-//       continue from where it left off last time. It returns TRUE when all
-//       vram updates are queued and FALSE if there are additonal vram updates
-//       pending.
+//       If get_should_initialize_clear_sweep() is TRUE, we will reset the
+//       pointers used to walk over the playfield. Otherwise, calling this
+//       function will continue from where it left off last time. It returns
+//       TRUE when all vram updates are queued and FALSE if there are additonal
+//       vram updates pending.
 unsigned char update_cleared_playfield_tiles(void) {
   // If this is the first sweep over the playfield, we need to init the counters.
-  if (temp_byte_6 == TRUE) {
+  if (get_should_initialize_clear_sweep() == TRUE) {
     // Keep pointer to the playfield in-memory structure.
     set_temp_ptr(playfield);
     // First ppu address of the playfield tiles.
-    temp_int_2 = get_ppu_addr(0, playfield_pixel_coord_x[0], playfield_pixel_coord_y[0]);
+    set_temp_ppu_address(get_ppu_addr(0, playfield_pixel_coord_x[0], playfield_pixel_coord_y[0]));
     // Turn off the initialization flag for subsequent sweeps.
-    temp_byte_6 = FALSE;
+    set_should_initialize_clear_sweep(FALSE);
   }
 
   // Reset per-sweep cleared counter.
@@ -1492,7 +1492,7 @@ unsigned char update_cleared_playfield_tiles(void) {
     *get_temp_ptr(unsigned char) = PLAYFIELD_WALL;
 
     // Calculate the ppu addr for the current tile and set the bg tile graphic.
-    one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, temp_int_2 + temp_ptr_1 - playfield);
+    one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_temp_ppu_address() + temp_ptr_1 - playfield);
 
     // We can only queue about 40 tile updates per v-blank.
     if (temp_byte_3 == MAX_TILE_UPDATES_PER_FRAME) {
