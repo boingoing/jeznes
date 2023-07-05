@@ -1181,31 +1181,27 @@ void start_line(unsigned char player_index) {
 }
 
 void draw_line(void) {
-  temp_byte_3 = get_temp_ptr(struct Line)->flags;
+  set_flags_byte(get_temp_ptr(struct Line)->flags);
 
-  if (get_line_is_started_flag_from_byte(temp_byte_3)) {
-    set_line_orientation(get_line_orientation_flag_from_byte(temp_byte_3));
+  if (get_line_is_started_flag_from_byte(get_flags_byte())) {
+    set_line_orientation(get_line_orientation_flag_from_byte(get_flags_byte()));
     set_tile_index_delta(compute_tile_index_delta(get_line_orientation()));
     set_negative_line_segment_origin(get_temp_ptr(struct Line)->origin);
 
-    if (!get_line_is_negative_complete_flag_from_byte(temp_byte_3)) {
+    if (!get_line_is_negative_complete_flag_from_byte(get_flags_byte())) {
       set_current_playfield_index(get_negative_line_segment_origin() -
                                   get_temp_ptr(struct Line)->tile_step_count *
                                       get_tile_index_delta());
 
-      // Negative-direction line segment front tile sprite needs to be flipped
-      // (OAM_FLIP_H 0x40). If the line is vertical, we need to do vertical flip
-      // instead (OAM_FLIP_V 0x80).
-      temp_byte_2 = OAM_FLIP_H + OAM_FLIP_H * get_line_orientation();
       oam_spr(playfield_index_pixel_coord_x(get_current_playfield_index()),
               playfield_index_pixel_coord_y(get_current_playfield_index()) - 1,
               get_line_sprite_index(
                   get_line_orientation(),
                   get_temp_ptr(struct Line)->current_block_completion),
-              1 | temp_byte_2);
+              1 | get_negative_direction_line_sprite_flags(get_line_orientation()));
     }
 
-    if (!get_line_is_positive_complete_flag_from_byte(temp_byte_3)) {
+    if (!get_line_is_positive_complete_flag_from_byte(get_flags_byte())) {
       set_positive_line_segment_origin(get_negative_line_segment_origin() +
                                        get_tile_index_delta());
       set_current_playfield_index(get_positive_line_segment_origin() +
