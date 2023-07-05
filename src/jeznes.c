@@ -950,12 +950,6 @@ void draw_pause_sprites(void) {
   }
 }
 
-// The tile index delta is the number we add to a playfield tile index to move
-// to the next playfield tile along the line segment.
-// |orientation| is the line orientation and must be one of ORIENTATION_HORIZ
-// or ORIENTATION_VERT.
-#define compute_tile_index_delta(orientation) ((orientation)*31 + 1)
-
 unsigned char update_line(unsigned char line_index) {
   temp_byte_6 = get_temp_ptr(struct Line)->flags;
 
