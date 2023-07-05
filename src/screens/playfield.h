@@ -38,7 +38,7 @@
 
 // Calculate the playfield tile index from (x,y) pixel coords.
 #define playfield_tile_from_pixel_coords(x, y) \
-  (((x) >> 3) + (((y) >> 3) << 5) - PLAYFIELD_FIRST_TILE_INDEX)
+  (((x) >> 3) + ((((y) >> 3) - 1) << 5))
 
 // Map of playfield x-coordinate index [0,31] to x-coordinate in pixel-space
 const unsigned char playfield_pixel_coord_x[] = {
@@ -59,9 +59,9 @@ const unsigned char playfield_pixel_coord_y[] = {
 
 // Calculate the bg tile position in pixel coords of the playfield tile |i|.
 #define playfield_index_pixel_coord_x(i) \
-  (playfield_index_x((i) + PLAYFIELD_FIRST_TILE_INDEX) << 3)
+  (playfield_index_x((i)) << 3)
 #define playfield_index_pixel_coord_y(i) \
-  (playfield_index_y((i) + PLAYFIELD_FIRST_TILE_INDEX) << 3)
+  ((playfield_index_y((i)) << 3) + 8)
 
 // Get the bg tile graphic index for lines.
 // Indicate horizontal or vertical via |orientation| which should be
