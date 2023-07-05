@@ -71,8 +71,10 @@ struct Line {
   // begins.
   int origin;
 
-  // How many steps away from the origin playfield tiles have we taken?
-  unsigned char tile_step_count;
+  unsigned char negative_sprite_x;
+  unsigned char negative_sprite_y;
+  unsigned char positive_sprite_x;
+  unsigned char positive_sprite_y;
 
   // Completion of the current block [0-7]
   unsigned char current_block_completion;
