@@ -79,6 +79,9 @@ const unsigned char playfield_pixel_coord_y[] = {
 #define get_playfield_bg_tile_line_origin(orientation, direction) \
   (TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE_ORIGIN | (direction) | ((orientation) << 1))
 
+// Set the bg tile graphic for the playfield tile located at (x,y) in pixel-coords.
+#define set_playfield_bg_tile(x, y, bg_tile) one_vram_buffer((bg_tile), get_ppu_addr(0, (x), (y)))
+
 const char playfield_bg_palette[] = {0x0f, 0x30, 0x16, 0x28, 0x0f, 0x00,
                                      0x15, 0x21, 0x0f, 0x06, 0x16, 0x26,
                                      0x0f, 0x20, 0x31, 0x21};
