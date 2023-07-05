@@ -63,23 +63,35 @@ const unsigned char playfield_pixel_coord_y[] = {
 #define playfield_index_pixel_coord_y(i) \
   ((playfield_index_y((i)) << 3) + 8)
 
+const unsigned char playfield_bg_tile_line_table[] = {
+  TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE,
+  TILE_INDEX_PLAYFIELD_LINE_HORIZ_POSITIVE,
+  TILE_INDEX_PLAYFIELD_LINE_VERT_NEGATIVE,
+  TILE_INDEX_PLAYFIELD_LINE_VERT_POSITIVE,
+};
+
+const unsigned char playfield_bg_tile_line_origin_table[] = {
+  TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE_ORIGIN,
+  TILE_INDEX_PLAYFIELD_LINE_HORIZ_POSITIVE_ORIGIN,
+  TILE_INDEX_PLAYFIELD_LINE_VERT_NEGATIVE_ORIGIN,
+  TILE_INDEX_PLAYFIELD_LINE_VERT_POSITIVE_ORIGIN,
+};
+
 // Get the bg tile graphic index for lines.
 // Indicate horizontal or vertical via |orientation| which should be
 // ORIENTATION_HORIZ or ORIENTATION_VERT.
 // Indicate line direction via |direction| which must be LINE_DIRECTION_POSITIVE
 // or LINE_DIRECTION_NEGATIVE.
-#define get_playfield_bg_tile_line(orientation, direction)  \
-  (TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE + (direction) + \
-   ((orientation) == ORIENTATION_HORIZ ? 0 : 2))
+#define get_playfield_bg_tile_line(orientation, direction) \
+  (TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE | (direction) | ((orientation) << 1))
 
 // Get the bg tile graphic index for the line origin tile.
 // Indicate horizontal or vertical via |orientation| which should be
 // ORIENTATION_HORIZ or ORIENTATION_VERT.
 // Indicate line direction via |direction| which must be LINE_DIRECTION_POSITIVE
 // or LINE_DIRECTION_NEGATIVE.
-#define get_playfield_bg_tile_line_origin(orientation, direction)  \
-  (TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE_ORIGIN + (direction) + \
-   ((orientation) == ORIENTATION_HORIZ ? 0 : 2))
+#define get_playfield_bg_tile_line_origin(orientation, direction) \
+  (TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE_ORIGIN | (direction) | ((orientation) << 1))
 
 const char playfield_bg_palette[] = {0x0f, 0x30, 0x16, 0x28, 0x0f, 0x00,
                                      0x15, 0x21, 0x0f, 0x06, 0x16, 0x26,
