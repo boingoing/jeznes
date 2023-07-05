@@ -63,20 +63,6 @@ const unsigned char playfield_pixel_coord_y[] = {
 #define playfield_index_pixel_coord_y(i) \
   ((playfield_index_y((i)) << 3) + 8)
 
-const unsigned char playfield_bg_tile_line_table[] = {
-  TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE,
-  TILE_INDEX_PLAYFIELD_LINE_HORIZ_POSITIVE,
-  TILE_INDEX_PLAYFIELD_LINE_VERT_NEGATIVE,
-  TILE_INDEX_PLAYFIELD_LINE_VERT_POSITIVE,
-};
-
-const unsigned char playfield_bg_tile_line_origin_table[] = {
-  TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE_ORIGIN,
-  TILE_INDEX_PLAYFIELD_LINE_HORIZ_POSITIVE_ORIGIN,
-  TILE_INDEX_PLAYFIELD_LINE_VERT_NEGATIVE_ORIGIN,
-  TILE_INDEX_PLAYFIELD_LINE_VERT_POSITIVE_ORIGIN,
-};
-
 // Get the bg tile graphic index for lines.
 // Indicate horizontal or vertical via |orientation| which should be
 // ORIENTATION_HORIZ or ORIENTATION_VERT.
