@@ -48,6 +48,11 @@
 #define get_pixel_coord_y() (temp_byte_4)
 #define set_pixel_coord_y(a) (temp_byte_4 = (a))
 
+#define get_sprite_x() (temp_byte_6)
+#define set_sprite_x(a) (temp_byte_6 = (a))
+#define get_sprite_y() (temp_byte_7)
+#define set_sprite_y(a) (temp_byte_7 = (a))
+
 #define get_line_orientation() (temp_byte_4)
 #define set_line_orientation(a) (temp_byte_4 = (a))
 #define get_current_playfield_index() (temp_int_1)

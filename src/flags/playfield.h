@@ -101,6 +101,10 @@
 #define get_playfield_tile_type(playfield_index) \
   get_playfield_tile_type_from_byte(playfield[(playfield_index)])
 
+// Update the playfield in-memory structure.
+#define set_playfield_tile_type(playfield_index, tile_type) \
+  (playfield[(playfield_index)] = (tile_type))
+
 // Get the playfield tile type for lines.
 // Indicate horizontal or vertical via |orientation| which should be
 // ORIENTATION_HORIZ or ORIENTATION_VERT. Indicate the line index via

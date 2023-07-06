@@ -34,6 +34,9 @@ enum {
 };
 
 struct Player {
+  // Playfield tile index for nearest tile
+  unsigned int nearest_playfield_tile;
+
   // Player metasprite location in pixel-coords
   unsigned char x;
   unsigned char y;
@@ -42,20 +45,17 @@ struct Player {
   unsigned char nearest_tile_x;
   unsigned char nearest_tile_y;
 
-  // Playfield tile index for nearest tile
-  int nearest_playfield_tile;
-
   // Hold bit-flags used to track state of this player.
   unsigned char flags;
 };
 
 struct Ball {
+  // Playfield tile index for nearest tile
+  unsigned int nearest_playfield_tile;
+
   // Ball sprite location in pixel-coords
   unsigned char x;
   unsigned char y;
-
-  // Playfield tile index for nearest tile
-  int nearest_playfield_tile;
 
   // Hold bit-flags used to track state of this ball.
   unsigned char flags;
@@ -69,10 +69,12 @@ struct Line {
   // (for ORIENTATION_HORIZ lines) or the tile below it (for ORIENTATION_VERT
   // lines) is where the line segment which spreads in the positive direction
   // begins.
-  int origin;
+  unsigned int origin;
 
-  // How many steps away from the origin playfield tiles have we taken?
-  unsigned char tile_step_count;
+  unsigned char negative_sprite_x;
+  unsigned char negative_sprite_y;
+  unsigned char positive_sprite_x;
+  unsigned char positive_sprite_y;
 
   // Completion of the current block [0-7]
   unsigned char current_block_completion;

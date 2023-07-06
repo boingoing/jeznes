@@ -12,10 +12,15 @@
 #define TILE_INDEX_PLAYFIELD_UNCLEARED 0x0
 #define TILE_INDEX_PLAYFIELD_CLEARED 0x3
 
+// Set of playfield line tiles.
+// Must be consecutive starting at an index with the low 4 bits unset.
 #define TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE 0xb0
 #define TILE_INDEX_PLAYFIELD_LINE_HORIZ_POSITIVE 0xb1
 #define TILE_INDEX_PLAYFIELD_LINE_VERT_NEGATIVE 0xb2
 #define TILE_INDEX_PLAYFIELD_LINE_VERT_POSITIVE 0xb3
+
+// Set of playfield line origin tiles.
+// Must be consecutive starting at an index with the low 4 bits unset.
 #define TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE_ORIGIN 0xa0
 #define TILE_INDEX_PLAYFIELD_LINE_HORIZ_POSITIVE_ORIGIN 0xa1
 #define TILE_INDEX_PLAYFIELD_LINE_VERT_NEGATIVE_ORIGIN 0xa2

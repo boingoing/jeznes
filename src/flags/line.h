@@ -17,6 +17,8 @@
 #define LINE_BITMASK_IS_POS_COMPLETE (1 << LINE_BIT_IS_POS_COMPLETE)
 #define LINE_BIT_IS_NEG_COMPLETE 3
 #define LINE_BITMASK_IS_NEG_COMPLETE (1 << LINE_BIT_IS_NEG_COMPLETE)
+#define LINE_BIT_IS_FIRST_STEP 4
+#define LINE_BITMASK_IS_FIRST_STEP (1 << LINE_BIT_IS_FIRST_STEP)
 
 #define get_line_flag(line_index, bitmask) \
   get_flag(lines[(line_index)].flags, (bitmask))
@@ -24,6 +26,20 @@
   set_flag(lines[(line_index)].flags, (bitmask))
 #define unset_line_flag(line_index, bitmask) \
   unset_flag(lines[(line_index)].flags, (bitmask))
+
+#define get_line_is_first_step_flag_from_byte(flags_byte) \
+  get_flag((flags_byte), LINE_BITMASK_IS_FIRST_STEP)
+#define set_line_is_first_step_flag_in_byte(flags_byte) \
+  set_flag((flags_byte), LINE_BITMASK_IS_FIRST_STEP)
+#define unset_line_is_first_step_flag_in_byte(flags_byte) \
+  unset_flag((flags_byte), LINE_BITMASK_IS_FIRST_STEP)
+
+#define get_line_is_first_step_flag(line_index) \
+  get_line_flag((line_index), LINE_BITMASK_IS_FIRST_STEP)
+#define set_line_is_first_step_flag(line_index) \
+  set_line_flag((line_index), LINE_BITMASK_IS_FIRST_STEP)
+#define unset_line_is_first_step_flag(line_index) \
+  unset_line_flag((line_index), LINE_BITMASK_IS_FIRST_STEP)
 
 #define get_line_is_started_flag_from_byte(flags_byte) \
   get_flag((flags_byte), LINE_BITMASK_IS_STARTED)
@@ -87,5 +103,17 @@
 // completion via |completion| which should be [0,7].
 #define get_line_sprite_index(orientation, completion) \
   (SPRITE_INDEX_PLAYFIELD_LINE_HORIZ_BASE + (completion) + 0x10 * (orientation))
+
+// Table of sprite flags indexed by orientation flag.
+const unsigned char negative_direction_line_sprite_flags_table[] = {
+    OAM_FLIP_H,
+    OAM_FLIP_V,
+};
+
+// Negative-direction line segment front tile sprite needs to be flipped
+// (OAM_FLIP_H 0x40). If the line is vertical, we need to do vertical flip
+// instead (OAM_FLIP_V 0x80).
+#define get_negative_direction_line_sprite_flags(orientation) \
+  (negative_direction_line_sprite_flags_table[(orientation)])
 
 #endif  // __JEZNES_FLAGS_LINE_H__
