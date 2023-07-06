@@ -106,13 +106,14 @@
 
 // Table of sprite flags indexed by orientation flag.
 const unsigned char negative_direction_line_sprite_flags_table[] = {
-  OAM_FLIP_H,
-  OAM_FLIP_V,
+    OAM_FLIP_H,
+    OAM_FLIP_V,
 };
 
 // Negative-direction line segment front tile sprite needs to be flipped
 // (OAM_FLIP_H 0x40). If the line is vertical, we need to do vertical flip
 // instead (OAM_FLIP_V 0x80).
-#define get_negative_direction_line_sprite_flags(orientation) (negative_direction_line_sprite_flags_table[(orientation)])
+#define get_negative_direction_line_sprite_flags(orientation) \
+  (negative_direction_line_sprite_flags_table[(orientation)])
 
 #endif  // __JEZNES_FLAGS_LINE_H__

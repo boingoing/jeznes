@@ -13,15 +13,16 @@
 
 // Table of tile index deltas indexed by orientation flag.
 const unsigned char tile_index_delta_table[] = {
-  1,
-  32,
+    1,
+    32,
 };
 
 // The tile index delta is the number we add to a playfield tile index to move
 // to the next playfield tile along the line segment.
 // |orientation| is the line orientation and must be one of ORIENTATION_HORIZ
 // or ORIENTATION_VERT.
-#define compute_tile_index_delta(orientation) (tile_index_delta_table[orientation])
+#define compute_tile_index_delta(orientation) \
+  (tile_index_delta_table[orientation])
 
 int main(void);
 

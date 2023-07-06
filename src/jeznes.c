@@ -976,15 +976,22 @@ unsigned char update_line(unsigned char line_index) {
       // tile we're moving from.
       set_sprite_x(get_temp_ptr(struct Line)->negative_sprite_x);
       set_sprite_y(get_temp_ptr(struct Line)->negative_sprite_y);
-      set_current_playfield_index(playfield_tile_from_pixel_coords(get_sprite_x(), get_sprite_y()));
+      set_current_playfield_index(
+          playfield_tile_from_pixel_coords(get_sprite_x(), get_sprite_y()));
 
       // While it was the front of the line segment, current playfield tile was
       // being drawn as a sprite. Now that it's complete, update the playfield
       // and bg tile. Note: The origin tile already has the playfield flags (and
       // bg tile) set. We can ignore that one.
       if (!get_line_is_first_step_flag_from_byte(get_flags_byte())) {
-        set_playfield_tile_type(get_current_playfield_index(), get_playfield_tile_type_line(get_line_orientation(), line_index, LINE_DIRECTION_NEGATIVE));
-        set_playfield_bg_tile(get_sprite_x(), get_sprite_y(), get_playfield_bg_tile_line(get_line_orientation(), LINE_DIRECTION_NEGATIVE));
+        set_playfield_tile_type(
+            get_current_playfield_index(),
+            get_playfield_tile_type_line(get_line_orientation(), line_index,
+                                         LINE_DIRECTION_NEGATIVE));
+        set_playfield_bg_tile(
+            get_sprite_x(), get_sprite_y(),
+            get_playfield_bg_tile_line(get_line_orientation(),
+                                       LINE_DIRECTION_NEGATIVE));
       }
 
       // Now move the front of the line segment forward by one tile.
@@ -1002,8 +1009,10 @@ unsigned char update_line(unsigned char line_index) {
                                       get_tile_index_delta());
           // Update the tile to cleared.
           cleared_tile_count++;
-          set_playfield_tile_type(get_current_playfield_index(), PLAYFIELD_WALL);
-          set_playfield_bg_tile(get_sprite_x(), get_sprite_y(), TILE_INDEX_PLAYFIELD_CLEARED);
+          set_playfield_tile_type(get_current_playfield_index(),
+                                  PLAYFIELD_WALL);
+          set_playfield_bg_tile(get_sprite_x(), get_sprite_y(),
+                                TILE_INDEX_PLAYFIELD_CLEARED);
           add_score_for_cleared_tiles(1);
 
           // Stop when we reach the origin.
@@ -1013,7 +1022,8 @@ unsigned char update_line(unsigned char line_index) {
           }
 
           // Only walk the sprite coords back if we haven't reached origin.
-          // These are not updated above when we move current_playfield_index so walk them after we use them.
+          // These are not updated above when we move current_playfield_index so
+          // walk them after we use them.
           if (get_line_orientation() == ORIENTATION_HORIZ) {
             set_sprite_x(get_sprite_x() + 8);
           } else {
@@ -1047,15 +1057,22 @@ unsigned char update_line(unsigned char line_index) {
       // tile we're moving from.
       set_sprite_x(get_temp_ptr(struct Line)->positive_sprite_x);
       set_sprite_y(get_temp_ptr(struct Line)->positive_sprite_y);
-      set_current_playfield_index(playfield_tile_from_pixel_coords(get_sprite_x(), get_sprite_y()));
-    
+      set_current_playfield_index(
+          playfield_tile_from_pixel_coords(get_sprite_x(), get_sprite_y()));
+
       // While it was the front of the line segment, current playfield tile was
       // being drawn as a sprite. Now that it's complete, update the playfield
       // and bg tile. Note: The origin tile already has the playfield flags (and
       // bg tile) set. We can ignore that one.
       if (!get_line_is_first_step_flag_from_byte(get_flags_byte())) {
-        set_playfield_tile_type(get_current_playfield_index(), get_playfield_tile_type_line(get_line_orientation(), line_index, LINE_DIRECTION_POSITIVE));
-          set_playfield_bg_tile(get_sprite_x(), get_sprite_y(), get_playfield_bg_tile_line(get_line_orientation(), LINE_DIRECTION_POSITIVE));
+        set_playfield_tile_type(
+            get_current_playfield_index(),
+            get_playfield_tile_type_line(get_line_orientation(), line_index,
+                                         LINE_DIRECTION_POSITIVE));
+        set_playfield_bg_tile(
+            get_sprite_x(), get_sprite_y(),
+            get_playfield_bg_tile_line(get_line_orientation(),
+                                       LINE_DIRECTION_POSITIVE));
       }
 
       // Now move the front of the line segment forward by one tile.
@@ -1067,10 +1084,10 @@ unsigned char update_line(unsigned char line_index) {
       // segment origin and update them to cleared.
       if (get_playfield_tile_type(get_current_playfield_index()) ==
           PLAYFIELD_WALL) {
-      // Calculate positive-direction line segment origin based
-      // on negative-direction line segment origin.
-      set_positive_line_segment_origin(get_temp_ptr(struct Line)->origin +
-                                       get_tile_index_delta());
+        // Calculate positive-direction line segment origin based
+        // on negative-direction line segment origin.
+        set_positive_line_segment_origin(get_temp_ptr(struct Line)->origin +
+                                         get_tile_index_delta());
 
         while (1) {
           // Walk back towards origin by one tile.
@@ -1078,8 +1095,10 @@ unsigned char update_line(unsigned char line_index) {
                                       get_tile_index_delta());
           // Update the tile to cleared.
           cleared_tile_count++;
-          set_playfield_tile_type(get_current_playfield_index(), PLAYFIELD_WALL);
-          set_playfield_bg_tile(get_sprite_x(), get_sprite_y(), TILE_INDEX_PLAYFIELD_CLEARED);
+          set_playfield_tile_type(get_current_playfield_index(),
+                                  PLAYFIELD_WALL);
+          set_playfield_bg_tile(get_sprite_x(), get_sprite_y(),
+                                TILE_INDEX_PLAYFIELD_CLEARED);
           add_score_for_cleared_tiles(1);
 
           // Stop when we reach the origin.
@@ -1089,7 +1108,8 @@ unsigned char update_line(unsigned char line_index) {
           }
 
           // Only walk the sprite coords back if we haven't reached origin.
-          // These are not updated above when we move current_playfield_index so walk them after we use them.
+          // These are not updated above when we move current_playfield_index so
+          // walk them after we use them.
           if (get_line_orientation() == ORIENTATION_HORIZ) {
             set_sprite_x(get_sprite_x() - 8);
           } else {
@@ -1118,7 +1138,7 @@ unsigned char update_line(unsigned char line_index) {
       }
     }
 
-    get_temp_ptr(struct Line)->current_block_completion = 0;    
+    get_temp_ptr(struct Line)->current_block_completion = 0;
     unset_line_is_first_step_flag_in_byte(get_temp_ptr(struct Line)->flags);
   } else {
     if (get_frame_count() % 2 == 0) {
@@ -1159,10 +1179,17 @@ void start_line(unsigned char player_index) {
     set_line_orientation(get_player_orientation_flag(player_index));
 
     // Update the playfield origin tile.
-    set_playfield_tile_type(get_negative_line_segment_origin(), get_playfield_tile_type_line(get_line_orientation(), player_index, LINE_DIRECTION_NEGATIVE));
-    set_sprite_x(playfield_index_pixel_coord_x(get_negative_line_segment_origin()));
-    set_sprite_y(playfield_index_pixel_coord_y(get_negative_line_segment_origin()));
-    set_playfield_bg_tile(get_sprite_x(), get_sprite_y(), get_playfield_bg_tile_line_origin(get_line_orientation(), LINE_DIRECTION_NEGATIVE));
+    set_playfield_tile_type(
+        get_negative_line_segment_origin(),
+        get_playfield_tile_type_line(get_line_orientation(), player_index,
+                                     LINE_DIRECTION_NEGATIVE));
+    set_sprite_x(
+        playfield_index_pixel_coord_x(get_negative_line_segment_origin()));
+    set_sprite_y(
+        playfield_index_pixel_coord_y(get_negative_line_segment_origin()));
+    set_playfield_bg_tile(get_sprite_x(), get_sprite_y(),
+                          get_playfield_bg_tile_line_origin(
+                              get_line_orientation(), LINE_DIRECTION_NEGATIVE));
 
     // Update the line data for the negative-direction line segment.
     lines[player_index].origin = get_negative_line_segment_origin();
@@ -1182,10 +1209,18 @@ void start_line(unsigned char player_index) {
     if (get_playfield_tile_type(get_positive_line_segment_origin()) !=
         PLAYFIELD_WALL) {
       // Update the positive-direction line segment origin playfield tile.
-      set_playfield_tile_type(get_positive_line_segment_origin(), get_playfield_tile_type_line(get_line_orientation(), player_index, LINE_DIRECTION_POSITIVE));
-      set_sprite_x(playfield_index_pixel_coord_x(get_positive_line_segment_origin()));
-    set_sprite_y(playfield_index_pixel_coord_y(get_positive_line_segment_origin()));
-    set_playfield_bg_tile(get_sprite_x(), get_sprite_y(), get_playfield_bg_tile_line_origin(get_line_orientation(), LINE_DIRECTION_POSITIVE));
+      set_playfield_tile_type(
+          get_positive_line_segment_origin(),
+          get_playfield_tile_type_line(get_line_orientation(), player_index,
+                                       LINE_DIRECTION_POSITIVE));
+      set_sprite_x(
+          playfield_index_pixel_coord_x(get_positive_line_segment_origin()));
+      set_sprite_y(
+          playfield_index_pixel_coord_y(get_positive_line_segment_origin()));
+      set_playfield_bg_tile(
+          get_sprite_x(), get_sprite_y(),
+          get_playfield_bg_tile_line_origin(get_line_orientation(),
+                                            LINE_DIRECTION_POSITIVE));
       unset_line_is_positive_complete_flag(player_index);
 
       // Track where the positive-direction head of line sprite should be drawn.
@@ -1212,12 +1247,13 @@ void draw_line(void) {
     set_line_orientation(get_line_orientation_flag_from_byte(get_flags_byte()));
 
     if (!get_line_is_negative_complete_flag_from_byte(get_flags_byte())) {
-      oam_spr(get_temp_ptr(struct Line)->negative_sprite_x,
-              get_temp_ptr(struct Line)->negative_sprite_y - 1,
-              get_line_sprite_index(
-                  get_line_orientation(),
-                  get_temp_ptr(struct Line)->current_block_completion),
-              1 | get_negative_direction_line_sprite_flags(get_line_orientation()));
+      oam_spr(
+          get_temp_ptr(struct Line)->negative_sprite_x,
+          get_temp_ptr(struct Line)->negative_sprite_y - 1,
+          get_line_sprite_index(
+              get_line_orientation(),
+              get_temp_ptr(struct Line)->current_block_completion),
+          1 | get_negative_direction_line_sprite_flags(get_line_orientation()));
     }
 
     if (!get_line_is_positive_complete_flag_from_byte(get_flags_byte())) {
@@ -1277,7 +1313,8 @@ void check_ball_line_collisions(void) {
       // to do anything to the playfield for this tile index.
       set_sprite_x(get_temp_ptr(struct Line)->negative_sprite_x);
       set_sprite_y(get_temp_ptr(struct Line)->negative_sprite_y);
-      set_current_playfield_index(playfield_tile_from_pixel_coords(get_sprite_x(), get_sprite_y()));
+      set_current_playfield_index(
+          playfield_tile_from_pixel_coords(get_sprite_x(), get_sprite_y()));
 
       // Walk back across the line segment (to origin) and reset the playfield
       // tiles to uncleared.
@@ -1291,8 +1328,10 @@ void check_ball_line_collisions(void) {
           set_sprite_y(get_sprite_y() + 8);
         }
         // Reset the tile to uncleared.
-        set_playfield_tile_type(get_current_playfield_index(), PLAYFIELD_UNCLEARED);
-        set_playfield_bg_tile(get_sprite_x(), get_sprite_y(), TILE_INDEX_PLAYFIELD_UNCLEARED);
+        set_playfield_tile_type(get_current_playfield_index(),
+                                PLAYFIELD_UNCLEARED);
+        set_playfield_bg_tile(get_sprite_x(), get_sprite_y(),
+                              TILE_INDEX_PLAYFIELD_UNCLEARED);
         // Stop when we reach the origin.
         if (get_current_playfield_index() ==
             get_negative_line_segment_origin()) {
@@ -1321,7 +1360,8 @@ void check_ball_line_collisions(void) {
       // to do anything to the playfield for this tile index.
       set_sprite_x(get_temp_ptr(struct Line)->positive_sprite_x);
       set_sprite_y(get_temp_ptr(struct Line)->positive_sprite_y);
-      set_current_playfield_index(playfield_tile_from_pixel_coords(get_sprite_x(), get_sprite_y()));
+      set_current_playfield_index(
+          playfield_tile_from_pixel_coords(get_sprite_x(), get_sprite_y()));
 
       // Walk back across the line segment (to origin) and reset the playfield
       // tiles to uncleared.
@@ -1335,8 +1375,10 @@ void check_ball_line_collisions(void) {
           set_sprite_y(get_sprite_y() - 8);
         }
         // Reset the tile to uncleared.
-        set_playfield_tile_type(get_current_playfield_index(), PLAYFIELD_UNCLEARED);
-        set_playfield_bg_tile(get_sprite_x(), get_sprite_y(), TILE_INDEX_PLAYFIELD_UNCLEARED);
+        set_playfield_tile_type(get_current_playfield_index(),
+                                PLAYFIELD_UNCLEARED);
+        set_playfield_bg_tile(get_sprite_x(), get_sprite_y(),
+                              TILE_INDEX_PLAYFIELD_UNCLEARED);
         // Stop when we reach the origin.
         if (get_current_playfield_index() ==
             get_positive_line_segment_origin()) {

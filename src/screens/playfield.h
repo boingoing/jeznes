@@ -58,29 +58,31 @@ const unsigned char playfield_pixel_coord_y[] = {
 #define playfield_index_y(i) ((i) >> 5)
 
 // Calculate the bg tile position in pixel coords of the playfield tile |i|.
-#define playfield_index_pixel_coord_x(i) \
-  (playfield_index_x((i)) << 3)
-#define playfield_index_pixel_coord_y(i) \
-  ((playfield_index_y((i)) << 3) + 8)
+#define playfield_index_pixel_coord_x(i) (playfield_index_x((i)) << 3)
+#define playfield_index_pixel_coord_y(i) ((playfield_index_y((i)) << 3) + 8)
 
 // Get the bg tile graphic index for lines.
 // Indicate horizontal or vertical via |orientation| which should be
 // ORIENTATION_HORIZ or ORIENTATION_VERT.
 // Indicate line direction via |direction| which must be LINE_DIRECTION_POSITIVE
 // or LINE_DIRECTION_NEGATIVE.
-#define get_playfield_bg_tile_line(orientation, direction) \
-  (TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE | (direction) | ((orientation) << 1))
+#define get_playfield_bg_tile_line(orientation, direction)  \
+  (TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE | (direction) | \
+   ((orientation) << 1))
 
 // Get the bg tile graphic index for the line origin tile.
 // Indicate horizontal or vertical via |orientation| which should be
 // ORIENTATION_HORIZ or ORIENTATION_VERT.
 // Indicate line direction via |direction| which must be LINE_DIRECTION_POSITIVE
 // or LINE_DIRECTION_NEGATIVE.
-#define get_playfield_bg_tile_line_origin(orientation, direction) \
-  (TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE_ORIGIN | (direction) | ((orientation) << 1))
+#define get_playfield_bg_tile_line_origin(orientation, direction)  \
+  (TILE_INDEX_PLAYFIELD_LINE_HORIZ_NEGATIVE_ORIGIN | (direction) | \
+   ((orientation) << 1))
 
-// Set the bg tile graphic for the playfield tile located at (x,y) in pixel-coords.
-#define set_playfield_bg_tile(x, y, bg_tile) one_vram_buffer((bg_tile), get_ppu_addr(0, (x), (y)))
+// Set the bg tile graphic for the playfield tile located at (x,y) in
+// pixel-coords.
+#define set_playfield_bg_tile(x, y, bg_tile) \
+  one_vram_buffer((bg_tile), get_ppu_addr(0, (x), (y)))
 
 const char playfield_bg_palette[] = {0x0f, 0x30, 0x16, 0x28, 0x0f, 0x00,
                                      0x15, 0x21, 0x0f, 0x06, 0x16, 0x26,
