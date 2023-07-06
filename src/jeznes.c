@@ -98,12 +98,7 @@ int main(void) {
       }
 
       // Check to see if any balls have collided with any lines.
-#if ENABLE_CHEATS
-      if (enable_ball_line_collisions != FALSE)
-#endif  // ENABLE_CHEATS
-      {
-        check_ball_line_collisions();
-      }
+      check_ball_line_collisions();
     } else if (game_state == GAME_STATE_PAUSED) {
       // Clear all sprites from the sprite buffer.
       oam_clear();
@@ -1290,6 +1285,15 @@ void check_ball_line_collisions(void) {
     get_temp_ptr(struct Ball)->nearest_playfield_tile =
         get_current_playfield_index();
     temp_byte_2 = playfield[get_current_playfield_index()];
+
+    // If we're cheating and ignoring collisions, wait until we computed the
+    // nearest_playfield_tile for each ball before bailing out. Without this,
+    // marking the playfield will fail.
+#if ENABLE_CHEATS
+    if (enable_ball_line_collisions == FALSE) {
+      continue;
+    }
+#endif  // ENABLE_CHEATS
 
     // The ball collides with a line if the playfield tile under the ball is a
     // line tile.
