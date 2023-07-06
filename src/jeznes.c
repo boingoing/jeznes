@@ -1141,7 +1141,7 @@ unsigned char update_line(unsigned char line_index) {
     get_temp_ptr(struct Line)->current_block_completion = 0;
     unset_line_is_first_step_flag_in_byte(get_temp_ptr(struct Line)->flags);
   } else {
-    if (get_frame_count() % 2 == 0) {
+    if ((((unsigned char)get_frame_count()) & 0x1) == 0) {
       ++get_temp_ptr(struct Line)->current_block_completion;
     }
   }
