@@ -52,7 +52,7 @@
 // BALL_DIRECTION_POSITIVE or BALL_DIRECTION_NEGATIVE
 #define set_ball_y_direction_flag_in_byte(flags_byte, direction) \
   ((flags_byte) = (flags_byte) & (~BALL_BIT_DIRECTION_Y |        \
-                                  (direction << BALL_BIT_DIRECTION_Y)))
+                                  ((direction) << BALL_BIT_DIRECTION_Y)))
 
 #define flip_ball_x_direction_flag_in_byte(flags_byte) ((flags_byte) ^= 1)
 
