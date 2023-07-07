@@ -1302,12 +1302,12 @@ void check_ball_line_collisions(void) {
       continue;
     }
 
-    set_line_orientation(
-        get_playfield_line_orientation_flag_from_byte(temp_byte_2));
-    set_tile_index_delta(compute_tile_index_delta(get_line_orientation()));
     temp_byte_3 = get_playfield_line_index_flag_from_byte(temp_byte_2);
     set_temp_ptr(&lines[temp_byte_3]);
     set_negative_line_segment_origin(get_temp_ptr(struct Line)->origin);
+    set_line_orientation(
+        get_line_orientation_flag_from_byte(get_temp_ptr(struct Line)->flags));
+    set_tile_index_delta(compute_tile_index_delta(get_line_orientation()));
 
     if (get_playfield_line_direction_flag_from_byte(temp_byte_2) ==
         LINE_DIRECTION_NEGATIVE) {
