@@ -33,66 +33,6 @@ PLAYFIELD_TILE_TYPE_TABLE(uncleared_marked, PLAYFIELD_TILE_TYPE_UNCLEARED_MARKED
 PLAYFIELD_TILE_TYPE_TABLE(line, PLAYFIELD_TILE_TYPE_LINE)
 PLAYFIELD_TILE_TYPE_TABLE(wall, PLAYFIELD_TILE_TYPE_WALL)
 
-#define get_playfield_tile_byte_index(playfield_tile_index) ((unsigned char)((playfield_tile_index) >> 2))
-#define get_playfield_tile_in_byte_index(playfield_tile_index) (((unsigned char)(playfield_tile_index)) & 0b11)
-
-#define get_playfield_tile_raw_value_from_byte_index(playfield_tile_byte_index, playfield_tiles_array) (playfield_tiles_array[(playfield_tile_byte_index)])
-#define get_playfield_tile_raw_value(playfield_tile_index, playfield_tiles_array) (get_playfield_tile_raw_value_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), (playfield_tiles_array)))
-
-#define get_playfield_tile_masked_value_from_byte_and_bitmask(byte, bitmask) ((byte) & (bitmask))
-#define get_playfield_tile_masked_value_from_byte(byte, playfield_tile_in_byte_index) (get_playfield_tile_masked_value_from_byte_and_bitmask((byte), playfield_bitmask_tile_table[(playfield_tile_in_byte_index)]))
-#define get_playfield_tile_masked_value_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array) (get_playfield_tile_masked_value_from_byte(get_playfield_tile_raw_value_from_byte_index((playfield_tile_byte_index), (playfield_tiles_array)), (playfield_tile_in_byte_index)))
-#define get_playfield_tile_masked_value(playfield_tile_index, playfield_tiles_array) (get_playfield_tile_masked_value_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array)))
-
-#define get_playfield_tile_value_from_masked_byte(masked_byte, playfield_tile_in_byte_index) ((masked_byte) >> ((playfield_tile_in_byte_index) << 1))
-#define get_playfield_tile_value_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array) (get_playfield_tile_value_from_masked_byte(get_playfield_tile_masked_value_from_byte_index((playfield_tile_byte_index), (playfield_tile_in_byte_index), (playfield_tiles_array)), (playfield_tile_in_byte_index)))
-
-
-#define get_playfield_tile_masked_value_table(byte, playfield_tile_in_byte_index, in_byte_table) (get_playfield_tile_masked_value_from_byte((byte), (in_byte_table[(playfield_tile_in_byte_index)])))
-
-#define get_playfield_tile_value_from_byte_no_shift(byte, playfield_tile_in_byte_index) (get_playfield_tile_masked_value_table((byte), (playfield_tile_in_byte_index), (playfield_bitmask_tile_table)))
-#define get_playfield_tile_value_from_byte(byte, playfield_tile_in_byte_index) (get_playfield_tile_value_from_byte_no_shift((byte), (playfield_tile_in_byte_index)) >> ((playfield_tile_in_byte_index)<<1))
-#define get_playfield_tile_value_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array) (get_playfield_tile_value_from_byte(playfield_tiles_array[(playfield_tile_byte_index)], (playfield_tile_in_byte_index)))
-#define get_playfield_tile_value(playfield_tile_index, playfield_tiles_array) (get_playfield_tile_value_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), playfield_tiles_array))
-
-#define is_mask_set_in_playfield_tile_value_from_byte(byte, playfield_tile_in_byte_index, bitmask) (get_playfield_tile_value_from_byte_no_shift((byte), (playfield_tile_in_byte_index)) == (bitmask))
-#define is_mask_set_in_playfield_tile_value_from_byte_table(byte, playfield_tile_in_byte_index, bitmask_table) (get_playfield_tile_value_from_byte_no_shift((byte), (playfield_tile_in_byte_index)) == tile_type_table[(playfield_tile_in_byte_index)])
-
-
-#define get_playfield_tile_type_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (get_playfield_tile_value_from_byte_index((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tiles))
-#define get_playfield_tile_type(playfield_tile_index) (get_playfield_tile_value((playfield_tile_index), playfield_tiles))
-
-#define set_playfield_tile_type_no_shift(playfield_tile_byte_index, playfield_tile_in_byte_index, byte) (playfield_tiles[(playfield_tile_byte_index)] = (playfield_tiles[(playfield_tile_byte_index)] & ~(playfield_bitmask_tile_table[(playfield_tile_in_byte_index)])) | (byte))
-#define set_playfield_tile_type_with_byte_and_in_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, tile_type) (set_playfield_tile_type_no_shift((playfield_tile_byte_index), (playfield_tile_in_byte_index), ((tile_type) << ((playfield_tile_in_byte_index) << 1))))
-#define set_playfield_tile_type(playfield_tile_index, tile_type) (set_playfield_tile_type_with_byte_and_in_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (tile_type)))
-
-#define set_playfield_tile_type_byte_index_table(playfield_tile_byte_index, playfield_tile_in_byte_index, tile_type_table) (set_playfield_tile_type_no_shift((playfield_tile_byte_index), (playfield_tile_in_byte_index), tile_type_table[(playfield_tile_in_byte_index)]))
-
-#define set_playfield_tile_type_byte_index_uncleared_unmarked(playfield_tile_byte_index, playfield_tile_in_byte_index) (playfield_tiles[(playfield_tile_byte_index)] &= ~(playfield_bitmask_tile_table[(playfield_tile_in_byte_index)]))
-#define set_playfield_tile_type_byte_index_wall(playfield_tile_byte_index, playfield_tile_in_byte_index) (playfield_tiles[(playfield_tile_byte_index)] |= playfield_bitmask_tile_table[(playfield_tile_in_byte_index)])
-#define set_playfield_tile_type_byte_index_uncleared_marked(playfield_tile_byte_index, playfield_tile_in_byte_index) (set_playfield_tile_type_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tile_type_uncleared_marked_table))
-#define set_playfield_tile_type_byte_index_line(playfield_tile_byte_index, playfield_tile_in_byte_index) (set_playfield_tile_type_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tile_type_line_table))
-
-#define is_playfield_tile_type_from_byte(byte, playfield_tile_in_byte_index, tile_type_table) (get_playfield_tile_value_from_byte_no_shift((byte), (playfield_tile_in_byte_index)) == tile_type_table[(playfield_tile_in_byte_index)])
-#define is_playfield_tile_type_with_byte_and_in_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, tile_type_table) (is_playfield_tile_type_from_byte(playfield_tiles[(playfield_tile_byte_index)], (playfield_tile_in_byte_index), (tile_type_table)))
-#define is_playfield_tile_type(playfield_tile_index, tile_type_table) (is_playfield_tile_type_with_byte_and_in_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (tile_type_table)))
-
-#define is_playfield_tile_uncleared_unmarked_from_byte(byte, playfield_tile_in_byte_index) (is_playfield_tile_type_from_byte((byte), (playfield_tile_in_byte_index), playfield_tile_type_uncleared_unmarked_table))
-#define is_playfield_tile_byte_index_uncleared_unmarked(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_type_with_byte_and_in_byte_index((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tile_type_uncleared_unmarked_table))
-#define is_playfield_tile_index_uncleared_unmarked(playfield_tile_index) (is_playfield_tile_type((playfield_tile_index), playfield_tile_type_uncleared_unmarked_table))
-
-#define is_playfield_tile_uncleared_marked_from_byte(byte, playfield_tile_in_byte_index) (is_playfield_tile_type_from_byte((byte), (playfield_tile_in_byte_index), playfield_tile_type_uncleared_marked_table))
-#define is_playfield_tile_byte_index_uncleared_marked(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_type_with_byte_and_in_byte_index((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tile_type_uncleared_marked_table))
-#define is_playfield_tile_index_uncleared_marked(playfield_tile_index) (is_playfield_tile_type((playfield_tile_index), playfield_tile_type_uncleared_marked_table))
-
-#define is_playfield_tile_wall_from_byte(byte, playfield_tile_in_byte_index) (is_playfield_tile_type_from_byte((byte), (playfield_tile_in_byte_index), playfield_tile_type_wall_table))
-#define is_playfield_tile_byte_index_wall(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_type_with_byte_and_in_byte_index((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tile_type_wall_table))
-#define is_playfield_tile_index_wall(playfield_tile_index) (is_playfield_tile_type((playfield_tile_index), playfield_tile_type_wall_table))
-
-#define is_playfield_tile_line_from_byte(byte, playfield_tile_in_byte_index) (is_playfield_tile_type_from_byte((byte), (playfield_tile_in_byte_index), playfield_tile_type_line_table))
-#define is_playfield_tile_byte_index_line(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_type_with_byte_and_in_byte_index((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tile_type_line_table))
-#define is_playfield_tile_index_line(playfield_tile_index) (is_playfield_tile_type((playfield_tile_index), playfield_tile_type_line_table))
-
 #define PLAYFIELD_BIT_LINE_INDEX 0
 #define PLAYFIELD_BITMASK_LINE_INDEX (1 << PLAYFIELD_BIT_LINE_INDEX)
 #define PLAYFIELD_BIT_LINE_DIRECTION 1
@@ -103,23 +43,76 @@ PLAYFIELD_TILE_TYPE_TABLE(wall, PLAYFIELD_TILE_TYPE_WALL)
 PLAYFIELD_TILE_LINE_FLAG_TABLE(index, PLAYFIELD_BITMASK_LINE_INDEX)
 PLAYFIELD_TILE_LINE_FLAG_TABLE(direction, PLAYFIELD_BITMASK_LINE_DIRECTION)
 
-#define get_playfield_tile_line_flag_from_byte(byte, playfield_tile_in_byte_index, in_byte_table) (get_playfield_tile_masked_value_table((byte), (playfield_tile_in_byte_index), in_byte_table) == in_byte_table[(playfield_tile_in_byte_index)])
-#define get_playfield_tile_byte_index_line_flag(playfield_tile_byte_index, playfield_tile_in_byte_index, in_byte_table) (get_playfield_tile_line_flag_from_byte(playfield_line_flags[(playfield_tile_byte_index)], (playfield_tile_in_byte_index), in_byte_table))
+#define get_playfield_tile_byte_index(playfield_tile_index) ((unsigned char)((playfield_tile_index) >> 2))
+#define get_playfield_tile_in_byte_index(playfield_tile_index) (((unsigned char)(playfield_tile_index)) & 0b11)
 
-#define get_playfield_tile_line_direction_flag_from_byte(byte, playfield_tile_in_byte_index) (get_playfield_tile_line_flag_from_byte((byte), (playfield_tile_in_byte_index), playfield_tile_line_direction_table))
-#define get_playfield_tile_byte_index_line_direction_flag(playfield_tile_byte_index, playfield_tile_in_byte_index) (get_playfield_tile_line_direction_flag_from_byte(playfield_line_flags[(playfield_tile_byte_index)], (playfield_tile_in_byte_index)))
-#define get_playfield_tile_index_line_direction_flag(playfield_tile_index) (get_playfield_tile_byte_index_line_direction_flag(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index))))
+// Playfield tile accessor macros
 
-#define get_playfield_tile_line_index_flag_from_byte(byte, playfield_tile_in_byte_index) (get_playfield_tile_line_flag_from_byte((byte), (playfield_tile_in_byte_index), playfield_tile_line_index_table))
-#define get_playfield_tile_byte_index_line_index_flag(playfield_tile_byte_index, playfield_tile_in_byte_index) (get_playfield_tile_line_index_flag_from_byte(playfield_line_flags[(playfield_tile_byte_index)], (playfield_tile_in_byte_index)))
-#define get_playfield_tile_index_line_index_flag(playfield_tile_index) (get_playfield_tile_byte_index_line_index_flag(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index))))
+#define get_playfield_tile_raw_value_from_byte_index(playfield_tile_byte_index, playfield_tiles_array) (playfield_tiles_array[(playfield_tile_byte_index)])
+#define get_playfield_tile_raw_value(playfield_tile_index, playfield_tiles_array) (get_playfield_tile_raw_value_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), (playfield_tiles_array)))
 
-#define get_playfield_tile_line_flags_from_byte(byte, playfield_tile_in_byte_index) (get_playfield_tile_value_from_byte((byte), (playfield_tile_in_byte_index)))
-#define get_playfield_tile_byte_index_line_flags(playfield_tile_byte_index, playfield_tile_in_byte_index) (get_playfield_tile_line_flags_from_byte(playfield_line_flags[(playfield_tile_byte_index)], (playfield_tile_in_byte_index)))
-#define get_playfield_tile_index_line_flags(playfield_tile_index) (get_playfield_tile_byte_index_line_flags(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index))))
+#define get_playfield_tile_masked_value_from_raw_byte_and_bitmask(raw_byte, bitmask) ((raw_byte) & (bitmask))
+#define get_playfield_tile_masked_value_from_raw_byte(raw_byte, playfield_tile_in_byte_index) (get_playfield_tile_masked_value_from_raw_byte_and_bitmask((raw_byte), playfield_bitmask_tile_table[(playfield_tile_in_byte_index)]))
+#define get_playfield_tile_masked_value_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array) (get_playfield_tile_masked_value_from_raw_byte(get_playfield_tile_raw_value_from_byte_index((playfield_tile_byte_index), (playfield_tiles_array)), (playfield_tile_in_byte_index)))
+#define get_playfield_tile_masked_value(playfield_tile_index, playfield_tiles_array) (get_playfield_tile_masked_value_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array)))
 
-#define set_playfield_tile_line_flags_in_byte(byte, playfield_tile_in_byte_index, line_index, line_direction) ((byte) = ((byte) & ~(playfield_bitmask_tile_table[(playfield_tile_in_byte_index)])) | (playfield_bitmask_tile_table[(playfield_tile_in_byte_index)] & ((((line_index) << PLAYFIELD_BIT_LINE_INDEX) | ((line_direction) << PLAYFIELD_BIT_LINE_DIRECTION)) << ((playfield_tile_in_byte_index) << 1))))
-#define set_playfield_tile_byte_index_line_flags(playfield_tile_byte_index, playfield_tile_in_byte_index, line_index, line_direction) (set_playfield_tile_line_flags_in_byte(playfield_line_flags[(playfield_tile_byte_index)], (playfield_tile_in_byte_index), (line_index), (line_direction)))
-#define set_playfield_tile_index_line_flags(playfield_tile_index, line_index, line_direction) (set_playfield_tile_byte_index_line_flags(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (line_index), (line_direction)))
+#define get_playfield_tile_value_from_masked_byte(masked_byte, playfield_tile_in_byte_index) ((masked_byte) >> ((playfield_tile_in_byte_index) << 1))
+#define get_playfield_tile_value_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array) (get_playfield_tile_value_from_masked_byte(get_playfield_tile_masked_value_from_byte_index((playfield_tile_byte_index), (playfield_tile_in_byte_index), (playfield_tiles_array)), (playfield_tile_in_byte_index)))
+#define get_playfield_tile_value(playfield_tile_index, playfield_tiles_array) (get_playfield_tile_value_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array)))
+
+#define is_playfield_tile_mask_set_from_raw_byte(raw_byte, bitmask) (get_playfield_tile_masked_value_from_raw_byte_and_bitmask((raw_byte), (bitmask)) == (bitmask))
+#define is_playfield_tile_mask_set_from_raw_byte_table(raw_byte, playfield_tile_in_byte_index, bitmask_table) (is_playfield_tile_mask_set_from_raw_byte((raw_byte), (bitmask_table)[(playfield_tile_in_byte_index)]))
+#define is_playfield_tile_mask_set_from_byte_index(playfield_tile_byte_index, playfield_tiles_array, bitmask) (is_playfield_tile_mask_set_from_raw_byte(get_playfield_tile_raw_value_from_byte_index((playfield_tile_byte_index), (playfield_tiles_array)), (bitmask)))
+#define is_playfield_tile_mask_set_from_byte_index_table(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array, bitmask_table) (is_playfield_tile_mask_set_from_byte_index((playfield_tile_byte_index), (playfield_tiles_array), (bitmask_table)[(playfield_tile_in_byte_index)]))
+#define is_playfield_tile_mask_set(playfield_tile_index, playfield_tiles_array, bitmask) (is_playfield_tile_mask_set_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), (playfield_tiles_array), (bitmask)))
+#define is_playfield_tile_mask_set_table(playfield_tile_index, playfield_tiles_array, bitmask_table) (is_playfield_tile_mask_set_from_byte_index_table(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array), (bitmask_table)))
+
+#define set_playfield_tile_value_in_raw_byte(raw_byte, playfield_tile_in_byte_index, value_bitmask) ((raw_byte) = (raw_byte & ~(playfield_bitmask_tile_table[(playfield_tile_in_byte_index)])) | (value_bitmask))
+#define set_playfield_tile_value_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array, value_bitmask) (set_playfield_tile_value_in_raw_byte(get_playfield_tile_raw_value_from_byte_index((playfield_tile_in_byte_index), (playfield_tiles_array)), (playfield_tile_in_byte_index), (value_bitmask)))
+#define set_playfield_tile_value_from_byte_index_table(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array, value_bitmask_table) (set_playfield_tile_value_from_byte_index((playfield_tile_byte_index), (playfield_tile_in_byte_index), (playfield_tiles_array), (value_bitmask_table)[(playfield_tile_in_byte_index)]))
+#define set_playfield_tile_value(playfield_tile_index, playfield_tiles_array, value_bitmask) (set_playfield_tile_value_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array), (value_bitmask)))
+#define set_playfield_tile_value_table(playfield_tile_index, playfield_tiles_array, value_bitmask_table) (set_playfield_tile_value_from_byte_index_table(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array), (value_bitmask_table)))
+
+// Playfield tile type accessor macros
+
+#define is_playfield_tile_type_uncleared_unmarked_from_byte(byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_raw_byte_table((byte), (playfield_tile_in_byte_index), playfield_tile_type_uncleared_unmarked_table))
+#define is_playfield_tile_type_uncleared_unmarked_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tiles, playfield_tile_type_uncleared_unmarked_table))
+#define is_playfield_tile_type_uncleared_unmarked(playfield_tile_index) (is_playfield_tile_mask_set_table((playfield_tile_index), playfield_tiles, playfield_tile_type_uncleared_unmarked_table))
+
+#define is_playfield_tile_type_uncleared_marked_from_byte(byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_raw_byte_table((byte), (playfield_tile_in_byte_index), playfield_tile_type_uncleared_marked_table))
+#define is_playfield_tile_type_uncleared_marked_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tiles, playfield_tile_type_uncleared_marked_table))
+#define is_playfield_tile_type_uncleared_marked(playfield_tile_index) (is_playfield_tile_mask_set_table((playfield_tile_index), playfield_tiles, playfield_tile_type_uncleared_marked_table))
+
+#define is_playfield_tile_type_wall_from_byte(byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_raw_byte_table((byte), (playfield_tile_in_byte_index), playfield_tile_type_wall_table))
+#define is_playfield_tile_type_wall_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tiles, playfield_tile_type_wall_table))
+#define is_playfield_tile_type_wall(playfield_tile_index) (is_playfield_tile_mask_set_table((playfield_tile_index), playfield_tiles, playfield_tile_type_wall_table))
+
+#define is_playfield_tile_type_line_from_byte(byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_raw_byte_table((byte), (playfield_tile_in_byte_index), playfield_tile_type_line_table))
+#define is_playfield_tile_type_line_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tiles, playfield_tile_type_line_table))
+#define is_playfield_tile_type_line(playfield_tile_index) (is_playfield_tile_mask_set_table((playfield_tile_index), playfield_tiles, playfield_tile_type_line_table))
+
+#define set_playfield_tile_type_uncleared_unmarked_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (playfield_tiles[(playfield_tile_byte_index)] &= ~(playfield_bitmask_tile_table[(playfield_tile_in_byte_index)]))
+#define set_playfield_tile_type_wall_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (playfield_tiles[(playfield_tile_byte_index)] |= playfield_bitmask_tile_table[(playfield_tile_in_byte_index)])
+#define set_playfield_tile_type_uncleared_marked_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (set_playfield_tile_value_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tiles, playfield_tile_type_uncleared_marked_table))
+#define set_playfield_tile_type_line_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (set_playfield_tile_value_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tiles, playfield_tile_type_line_table))
+
+#define set_playfield_tile_type_uncleared_unmarked(playfield_tile_index) (set_playfield_tile_type_uncleared_unmarked_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index))))
+#define set_playfield_tile_type_wall(playfield_tile_index) (set_playfield_tile_type_wall_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index))))
+#define set_playfield_tile_type_uncleared_marked(playfield_tile_index) (set_playfield_tile_type_uncleared_marked_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index))))
+#define set_playfield_tile_type_line(playfield_tile_index) (set_playfield_tile_type_line_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index))))
+
+// Playfield tile line flags accessor macros
+
+#define is_playfield_tile_line_index_from_byte(byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_raw_byte_table((byte), (playfield_tile_in_byte_index), playfield_tile_line_index_table))
+#define is_playfield_tile_line_index_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_line_flags, playfield_tile_line_index_table))
+#define is_playfield_tile_line_index(playfield_tile_index) (is_playfield_tile_mask_set_table((playfield_tile_index), playfield_line_flags, playfield_tile_line_index_table))
+
+#define is_playfield_tile_line_direction_from_byte(byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_raw_byte_table((byte), (playfield_tile_in_byte_index), playfield_tile_line_direction_table))
+#define is_playfield_tile_line_direction_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_line_flags, playfield_tile_line_direction_table))
+#define is_playfield_tile_line_direction(playfield_tile_index) (is_playfield_tile_mask_set_table((playfield_tile_index), playfield_line_flags, playfield_tile_line_direction_table))
+
+#define set_playfield_tile_line_flags_in_byte(byte, playfield_tile_in_byte_index, line_index, line_direction) (set_playfield_tile_value_in_raw_byte((byte), (playfield_tile_in_byte_index), ((line_index) ? playfield_tile_line_index_table[(playfield_tile_in_byte_index)] : 0x0) | ((line_direction) ? playfield_tile_line_direction_table[(playfield_tile_in_byte_index)] : 0x0)))
+#define set_playfield_tile_line_flags_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, line_index, line_direction) (set_playfield_tile_line_flags_in_byte(playfield_line_flags[(playfield_tile_byte_index)], (playfield_tile_in_byte_index), (line_index), (line_direction)))
+#define set_playfield_tile_line_flags(playfield_tile_index, line_index, line_direction) (set_playfield_tile_line_flags_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (line_index), (line_direction)))
 
 #endif  // __JEZNES_FLAGS_PLAYFIELD_H__

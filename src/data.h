@@ -90,7 +90,4 @@
 #define get_y_compare_pixel_coord() (temp_byte_4)
 #define set_y_compare_pixel_coord(a) (temp_byte_4 = (a))
 
-#define get_playfield_tile_value() (temp_byte_4)
-#define set_playfield_tile_value(a) (temp_byte_4 = (a))
-
 #endif  // __JEZNES_DATA_H__

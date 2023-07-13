@@ -819,7 +819,7 @@ void move_ball() {
   set_current_playfield_index(playfield_tile_from_pixel_coords(
       get_x_compare_pixel_coord(), get_y_candidate_pixel_coord()));
   // Bounce off a left or right wall tile.
-  if (is_playfield_tile_index_wall(get_current_playfield_index())) {
+  if (is_playfield_tile_type_wall(get_current_playfield_index())) {
     // Move the ball such that it's in the non-wall tile opposite the candidate.
     if (get_x_direction() == BALL_DIRECTION_POSITIVE) {
       // We inc'd the candidate pixel coord above so now dec it to move in the
@@ -863,7 +863,7 @@ void move_ball() {
   set_current_playfield_index(playfield_tile_from_pixel_coords(
       get_x_candidate_pixel_coord(), get_y_compare_pixel_coord()));
   // Bounce off a top or bottom wall tile.
-  if (is_playfield_tile_index_wall(get_current_playfield_index())) {
+  if (is_playfield_tile_type_wall(get_current_playfield_index())) {
     // Move the ball such that it's in the non-wall tile opposite the candidate.
     if (get_y_direction() == BALL_DIRECTION_POSITIVE) {
       // We inc'd the candidate pixel coord above so now dec it to move in the
@@ -906,7 +906,7 @@ void draw_player(void) {
 }
 
 void draw_tile_highlight(void) {
-  if (is_playfield_tile_index_uncleared_unmarked(get_temp_ptr(struct Player)->nearest_playfield_tile)) {
+  if (is_playfield_tile_type_uncleared_unmarked(get_temp_ptr(struct Player)->nearest_playfield_tile)) {
     oam_spr(get_temp_ptr(struct Player)->nearest_tile_x,
             get_temp_ptr(struct Player)->nearest_tile_y - 1,
             SPRITE_INDEX_TILE_HIGHLIGHT, 1);
@@ -975,8 +975,8 @@ unsigned char update_line(unsigned char line_index) {
       // and bg tile. Note: The origin tile already has the playfield flags (and
       // bg tile) set. We can ignore that one.
       if (!get_line_is_first_step_flag_from_byte(get_flags_byte())) {
-        set_playfield_tile_type(get_current_playfield_index(), PLAYFIELD_TILE_TYPE_LINE);
-        set_playfield_tile_index_line_flags(get_current_playfield_index(), line_index, LINE_DIRECTION_NEGATIVE);
+        set_playfield_tile_type_line(get_current_playfield_index());
+        set_playfield_tile_line_flags(get_current_playfield_index(), line_index, LINE_DIRECTION_NEGATIVE);
         set_playfield_bg_tile(
             get_sprite_x(), get_sprite_y(),
             get_playfield_bg_tile_line(get_line_orientation(),
@@ -990,14 +990,14 @@ unsigned char update_line(unsigned char line_index) {
       // If the next tile is not an uncleared tile, that means we hit the end
       // for the line segment. Walk back over the tiles until we reach line
       // segment origin and update them to cleared.
-      if (is_playfield_tile_index_wall(get_current_playfield_index())) {
+      if (is_playfield_tile_type_wall(get_current_playfield_index())) {
         while (1) {
           // Walk back towards origin by one tile.
           set_current_playfield_index(get_current_playfield_index() +
                                       get_tile_index_delta());
           // Update the tile to cleared.
           cleared_tile_count++;
-          set_playfield_tile_type(get_current_playfield_index(), PLAYFIELD_TILE_TYPE_WALL);
+          set_playfield_tile_type_wall(get_current_playfield_index());
           set_playfield_bg_tile(get_sprite_x(), get_sprite_y(),
                                 TILE_INDEX_PLAYFIELD_CLEARED);
           add_score_for_cleared_tiles(1);
@@ -1052,8 +1052,8 @@ unsigned char update_line(unsigned char line_index) {
       // and bg tile. Note: The origin tile already has the playfield flags (and
       // bg tile) set. We can ignore that one.
       if (!get_line_is_first_step_flag_from_byte(get_flags_byte())) {
-        set_playfield_tile_type(get_current_playfield_index(), PLAYFIELD_TILE_TYPE_LINE);
-        set_playfield_tile_index_line_flags(get_current_playfield_index(), line_index, LINE_DIRECTION_POSITIVE);
+        set_playfield_tile_type_line(get_current_playfield_index());
+        set_playfield_tile_line_flags(get_current_playfield_index(), line_index, LINE_DIRECTION_POSITIVE);
         set_playfield_bg_tile(
             get_sprite_x(), get_sprite_y(),
             get_playfield_bg_tile_line(get_line_orientation(),
@@ -1067,7 +1067,7 @@ unsigned char update_line(unsigned char line_index) {
       // If the next tile is not an uncleared tile, that means we hit the end
       // for the line segment. Walk back over the tiles until we reach line
       // segment origin and update them to cleared.
-      if (is_playfield_tile_index_wall(get_current_playfield_index())) {
+      if (is_playfield_tile_type_wall(get_current_playfield_index())) {
         // Calculate positive-direction line segment origin based
         // on negative-direction line segment origin.
         set_positive_line_segment_origin(get_temp_ptr(struct Line)->origin +
@@ -1079,7 +1079,7 @@ unsigned char update_line(unsigned char line_index) {
                                       get_tile_index_delta());
           // Update the tile to cleared.
           cleared_tile_count++;
-          set_playfield_tile_type(get_current_playfield_index(), PLAYFIELD_TILE_TYPE_WALL);
+          set_playfield_tile_type_wall(get_current_playfield_index());
           set_playfield_bg_tile(get_sprite_x(), get_sprite_y(),
                                 TILE_INDEX_PLAYFIELD_CLEARED);
           add_score_for_cleared_tiles(1);
@@ -1152,7 +1152,7 @@ void start_line(unsigned char player_index) {
         players[player_index].nearest_playfield_tile);
 
     // We only want to start a line if the origin tile is not already cleared.
-    if (is_playfield_tile_index_wall(get_negative_line_segment_origin())) {
+    if (is_playfield_tile_type_wall(get_negative_line_segment_origin())) {
       return;
     }
 
@@ -1161,8 +1161,8 @@ void start_line(unsigned char player_index) {
     set_line_orientation(get_player_orientation_flag(player_index));
 
     // Update the playfield origin tile.
-        set_playfield_tile_type(get_negative_line_segment_origin(), PLAYFIELD_TILE_TYPE_LINE);
-        set_playfield_tile_index_line_flags(get_current_playfield_index(), player_index, LINE_DIRECTION_NEGATIVE);
+    set_playfield_tile_type_line(get_negative_line_segment_origin());
+    set_playfield_tile_line_flags(get_current_playfield_index(), player_index, LINE_DIRECTION_NEGATIVE);
     set_sprite_x(
         playfield_index_pixel_coord_x(get_negative_line_segment_origin()));
     set_sprite_y(
@@ -1186,10 +1186,10 @@ void start_line(unsigned char player_index) {
 
     // We can only start the positive-direction line segment if it would have
     // origin on an uncleared playfield tile.
-    if (is_playfield_tile_index_wall(get_positive_line_segment_origin())) {
+    if (is_playfield_tile_type_wall(get_positive_line_segment_origin())) {
       // Update the positive-direction line segment origin playfield tile.
-        set_playfield_tile_type(get_positive_line_segment_origin(), PLAYFIELD_TILE_TYPE_LINE);
-        set_playfield_tile_index_line_flags(get_current_playfield_index(), player_index, LINE_DIRECTION_POSITIVE);
+      set_playfield_tile_type_line(get_positive_line_segment_origin());
+      set_playfield_tile_line_flags(get_current_playfield_index(), player_index, LINE_DIRECTION_POSITIVE);
       set_sprite_x(
           playfield_index_pixel_coord_x(get_positive_line_segment_origin()));
       set_sprite_y(
@@ -1278,20 +1278,19 @@ void check_ball_line_collisions(void) {
 
     // The ball collides with a line if the playfield tile under the ball is a
     // line tile.
-    if (!is_playfield_tile_index_line(get_current_playfield_index())) {
+    if (!is_playfield_tile_type_line(get_current_playfield_index())) {
       // No collision.
       continue;
     }
 
-    temp_byte_3 = get_playfield_line_index_flag_from_byte(temp_byte_2);
+    temp_byte_3 = is_playfield_tile_line_index(get_current_playfield_index()) ? 1 : 0;
     set_temp_ptr(&lines[temp_byte_3]);
     set_negative_line_segment_origin(get_temp_ptr(struct Line)->origin);
     set_line_orientation(
         get_line_orientation_flag_from_byte(get_temp_ptr(struct Line)->flags));
     set_tile_index_delta(compute_tile_index_delta(get_line_orientation()));
 
-    if (get_playfield_line_direction_flag_from_byte(temp_byte_2) ==
-        LINE_DIRECTION_NEGATIVE) {
+    if (!is_playfield_tile_line_direction(get_current_playfield_index())) {
       // Playfield tile index of the line segment front tile.
       // This is drawn as a sprite and we haven't updated the playfield
       // metadata to include the line flags for this tile so we don't need
@@ -1313,8 +1312,7 @@ void check_ball_line_collisions(void) {
           set_sprite_y(get_sprite_y() + 8);
         }
         // Reset the tile to uncleared.
-        set_playfield_tile_type(get_current_playfield_index(),
-                                PLAYFIELD_UNCLEARED);
+        set_playfield_tile_type_uncleared_unmarked(get_current_playfield_index());
         set_playfield_bg_tile(get_sprite_x(), get_sprite_y(),
                               TILE_INDEX_PLAYFIELD_UNCLEARED);
         // Stop when we reach the origin.
@@ -1360,8 +1358,7 @@ void check_ball_line_collisions(void) {
           set_sprite_y(get_sprite_y() - 8);
         }
         // Reset the tile to uncleared.
-        set_playfield_tile_type(get_current_playfield_index(),
-                                PLAYFIELD_UNCLEARED);
+        set_playfield_tile_type_uncleared_unmarked(get_current_playfield_index());
         set_playfield_bg_tile(get_sprite_x(), get_sprite_y(),
                               TILE_INDEX_PLAYFIELD_UNCLEARED);
         // Stop when we reach the origin.
@@ -1462,9 +1459,9 @@ void line_completed(void) {
   game_state = GAME_STATE_UPDATING_PLAYFIELD;
 }
 
-#define get_playfield_tile_byte_index() (temp_byte_1)
-#define set_playfield_tile_byte_index(a) (temp_byte_1 = (a))
-#define inc_playfield_tile_byte_index() (++temp_byte_1)
+#define get_temp_playfield_tile_byte_index() (temp_byte_1)
+#define set_temp_playfield_tile_byte_index(a) (temp_byte_1 = (a))
+#define inc_temp_playfield_tile_byte_index() (++temp_byte_1)
 
 #define get_tiles_cleared_this_sweep() (temp_byte_3)
 #define set_tiles_cleared_this_sweep(a) (temp_byte_3 = (a))
@@ -1475,17 +1472,19 @@ void line_completed(void) {
 
 #define update_one_cleared_playfield_tile(tile_in_byte_index) \
   /* If the tile was marked, we aren't supposed to clear it. Mark implies there is a ball inside the same region. */ \
-  if (is_playfield_tile_uncleared_marked_from_byte(get_playfield_tile_byte_value(), tile_in_byte_index)) { \
+  if (is_playfield_tile_type_uncleared_marked_from_byte(get_playfield_tile_byte_value(), tile_in_byte_index)) { \
     /* While we're here... let's remove all the mark bits from uncleared tiles. We won't revisit this tile index during this sweep of the playfield. */ \
-    playfield_tiles[get_playfield_tile_byte_index()] = get_playfield_tile_byte_value() & ~(playfield_bitmask_tile_table[tile_in_byte_index]); \
-  } else if (is_playfield_tile_uncleared_unmarked_from_byte(get_playfield_tile_byte_value(), tile_in_byte_index)) { \
+    set_playfield_tile_type_uncleared_marked_from_byte_index(get_temp_playfield_tile_byte_index(), tile_in_byte_index); \
+    /* playfield_tiles[get_temp_playfield_tile_byte_index()] = get_playfield_tile_byte_value() & ~(playfield_bitmask_tile_table[tile_in_byte_index]); */ \
+  } else if (is_playfield_tile_type_uncleared_unmarked_from_byte(get_playfield_tile_byte_value(), tile_in_byte_index)) { \
     /* TODO(boingoing): What about PLAYFIELD_LINE tiles from the other player? */ \
     /* Unmarked, uncleared playfield tile. Let's reset it to cleared and track the count for this sweep as well as all-time for the level. */ \
     inc_tiles_cleared_this_sweep(); \
     /* Update the playfield in-memory structure to mark the tile as wall. */ \
-    playfield_tiles[get_playfield_tile_byte_index()] = get_playfield_tile_byte_value() | playfield_bitmask_tile_table[tile_in_byte_index]; \
+    set_playfield_tile_type_wall_from_byte_index(get_temp_playfield_tile_byte_index(), tile_in_byte_index); \
+    /* playfield_tiles[get_temp_playfield_tile_byte_index()] = get_playfield_tile_byte_value() | playfield_bitmask_tile_table[tile_in_byte_index]; */ \
     /* Calculate the ppu addr for the current tile and set the bg tile graphic. */ \
-    one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_temp_ppu_address() + (get_playfield_tile_byte_index() << 2) + (tile_in_byte_index)); \
+    one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_temp_ppu_address() + (get_temp_playfield_tile_byte_index() << 2) + (tile_in_byte_index)); \
     /* We can only queue about 40 tile updates per v-blank. */ \
     if (get_tiles_cleared_this_sweep() == MAX_TILE_UPDATES_PER_FRAME) { \
       add_score_for_cleared_tiles(get_tiles_cleared_this_sweep()); \
@@ -1510,7 +1509,7 @@ unsigned char update_cleared_playfield_tiles(void) {
     // First ppu address of the playfield tiles.
     set_temp_ppu_address(get_ppu_addr(0, playfield_pixel_coord_x[0], playfield_pixel_coord_y[0]));
     // Reset the playfield tile byte index.
-    set_playfield_tile_byte_index(0);
+    set_temp_playfield_tile_byte_index(0);
     // Turn off the initialization flag for subsequent sweeps.
     set_should_initialize_clear_sweep(FALSE);
   }
@@ -1519,8 +1518,8 @@ unsigned char update_cleared_playfield_tiles(void) {
   set_tiles_cleared_this_sweep(0);
 
   // Look over all tiles in the playfield and for each uncleared, unmarked tile change it to cleared (wall).
-  for (; get_playfield_tile_byte_index() != PLAYFIELD_BYTES; inc_playfield_tile_byte_index()) {
-    set_playfield_tile_byte_value(playfield_tiles[get_playfield_tile_byte_index()]);
+  for (; get_temp_playfield_tile_byte_index() != PLAYFIELD_BYTES; inc_temp_playfield_tile_byte_index()) {
+    set_playfield_tile_byte_value(playfield_tiles[get_temp_playfield_tile_byte_index()]);
 
     update_one_cleared_playfield_tile(0);
     update_one_cleared_playfield_tile(1);

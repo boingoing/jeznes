@@ -85,7 +85,7 @@ const unsigned char turn_left_table[] = {
 #define dec_current_playfield_in_byte_index() (--high_byte(get_current_position()))
 
 // Returns true when tile at position |i| is uncleared and unmarked.
-#define inside(i) (is_playfield_tile_byte_index_uncleared_unmarked(get_playfield_byte_index((i)), get_playfield_in_byte_index((i))))
+#define inside(i) (is_playfield_tile_type_uncleared_unmarked_from_byte_index(get_playfield_byte_index((i)), get_playfield_in_byte_index((i))))
 
 #define get_mark() (temp_int_2)
 #define set_mark(a) (temp_int_2 = (a))
@@ -119,7 +119,7 @@ const unsigned char turn_left_table[] = {
 #define turn_left() (set_cur_dir(turn_left_table[get_cur_dir()]))
 #define move_forward() (set_current_position(get_front()))
 
-#define mark_current_position() (set_playfield_tile_type_byte_index_uncleared_marked(get_current_playfield_byte_index(), get_current_playfield_in_byte_index()))
+#define mark_current_position() (set_playfield_tile_type_uncleared_marked_from_byte_index(get_current_playfield_byte_index(), get_current_playfield_in_byte_index()))
 
 #define get_front()                                         \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                    \
