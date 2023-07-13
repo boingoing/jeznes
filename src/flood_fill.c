@@ -92,7 +92,7 @@ void compute_playfield_mark_bit_one_region(void) {
           }
         } else if (inside(get_front_left()) && inside(get_back_left())) {
           set_mark_null(TRUE);
-          set_playfield_is_marked_flag(get_current_position());
+          mark_current_position();
           goto PAINTER_ALGORITHM_PAINT;
         }
         break;
@@ -100,7 +100,7 @@ void compute_playfield_mark_bit_one_region(void) {
         if (!inside(get_back())) {
           if (inside(get_front_left())) {
             set_mark_null(TRUE);
-            set_playfield_is_marked_flag(get_current_position());
+            mark_current_position();
             goto PAINTER_ALGORITHM_PAINT;
           }
         } else if (get_mark_null() == TRUE) {
@@ -116,7 +116,7 @@ void compute_playfield_mark_bit_one_region(void) {
               if (get_cur_dir() == get_mark_dir()) {
                 set_mark_null(TRUE);
                 reverse_direction();
-                set_playfield_is_marked_flag(get_current_position());
+                mark_current_position();
                 goto PAINTER_ALGORITHM_PAINT;
               } else {
                 set_backtrack(TRUE);
@@ -136,7 +136,7 @@ void compute_playfield_mark_bit_one_region(void) {
               set_mark2_null(TRUE);
               set_backtrack(FALSE);
               reverse_direction();
-              set_playfield_is_marked_flag(get_current_position());
+              mark_current_position();
               goto PAINTER_ALGORITHM_PAINT;
             } else if (get_current_position() == get_mark2()) {
               set_mark(get_current_position());
@@ -150,11 +150,11 @@ void compute_playfield_mark_bit_one_region(void) {
         break;
       case 3:
         set_mark_null(TRUE);
-        set_playfield_is_marked_flag(get_current_position());
+        mark_current_position();
         goto PAINTER_ALGORITHM_PAINT;
         break;
       case 4:
-        set_playfield_is_marked_flag(get_current_position());
+        mark_current_position();
         return;
     }
   }

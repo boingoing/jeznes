@@ -7,18 +7,30 @@
 #ifndef __JEZNES_FLOOD_FILL_H__
 #define __JEZNES_FLOOD_FILL_H__
 
-#define playfield_index_move_up(i) ((i)-32)
-#define playfield_index_move_down(i) ((i) + 32)
-#define playfield_index_move_left(i) ((i)-1)
-#define playfield_index_move_right(i) ((i) + 1)
+#include "lib/nesdoug.h"
+
+#define playfield_index_current_move_up() (set_current_playfield_byte_index(get_current_playfield_byte_index()-8))
+#define playfield_index_current_move_down() (set_current_playfield_byte_index(get_current_playfield_byte_index()+8))
+#define playfield_index_current_move_left() (get_current_playfield_in_byte_index() == 0 ? \
+    {set_current_playfield_in_byte_index(3); dec_current_playfield_byte_index();} : \
+    {dec_current_playfield_in_byte_index()})
+#define playfield_index_current_move_right() (get_current_playfield_in_byte_index() == 3 ? \
+    {set_current_playfield_in_byte_index(0); inc_current_playfield_byte_index();} : \
+    {inc_current_playfield_in_byte_index()})
 
 #define playfield_index_move_right_up(i) ((i)-31)
 #define playfield_index_move_left_down(i) ((i) + 31)
 #define playfield_index_move_left_up(i) ((i)-33)
 #define playfield_index_move_right_down(i) ((i) + 33)
 
-#define inside(i) \
-  ((playfield[(i)] & (PLAYFIELD_WALL | PLAYFIELD_BITMASK_MARK)) == 0)
+#define playfield_index_move_up(i) (make_word(get_playfield_byte_index(i)-8, get_playfield_in_byte_index(i)))
+#define playfield_index_move_down(i) (make_word(get_playfield_byte_index(i)+8, get_playfield_in_byte_index(i)))
+#define playfield_index_move_left(i) (get_playfield_in_byte_index(i) == 0 ? \
+    make_word(get_playfield_byte_index(i)-1, 3) : \
+    make_word(get_playfield_byte_index(i), get_playfield_in_byte_index(i)-1))
+#define playfield_index_move_right(i) (get_playfield_in_byte_index(i) == 3 ? \
+    make_word(get_playfield_byte_index(i)+1, 0) : \
+    make_word(get_playfield_byte_index(i), get_playfield_in_byte_index(i)+1))
 
 enum {
   MOVE_DIRECTION_RIGHT,
@@ -49,8 +61,32 @@ const unsigned char turn_left_table[] = {
     MOVE_DIRECTION_LEFT,
 };
 
+// The current position is a byte-index into the playfield_tiles array and a number [0-3] indicating the offset into the byte data belonging to the current tile.
+// The byte-index is stored in the low-byte and the in-byte offset is stored in the high-byte.
 #define get_current_position() (temp_int_1)
 #define set_current_position(a) (temp_int_1 = (a))
+
+// Gets the playfield_tiles byte index of the position |i|.
+#define get_playfield_byte_index(i) ((unsigned char)(i))
+
+// Gets the playfield_tiles byte data in-byte index of the position |i|. [0,3]
+#define get_playfield_in_byte_index(i) ((i)>>8)
+
+// Gets the playfield_tiles byte index of the current position.
+#define get_current_playfield_byte_index() (low_byte(get_current_position()))
+#define set_current_playfield_byte_index(a) (low_byte(get_current_position()) = (a))
+#define inc_current_playfield_byte_index() (++low_byte(get_current_position()))
+#define dec_current_playfield_byte_index() (--low_byte(get_current_position()))
+
+// Gets the playfield_tiles byte data in-byte index of the current position. [0,3]
+#define get_current_playfield_in_byte_index() (high_byte(get_current_position()))
+#define set_current_playfield_in_byte_index(a) (high_byte(get_current_position()) = (a))
+#define inc_current_playfield_in_byte_index() (++high_byte(get_current_position()))
+#define dec_current_playfield_in_byte_index() (--high_byte(get_current_position()))
+
+// Returns true when tile at position |i| is uncleared and unmarked.
+#define inside(i) (is_playfield_tile_byte_index_uncleared_unmarked(get_playfield_byte_index((i)), get_playfield_in_byte_index((i))))
+
 #define get_mark() (temp_int_2)
 #define set_mark(a) (temp_int_2 = (a))
 #define get_mark2() (temp_int_3)
@@ -82,6 +118,8 @@ const unsigned char turn_left_table[] = {
 #define turn_right() (set_cur_dir(turn_right_table[get_cur_dir()]))
 #define turn_left() (set_cur_dir(turn_left_table[get_cur_dir()]))
 #define move_forward() (set_current_position(get_front()))
+
+#define mark_current_position() (set_playfield_tile_type_byte_index_uncleared_marked(get_current_playfield_byte_index(), get_current_playfield_in_byte_index()))
 
 #define get_front()                                         \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                    \

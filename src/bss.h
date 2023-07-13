@@ -21,7 +21,13 @@
 #include "screens/title.h"
 #include "sprites.h"
 
-unsigned char playfield[PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT];
+#define PLAYFIELD_BYTES ((PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT) >> 2)
+
+// The state of every tile in the playfield.
+unsigned char playfield_tiles[PLAYFIELD_BYTES];
+
+// The line-related flags for each playfield tile.
+unsigned char playfield_line_flags[PLAYFIELD_BYTES];
 
 #if ENABLE_CHEATS
 unsigned char enable_ball_line_collisions;
