@@ -1162,7 +1162,7 @@ void start_line(unsigned char player_index) {
 
     // Update the playfield origin tile.
     set_playfield_tile_type_line(get_negative_line_segment_origin());
-    set_playfield_tile_line_flags(get_current_playfield_index(), player_index, LINE_DIRECTION_NEGATIVE);
+    set_playfield_tile_line_flags(get_negative_line_segment_origin(), player_index, LINE_DIRECTION_NEGATIVE);
     set_sprite_x(
         playfield_index_pixel_coord_x(get_negative_line_segment_origin()));
     set_sprite_y(
