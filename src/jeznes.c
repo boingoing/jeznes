@@ -1445,6 +1445,7 @@ void update_nearest_tile(void) {
 void line_completed(void) {
   for (temp_byte_9 = 0; temp_byte_9 < get_ball_count(); ++temp_byte_9) {
     set_current_position(balls[temp_byte_9].nearest_playfield_tile);
+    set_current_position(get_playfield_tile_position(get_current_position()));
     compute_playfield_mark_bit_one_region();
   }
 

@@ -8,6 +8,7 @@
 #define __JEZNES_FLAGS_PLAYFIELD_H__
 
 #include "base.h"
+#include "lib/nesdoug.h"
 
 #define PLAYFIELD_BITMASK_ALL 0b11
 
@@ -46,6 +47,8 @@ PLAYFIELD_TILE_LINE_FLAG_TABLE(direction, PLAYFIELD_BITMASK_LINE_DIRECTION)
 #define get_playfield_tile_byte_index(playfield_tile_index) ((unsigned char)((playfield_tile_index) >> 2))
 #define get_playfield_tile_in_byte_index(playfield_tile_index) (((unsigned char)(playfield_tile_index)) & 0b11)
 
+#define get_playfield_tile_position(playfield_tile_index) (make_word(get_playfield_tile_byte_index(get_current_position()), get_playfield_tile_in_byte_index(get_current_position())))
+
 // Playfield tile accessor macros
 
 #define get_playfield_tile_raw_value_from_byte_index(playfield_tile_byte_index, playfield_tiles_array) (playfield_tiles_array[(playfield_tile_byte_index)])
@@ -60,11 +63,11 @@ PLAYFIELD_TILE_LINE_FLAG_TABLE(direction, PLAYFIELD_BITMASK_LINE_DIRECTION)
 #define get_playfield_tile_value_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array) (get_playfield_tile_value_from_masked_byte(get_playfield_tile_masked_value_from_byte_index((playfield_tile_byte_index), (playfield_tile_in_byte_index), (playfield_tiles_array)), (playfield_tile_in_byte_index)))
 #define get_playfield_tile_value(playfield_tile_index, playfield_tiles_array) (get_playfield_tile_value_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array)))
 
-#define is_playfield_tile_mask_set_from_raw_byte(raw_byte, bitmask) (get_playfield_tile_masked_value_from_raw_byte_and_bitmask((raw_byte), (bitmask)) == (bitmask))
-#define is_playfield_tile_mask_set_from_raw_byte_table(raw_byte, playfield_tile_in_byte_index, bitmask_table) (is_playfield_tile_mask_set_from_raw_byte((raw_byte), (bitmask_table)[(playfield_tile_in_byte_index)]))
-#define is_playfield_tile_mask_set_from_byte_index(playfield_tile_byte_index, playfield_tiles_array, bitmask) (is_playfield_tile_mask_set_from_raw_byte(get_playfield_tile_raw_value_from_byte_index((playfield_tile_byte_index), (playfield_tiles_array)), (bitmask)))
-#define is_playfield_tile_mask_set_from_byte_index_table(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array, bitmask_table) (is_playfield_tile_mask_set_from_byte_index((playfield_tile_byte_index), (playfield_tiles_array), (bitmask_table)[(playfield_tile_in_byte_index)]))
-#define is_playfield_tile_mask_set(playfield_tile_index, playfield_tiles_array, bitmask) (is_playfield_tile_mask_set_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), (playfield_tiles_array), (bitmask)))
+#define is_playfield_tile_mask_set_from_raw_byte(raw_byte, playfield_tile_in_byte_index, bitmask) (get_playfield_tile_masked_value_from_raw_byte((raw_byte), (playfield_tile_in_byte_index)) == (bitmask))
+#define is_playfield_tile_mask_set_from_raw_byte_table(raw_byte, playfield_tile_in_byte_index, bitmask_table) (is_playfield_tile_mask_set_from_raw_byte((raw_byte), (playfield_tile_in_byte_index), (bitmask_table)[(playfield_tile_in_byte_index)]))
+#define is_playfield_tile_mask_set_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array, bitmask) (is_playfield_tile_mask_set_from_raw_byte(get_playfield_tile_raw_value_from_byte_index((playfield_tile_byte_index), (playfield_tiles_array)), (playfield_tile_in_byte_index), (bitmask)))
+#define is_playfield_tile_mask_set_from_byte_index_table(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array, bitmask_table) (is_playfield_tile_mask_set_from_byte_index((playfield_tile_byte_index), (playfield_tile_in_byte_index), (playfield_tiles_array), (bitmask_table)[(playfield_tile_in_byte_index)]))
+#define is_playfield_tile_mask_set(playfield_tile_index, playfield_tiles_array, bitmask) (is_playfield_tile_mask_set_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array), (bitmask)))
 #define is_playfield_tile_mask_set_table(playfield_tile_index, playfield_tiles_array, bitmask_table) (is_playfield_tile_mask_set_from_byte_index_table(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array), (bitmask_table)))
 
 #define set_playfield_tile_value_in_raw_byte(raw_byte, playfield_tile_in_byte_index, value_bitmask) ((raw_byte) = (raw_byte & ~(playfield_bitmask_tile_table[(playfield_tile_in_byte_index)])) | (value_bitmask))

@@ -9,29 +9,6 @@
 
 #include "lib/nesdoug.h"
 
-#define playfield_index_current_move_up() (set_current_playfield_byte_index(get_current_playfield_byte_index()-8))
-#define playfield_index_current_move_down() (set_current_playfield_byte_index(get_current_playfield_byte_index()+8))
-#define playfield_index_current_move_left() (get_current_playfield_in_byte_index() == 0 ? \
-    {set_current_playfield_in_byte_index(3); dec_current_playfield_byte_index();} : \
-    {dec_current_playfield_in_byte_index()})
-#define playfield_index_current_move_right() (get_current_playfield_in_byte_index() == 3 ? \
-    {set_current_playfield_in_byte_index(0); inc_current_playfield_byte_index();} : \
-    {inc_current_playfield_in_byte_index()})
-
-#define playfield_index_move_right_up(i) ((i)-31)
-#define playfield_index_move_left_down(i) ((i) + 31)
-#define playfield_index_move_left_up(i) ((i)-33)
-#define playfield_index_move_right_down(i) ((i) + 33)
-
-#define playfield_index_move_up(i) (make_word(get_playfield_byte_index(i)-8, get_playfield_in_byte_index(i)))
-#define playfield_index_move_down(i) (make_word(get_playfield_byte_index(i)+8, get_playfield_in_byte_index(i)))
-#define playfield_index_move_left(i) (get_playfield_in_byte_index(i) == 0 ? \
-    make_word(get_playfield_byte_index(i)-1, 3) : \
-    make_word(get_playfield_byte_index(i), get_playfield_in_byte_index(i)-1))
-#define playfield_index_move_right(i) (get_playfield_in_byte_index(i) == 3 ? \
-    make_word(get_playfield_byte_index(i)+1, 0) : \
-    make_word(get_playfield_byte_index(i), get_playfield_in_byte_index(i)+1))
-
 enum {
   MOVE_DIRECTION_RIGHT,
   MOVE_DIRECTION_DOWN,
@@ -67,10 +44,10 @@ const unsigned char turn_left_table[] = {
 #define set_current_position(a) (temp_int_1 = (a))
 
 // Gets the playfield_tiles byte index of the position |i|.
-#define get_playfield_byte_index(i) ((unsigned char)(i))
+#define get_playfield_byte_index_from_position(i) ((unsigned char)(i))
 
 // Gets the playfield_tiles byte data in-byte index of the position |i|. [0,3]
-#define get_playfield_in_byte_index(i) ((i)>>8)
+#define get_playfield_in_byte_index_from_position(i) ((i)>>8)
 
 // Gets the playfield_tiles byte index of the current position.
 #define get_current_playfield_byte_index() (low_byte(get_current_position()))
@@ -85,7 +62,7 @@ const unsigned char turn_left_table[] = {
 #define dec_current_playfield_in_byte_index() (--high_byte(get_current_position()))
 
 // Returns true when tile at position |i| is uncleared and unmarked.
-#define inside(i) (is_playfield_tile_type_uncleared_unmarked_from_byte_index(get_playfield_byte_index((i)), get_playfield_in_byte_index((i))))
+#define inside(i) (is_playfield_tile_type_uncleared_unmarked_from_byte_index(get_playfield_byte_index_from_position((i)), get_playfield_in_byte_index_from_position((i))))
 
 #define get_mark() (temp_int_2)
 #define set_mark(a) (temp_int_2 = (a))
@@ -121,59 +98,90 @@ const unsigned char turn_left_table[] = {
 
 #define mark_current_position() (set_playfield_tile_type_uncleared_marked_from_byte_index(get_current_playfield_byte_index(), get_current_playfield_in_byte_index()))
 
+#define playfield_index_current_move_up() (make_word(get_current_playfield_byte_index()-8, get_current_playfield_in_byte_index()))
+#define playfield_index_current_move_down() (make_word(get_current_playfield_byte_index()+8, get_current_playfield_in_byte_index()))
+#define playfield_index_current_move_left() (get_current_playfield_in_byte_index() == 0 ? \
+    make_word(get_current_playfield_byte_index()-1, 3) : \
+    make_word(get_current_playfield_byte_index(), get_current_playfield_in_byte_index() - 1))
+#define playfield_index_current_move_right() (get_current_playfield_in_byte_index() == 3 ? \
+    make_word(get_current_playfield_byte_index()+1, 0) : \
+    make_word(get_current_playfield_byte_index(), get_current_playfield_in_byte_index() + 1))
+
+#define playfield_index_current_move_right_up() (get_current_playfield_in_byte_index() == 3 ? \
+    make_word(get_current_playfield_byte_index()-7, 0) : \
+    make_word(get_current_playfield_byte_index()-8, get_current_playfield_in_byte_index() + 1))
+#define playfield_index_current_move_left_down() (get_current_playfield_in_byte_index() == 0 ? \
+    make_word(get_current_playfield_byte_index()+7, 3) : \
+    make_word(get_current_playfield_byte_index()+8, get_current_playfield_in_byte_index() - 1))
+#define playfield_index_current_move_left_up() (get_current_playfield_in_byte_index() == 0 ? \
+    make_word(get_current_playfield_byte_index()-9, 3) : \
+    make_word(get_current_playfield_byte_index()-8, get_current_playfield_in_byte_index() - 1))
+#define playfield_index_current_move_right_down() (get_current_playfield_in_byte_index() == 3 ? \
+    make_word(get_current_playfield_byte_index()+9, 0) : \
+    make_word(get_current_playfield_byte_index()+8, get_current_playfield_in_byte_index() + 1))
+
+#define playfield_index_move_up(i) (make_word(get_playfield_byte_index_from_position(i)-8, get_playfield_in_byte_index_from_position(i)))
+#define playfield_index_move_down(i) (make_word(get_playfield_byte_index_from_position(i)+8, get_playfield_in_byte_index_from_position(i)))
+#define playfield_index_move_left(i) (get_playfield_in_byte_index_from_position(i) == 0 ? \
+    make_word(get_playfield_byte_index_from_position(i)-1, 3) : \
+    make_word(get_playfield_byte_index_from_position(i), get_playfield_in_byte_index_from_position(i)-1))
+#define playfield_index_move_right(i) (get_playfield_in_byte_index_from_position(i) == 3 ? \
+    make_word(get_playfield_byte_index_from_position(i)+1, 0) : \
+    make_word(get_playfield_byte_index_from_position(i), get_playfield_in_byte_index_from_position(i)+1))
+
 #define get_front()                                         \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                    \
-       ? playfield_index_move_right(get_current_position()) \
+       ? playfield_index_current_move_right() \
    : get_cur_dir() == MOVE_DIRECTION_LEFT                   \
-       ? playfield_index_move_left(get_current_position())  \
+       ? playfield_index_current_move_left()  \
    : get_cur_dir() == MOVE_DIRECTION_DOWN                   \
-       ? playfield_index_move_down(get_current_position())  \
-       : playfield_index_move_up(get_current_position()))
+       ? playfield_index_current_move_down()  \
+       : playfield_index_current_move_up())
 
 #define get_back()                                          \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                    \
-       ? playfield_index_move_left(get_current_position())  \
+       ? playfield_index_current_move_left()  \
    : get_cur_dir() == MOVE_DIRECTION_LEFT                   \
-       ? playfield_index_move_right(get_current_position()) \
+       ? playfield_index_current_move_right() \
    : get_cur_dir() == MOVE_DIRECTION_DOWN                   \
-       ? playfield_index_move_up(get_current_position())    \
-       : playfield_index_move_down(get_current_position()))
+       ? playfield_index_current_move_up()    \
+       : playfield_index_current_move_down())
 
 #define get_right()                                        \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                   \
-       ? playfield_index_move_down(get_current_position()) \
+       ? playfield_index_current_move_down() \
    : get_cur_dir() == MOVE_DIRECTION_LEFT                  \
-       ? playfield_index_move_up(get_current_position())   \
+       ? playfield_index_current_move_up()   \
    : get_cur_dir() == MOVE_DIRECTION_DOWN                  \
-       ? playfield_index_move_left(get_current_position()) \
-       : playfield_index_move_right(get_current_position()))
+       ? playfield_index_current_move_left() \
+       : playfield_index_current_move_right())
 
 #define get_left()                                          \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                    \
-       ? playfield_index_move_up(get_current_position())    \
+       ? playfield_index_current_move_up()    \
    : get_cur_dir() == MOVE_DIRECTION_LEFT                   \
-       ? playfield_index_move_down(get_current_position())  \
+       ? playfield_index_current_move_down()  \
    : get_cur_dir() == MOVE_DIRECTION_DOWN                   \
-       ? playfield_index_move_right(get_current_position()) \
-       : playfield_index_move_left(get_current_position()))
+       ? playfield_index_current_move_right() \
+       : playfield_index_current_move_left())
 
 #define get_front_left()                                         \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                         \
-       ? playfield_index_move_right_up(get_current_position())   \
+       ? playfield_index_current_move_right_up()   \
    : get_cur_dir() == MOVE_DIRECTION_LEFT                        \
-       ? playfield_index_move_left_down(get_current_position())  \
+       ? playfield_index_current_move_left_down()  \
    : get_cur_dir() == MOVE_DIRECTION_DOWN                        \
-       ? playfield_index_move_right_down(get_current_position()) \
-       : playfield_index_move_left_up(get_current_position()))
+       ? playfield_index_current_move_right_down() \
+       : playfield_index_current_move_left_up())
 
 #define get_back_left()                                          \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                         \
-       ? playfield_index_move_left_up(get_current_position())    \
+       ? playfield_index_current_move_left_up()    \
    : get_cur_dir() == MOVE_DIRECTION_LEFT                        \
-       ? playfield_index_move_right_down(get_current_position()) \
+       ? playfield_index_current_move_right_down() \
    : get_cur_dir() == MOVE_DIRECTION_DOWN                        \
-       ? playfield_index_move_right_up(get_current_position())   \
-       : playfield_index_move_left_down(get_current_position()))
+       ? playfield_index_current_move_right_up()   \
+       : playfield_index_current_move_left_down())
 
 // Uses a constant-memory usage implementation of the painters algorithm to walk
 // the playfield starting at the playfield tile returned via
