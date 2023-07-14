@@ -1186,10 +1186,10 @@ void start_line(unsigned char player_index) {
 
     // We can only start the positive-direction line segment if it would have
     // origin on an uncleared playfield tile.
-    if (is_playfield_tile_type_wall(get_positive_line_segment_origin())) {
+    if (!is_playfield_tile_type_wall(get_positive_line_segment_origin())) {
       // Update the positive-direction line segment origin playfield tile.
       set_playfield_tile_type_line(get_positive_line_segment_origin());
-      set_playfield_tile_line_flags(get_current_playfield_index(), player_index, LINE_DIRECTION_POSITIVE);
+      set_playfield_tile_line_flags(get_positive_line_segment_origin(), player_index, LINE_DIRECTION_POSITIVE);
       set_sprite_x(
           playfield_index_pixel_coord_x(get_positive_line_segment_origin()));
       set_sprite_y(
