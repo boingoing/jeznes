@@ -120,15 +120,6 @@ const unsigned char turn_left_table[] = {
     make_word(get_current_playfield_byte_index()+9, 0) : \
     make_word(get_current_playfield_byte_index()+8, get_current_playfield_in_byte_index() + 1))
 
-#define playfield_index_move_up(i) (make_word(get_playfield_byte_index_from_position(i)-8, get_playfield_in_byte_index_from_position(i)))
-#define playfield_index_move_down(i) (make_word(get_playfield_byte_index_from_position(i)+8, get_playfield_in_byte_index_from_position(i)))
-#define playfield_index_move_left(i) (get_playfield_in_byte_index_from_position(i) == 0 ? \
-    make_word(get_playfield_byte_index_from_position(i)-1, 3) : \
-    make_word(get_playfield_byte_index_from_position(i), get_playfield_in_byte_index_from_position(i)-1))
-#define playfield_index_move_right(i) (get_playfield_in_byte_index_from_position(i) == 3 ? \
-    make_word(get_playfield_byte_index_from_position(i)+1, 0) : \
-    make_word(get_playfield_byte_index_from_position(i), get_playfield_in_byte_index_from_position(i)+1))
-
 #define get_front()                                         \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                    \
        ? playfield_index_current_move_right() \

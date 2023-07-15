@@ -60,16 +60,16 @@ void compute_playfield_mark_bit_one_region(void) {
   PAINTER_ALGORITHM_START:
     // Count number of non-diagonally adjacent marked playfield tiles.
     set_adjacent_marked_tile_count(0);
-    if (!inside(playfield_index_move_up(get_current_position()))) {
+    if (!inside(playfield_index_current_move_up())) {
       inc_adjacent_marked_tile_count();
     }
-    if (!inside(playfield_index_move_down(get_current_position()))) {
+    if (!inside(playfield_index_current_move_down())) {
       inc_adjacent_marked_tile_count();
     }
-    if (!inside(playfield_index_move_left(get_current_position()))) {
+    if (!inside(playfield_index_current_move_left())) {
       inc_adjacent_marked_tile_count();
     }
-    if (!inside(playfield_index_move_right(get_current_position()))) {
+    if (!inside(playfield_index_current_move_right())) {
       inc_adjacent_marked_tile_count();
     }
 
