@@ -1471,13 +1471,17 @@ void line_completed(void) {
 #define get_playfield_tile_byte_value() (temp_byte_5)
 #define set_playfield_tile_byte_value(a) (temp_byte_5 = (a))
 
+#define get_temp_playfield_tile_masked_value() (temp_byte_4)
+#define set_temp_playfield_tile_masked_value(a) (temp_byte_4 = (a))
+
 #define update_one_cleared_playfield_tile(tile_in_byte_index) \
+  set_temp_playfield_tile_masked_value(get_playfield_tile_masked_value_from_raw_byte(get_playfield_tile_byte_value(), tile_in_byte_index)); \
   /* If the tile was marked, we aren't supposed to clear it. Mark implies there is a ball inside the same region. */ \
-  if (is_playfield_tile_type_uncleared_marked_from_byte(get_playfield_tile_byte_value(), tile_in_byte_index)) { \
+  if (is_playfield_tile_type_uncleared_marked_from_masked_byte(get_temp_playfield_tile_masked_value(), tile_in_byte_index)) { \
     /* While we're here... let's remove all the mark bits from uncleared tiles. We won't revisit this tile index during this sweep of the playfield. */ \
     set_playfield_tile_type_uncleared_marked_from_byte_index(get_temp_playfield_tile_byte_index(), tile_in_byte_index); \
     /* playfield_tiles[get_temp_playfield_tile_byte_index()] = get_playfield_tile_byte_value() & ~(playfield_bitmask_tile_table[tile_in_byte_index]); */ \
-  } else if (is_playfield_tile_type_uncleared_unmarked_from_byte(get_playfield_tile_byte_value(), tile_in_byte_index)) { \
+  } else if (is_playfield_tile_type_uncleared_unmarked_from_masked_byte(get_temp_playfield_tile_masked_value(), tile_in_byte_index)) { \
     /* TODO(boingoing): What about PLAYFIELD_LINE tiles from the other player? */ \
     /* Unmarked, uncleared playfield tile. Let's reset it to cleared and track the count for this sweep as well as all-time for the level. */ \
     inc_tiles_cleared_this_sweep(); \
