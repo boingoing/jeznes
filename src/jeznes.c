@@ -1480,14 +1480,12 @@ void line_completed(void) {
   if (is_playfield_tile_type_uncleared_marked_from_masked_byte(get_temp_playfield_tile_masked_value(), tile_in_byte_index)) { \
     /* While we're here... let's remove all the mark bits from uncleared tiles. We won't revisit this tile index during this sweep of the playfield. */ \
     set_playfield_tile_type_uncleared_unmarked_from_byte_index(get_temp_playfield_tile_byte_index(), tile_in_byte_index); \
-    /* playfield_tiles[get_temp_playfield_tile_byte_index()] = get_playfield_tile_byte_value() & ~(playfield_bitmask_tile_table[tile_in_byte_index]); */ \
   } else if (is_playfield_tile_type_uncleared_unmarked_from_masked_byte(get_temp_playfield_tile_masked_value(), tile_in_byte_index)) { \
     /* TODO(boingoing): What about PLAYFIELD_LINE tiles from the other player? */ \
     /* Unmarked, uncleared playfield tile. Let's reset it to cleared and track the count for this sweep as well as all-time for the level. */ \
     inc_tiles_cleared_this_sweep(); \
     /* Update the playfield in-memory structure to mark the tile as wall. */ \
     set_playfield_tile_type_wall_from_byte_index(get_temp_playfield_tile_byte_index(), tile_in_byte_index); \
-    /* playfield_tiles[get_temp_playfield_tile_byte_index()] = get_playfield_tile_byte_value() | playfield_bitmask_tile_table[tile_in_byte_index]; */ \
     /* Calculate the ppu addr for the current tile and set the bg tile graphic. */ \
     one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_temp_ppu_address() + (get_temp_playfield_tile_byte_index() << 2) + (tile_in_byte_index)); \
     /* We can only queue about 40 tile updates per v-blank. */ \
@@ -1497,6 +1495,10 @@ void line_completed(void) {
       return FALSE; \
     } \
   }
+
+// Use these to skip scanning the first and last blocks of continuous wall playfield tiles.
+#define FIRST_NON_WALL_PLAYFIELD_TILE_BYTE_INDEX 8
+#define LAST_NON_WALL_PLAYFIELD_TILE_BYTE_INDEX 168
 
 // Update uncleared, unmarked playfield tiles to be cleared. Returns TRUE when
 // all uncleared tiles have been updated. Note: This function can potentially
@@ -1514,7 +1516,7 @@ unsigned char update_cleared_playfield_tiles(void) {
     // First ppu address of the playfield tiles.
     set_temp_ppu_address(get_ppu_addr(0, playfield_pixel_coord_x[0], playfield_pixel_coord_y[0]));
     // Reset the playfield tile byte index.
-    set_temp_playfield_tile_byte_index(0);
+    set_temp_playfield_tile_byte_index(FIRST_NON_WALL_PLAYFIELD_TILE_BYTE_INDEX);
     // Turn off the initialization flag for subsequent sweeps.
     set_should_initialize_clear_sweep(FALSE);
   }
@@ -1523,7 +1525,7 @@ unsigned char update_cleared_playfield_tiles(void) {
   set_tiles_cleared_this_sweep(0);
 
   // Look over all tiles in the playfield and for each uncleared, unmarked tile change it to cleared (wall).
-  for (; get_temp_playfield_tile_byte_index() != PLAYFIELD_BYTES; inc_temp_playfield_tile_byte_index()) {
+  for (; get_temp_playfield_tile_byte_index() != LAST_NON_WALL_PLAYFIELD_TILE_BYTE_INDEX; inc_temp_playfield_tile_byte_index()) {
     set_playfield_tile_byte_value(playfield_tiles[get_temp_playfield_tile_byte_index()]);
 
     update_one_cleared_playfield_tile(0);
