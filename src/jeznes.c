@@ -1479,7 +1479,7 @@ void line_completed(void) {
   /* If the tile was marked, we aren't supposed to clear it. Mark implies there is a ball inside the same region. */ \
   if (is_playfield_tile_type_uncleared_marked_from_masked_byte(get_temp_playfield_tile_masked_value(), tile_in_byte_index)) { \
     /* While we're here... let's remove all the mark bits from uncleared tiles. We won't revisit this tile index during this sweep of the playfield. */ \
-    set_playfield_tile_type_uncleared_marked_from_byte_index(get_temp_playfield_tile_byte_index(), tile_in_byte_index); \
+    set_playfield_tile_type_uncleared_unmarked_from_byte_index(get_temp_playfield_tile_byte_index(), tile_in_byte_index); \
     /* playfield_tiles[get_temp_playfield_tile_byte_index()] = get_playfield_tile_byte_value() & ~(playfield_bitmask_tile_table[tile_in_byte_index]); */ \
   } else if (is_playfield_tile_type_uncleared_unmarked_from_masked_byte(get_temp_playfield_tile_masked_value(), tile_in_byte_index)) { \
     /* TODO(boingoing): What about PLAYFIELD_LINE tiles from the other player? */ \
