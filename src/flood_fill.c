@@ -18,7 +18,7 @@ void compute_playfield_mark_bit_one_region(void) {
   // If the playfield tile at |get_current_position()| is marked, the region
   // containing the tile has already been marked. There's no point in remarking
   // the region.
-  if (!inside(get_current_position())) {
+  if (!is_current_inside()) {
     return;
   }
 
@@ -35,10 +35,8 @@ void compute_playfield_mark_bit_one_region(void) {
   // (ie: it is not inside).
   // Note: This function does not do bounds checking, we assume the playfield
   //       has a border of wall tiles on all sides.
-  set_temp_forward_iterator(get_front());
-  while (inside(get_temp_forward_iterator())) {
-    set_current_position(get_temp_forward_iterator());
-    set_temp_forward_iterator(get_front());
+  while (is_front_inside()) {
+    move_forward();
   }
 
   goto PAINTER_ALGORITHM_START;
@@ -46,9 +44,9 @@ void compute_playfield_mark_bit_one_region(void) {
   while (1) {
     move_forward();
 
-    if (inside(get_right())) {
+    if (is_right_inside()) {
       if (get_backtrack() == TRUE && get_findloop() == FALSE &&
-          (inside(get_front()) || inside(get_left()))) {
+          (is_front_inside() || is_left_inside())) {
         set_findloop(TRUE);
       }
       turn_right();
@@ -60,26 +58,26 @@ void compute_playfield_mark_bit_one_region(void) {
   PAINTER_ALGORITHM_START:
     // Count number of non-diagonally adjacent marked playfield tiles.
     set_adjacent_marked_tile_count(0);
-    if (!inside(playfield_index_current_move_up())) {
+    if (!is_above_tile_inside()) {
       inc_adjacent_marked_tile_count();
     }
-    if (!inside(playfield_index_current_move_down())) {
+    if (!is_below_tile_inside()) {
       inc_adjacent_marked_tile_count();
     }
-    if (!inside(playfield_index_current_move_left())) {
+    if (!is_left_tile_inside()) {
       inc_adjacent_marked_tile_count();
     }
-    if (!inside(playfield_index_current_move_right())) {
+    if (!is_right_tile_inside()) {
       inc_adjacent_marked_tile_count();
     }
 
     if (get_adjacent_marked_tile_count() != 4) {
       do {
         turn_right();
-      } while (inside(get_front()));
+      } while (is_front_inside());
       do {
         turn_left();
-      } while (!inside(get_front()));
+      } while (!is_front_inside());
     }
 
     switch (get_adjacent_marked_tile_count()) {
@@ -90,17 +88,17 @@ void compute_playfield_mark_bit_one_region(void) {
           if (get_mark_null() == TRUE) {
             set_mark_null(FALSE);
           }
-        } else if (inside(get_front_left()) && inside(get_back_left())) {
+        } else if (is_front_left_inside() && is_back_left_inside()) {
           set_mark_null(TRUE);
-          mark_current_position();
+          paint_current_position();
           goto PAINTER_ALGORITHM_PAINT;
         }
         break;
       case 2:
-        if (!inside(get_back())) {
-          if (inside(get_front_left())) {
+        if (!is_back_inside()) {
+          if (is_front_left_inside()) {
             set_mark_null(TRUE);
-            mark_current_position();
+            paint_current_position();
             goto PAINTER_ALGORITHM_PAINT;
           }
         } else if (get_mark_null() == TRUE) {
@@ -116,7 +114,7 @@ void compute_playfield_mark_bit_one_region(void) {
               if (get_cur_dir() == get_mark_dir()) {
                 set_mark_null(TRUE);
                 reverse_direction();
-                mark_current_position();
+                paint_current_position();
                 goto PAINTER_ALGORITHM_PAINT;
               } else {
                 set_backtrack(TRUE);
@@ -136,7 +134,7 @@ void compute_playfield_mark_bit_one_region(void) {
               set_mark2_null(TRUE);
               set_backtrack(FALSE);
               reverse_direction();
-              mark_current_position();
+              paint_current_position();
               goto PAINTER_ALGORITHM_PAINT;
             } else if (get_current_position() == get_mark2()) {
               set_mark(get_current_position());
@@ -150,11 +148,11 @@ void compute_playfield_mark_bit_one_region(void) {
         break;
       case 3:
         set_mark_null(TRUE);
-        mark_current_position();
+        paint_current_position();
         goto PAINTER_ALGORITHM_PAINT;
         break;
       case 4:
-        mark_current_position();
+        paint_current_position();
         return;
     }
   }

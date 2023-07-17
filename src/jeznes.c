@@ -784,10 +784,10 @@ void move_and_draw_balls(void) {
 
 #if DRAW_BALL_NEAREST_TILE_HIGHLIGHT
     // Calculate nearest playfield tile - center of the ball in sprite-coords.
-    temp_int_1 = playfield_tile_from_pixel_coords(
-        get_temp_ptr(struct Ball)->x + 4, get_temp_ptr(struct Ball)->y + 4);
-    oam_spr(playfield_index_pixel_coord_x(temp_int_1),
-            playfield_index_pixel_coord_y(temp_int_1) - 1,
+    set_current_playfield_index(playfield_tile_from_pixel_coords(
+        get_temp_ptr(struct Ball)->x + 4, get_temp_ptr(struct Ball)->y + 4));
+    oam_spr(playfield_index_pixel_coord_x(get_current_playfield_index()),
+            playfield_index_pixel_coord_y(get_current_playfield_index()) - 1,
             SPRITE_INDEX_TILE_HIGHLIGHT, 1);
 #endif
   }
@@ -1444,8 +1444,7 @@ void update_nearest_tile(void) {
 
 void line_completed(void) {
   for (temp_byte_9 = 0; temp_byte_9 < get_ball_count(); ++temp_byte_9) {
-    set_current_position(balls[temp_byte_9].nearest_playfield_tile);
-    set_current_position(get_playfield_tile_position(get_current_position()));
+    set_current_position_from_tile_index(balls[temp_byte_9].nearest_playfield_tile);
     compute_playfield_mark_bit_one_region();
   }
 
@@ -1490,6 +1489,25 @@ void line_completed(void) {
     one_vram_buffer(TILE_INDEX_PLAYFIELD_CLEARED, get_temp_ppu_address() + (get_temp_playfield_tile_byte_index() << 2) + (tile_in_byte_index)); \
     /* We can only queue about 40 tile updates per v-blank. */ \
     if (get_tiles_cleared_this_sweep() == MAX_TILE_UPDATES_PER_FRAME) { \
+      /* We aren't going to increment |get_temp_playfield_tile_byte_index()| when we return early which means that we may revisit already-cleared tiles in this byte. To avoid clearing tiles in the next sweep which were originally marked, let's just mark all the tiles in this byte which we've already visited. */ \
+      switch(tile_in_byte_index) { \
+      case 3: \
+        /* If this is the final tile in the byte, let's increment the byte index and avoid this issue. */ \
+        inc_temp_playfield_tile_byte_index(); \
+        break; \
+      case 2: \
+        /* We just unmarked tile 2 in the current byte. Let's remark it so we don't clear it in the next sweep pass. */ \
+        set_playfield_tile_type_uncleared_marked_from_byte_index(get_temp_playfield_tile_byte_index(), 2); \
+        /* Intentional fall-through */ \
+      case 1: \
+        /* We just unmarked tile 1 in the current byte. Let's remark it so we don't clear it in the next sweep pass. */ \
+        set_playfield_tile_type_uncleared_marked_from_byte_index(get_temp_playfield_tile_byte_index(), 1); \
+        /* Intentional fall-through */ \
+      case 0: \
+        /* We just unmarked tile 0 in the current byte. Let's remark it so we don't clear it in the next sweep pass. */ \
+        set_playfield_tile_type_uncleared_marked_from_byte_index(get_temp_playfield_tile_byte_index(), 0); \
+        break; \
+      }; \
       add_score_for_cleared_tiles(get_tiles_cleared_this_sweep()); \
       cleared_tile_count += get_tiles_cleared_this_sweep(); \
       return FALSE; \
