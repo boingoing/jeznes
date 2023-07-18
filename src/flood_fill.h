@@ -7,6 +7,9 @@
 #ifndef __JEZNES_FLOOD_FILL_H__
 #define __JEZNES_FLOOD_FILL_H__
 
+#include "debug.h"
+#include "zeropage.h"
+
 enum {
   MOVE_DIRECTION_RIGHT,
   MOVE_DIRECTION_DOWN,
@@ -82,10 +85,10 @@ const unsigned char turn_left_table[] = {
 
 #define paint_current_position() (set_playfield_tile_type_uncleared_marked_from_byte_index(get_current_playfield_byte_index(), get_current_playfield_in_byte_index()))
 
-#define reverse_direction() \
+#define reverse_direction_macro() \
   (set_cur_dir(reverse_direction_table[get_cur_dir()]))
-#define turn_right() (set_cur_dir(turn_right_table[get_cur_dir()]))
-#define turn_left() (set_cur_dir(turn_left_table[get_cur_dir()]))
+#define turn_right_macro() (set_cur_dir(turn_right_table[get_cur_dir()]))
+#define turn_left_macro() (set_cur_dir(turn_left_table[get_cur_dir()]))
 
 #define move_to_above_tile() (get_current_playfield_byte_index() -= 8)
 #define move_to_below_tile() (get_current_playfield_byte_index() += 8)
@@ -104,7 +107,7 @@ const unsigned char turn_left_table[] = {
     dec_current_playfield_in_byte_index(); \
     }
 
-#define move_forward() \
+#define move_forward_macro() \
   switch(get_cur_dir()) { \
   case MOVE_DIRECTION_RIGHT:                   \
        move_to_right_tile(); \
@@ -147,7 +150,7 @@ const unsigned char turn_left_table[] = {
     is_inside(get_current_playfield_byte_index()+7, 3) : \
     is_current_offset_inside(8, -1))
 
-#define is_front_inside()                                          \
+#define is_front_inside_macro()                                          \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                    \
        ? is_right_tile_inside() \
    : get_cur_dir() == MOVE_DIRECTION_LEFT                   \
@@ -155,7 +158,7 @@ const unsigned char turn_left_table[] = {
    : get_cur_dir() == MOVE_DIRECTION_DOWN                   \
        ? is_below_tile_inside()  \
        : is_above_tile_inside())
-#define is_back_inside()                                          \
+#define is_back_inside_macro()                                          \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                    \
        ? is_left_tile_inside()  \
    : get_cur_dir() == MOVE_DIRECTION_LEFT                   \
@@ -163,7 +166,7 @@ const unsigned char turn_left_table[] = {
    : get_cur_dir() == MOVE_DIRECTION_DOWN                   \
        ? is_above_tile_inside()    \
        : is_below_tile_inside())
-#define is_right_inside()                                        \
+#define is_right_inside_macro()                                        \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                   \
        ? is_below_tile_inside() \
    : get_cur_dir() == MOVE_DIRECTION_LEFT                  \
@@ -171,7 +174,7 @@ const unsigned char turn_left_table[] = {
    : get_cur_dir() == MOVE_DIRECTION_DOWN                  \
        ? is_left_tile_inside() \
        : is_right_tile_inside())
-#define is_left_inside()                                          \
+#define is_left_inside_macro()                                          \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                    \
        ? is_above_tile_inside()    \
    : get_cur_dir() == MOVE_DIRECTION_LEFT                   \
@@ -179,7 +182,7 @@ const unsigned char turn_left_table[] = {
    : get_cur_dir() == MOVE_DIRECTION_DOWN                   \
        ? is_right_tile_inside() \
        : is_left_tile_inside())
-#define is_front_left_inside()                                         \
+#define is_front_left_inside_macro()                                         \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                         \
        ? is_above_right_tile_inside()   \
    : get_cur_dir() == MOVE_DIRECTION_LEFT                        \
@@ -187,7 +190,7 @@ const unsigned char turn_left_table[] = {
    : get_cur_dir() == MOVE_DIRECTION_DOWN                        \
        ? is_below_right_tile_inside() \
        : is_above_left_tile_inside())
-#define is_back_left_inside()                                          \
+#define is_back_left_inside_macro()                                          \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                         \
        ? is_above_left_tile_inside()    \
    : get_cur_dir() == MOVE_DIRECTION_LEFT                        \
@@ -195,6 +198,52 @@ const unsigned char turn_left_table[] = {
    : get_cur_dir() == MOVE_DIRECTION_DOWN                        \
        ? is_above_right_tile_inside()   \
        : is_below_left_tile_inside())
+
+#if PUT_CRITICAL_CODE_IN_FUNCTIONS
+void reverse_direction(void) {
+    reverse_direction_macro();
+}
+void turn_right(void) {
+    turn_right_macro();
+}
+void turn_left(void) {
+    turn_left_macro();
+}
+void move_forward(void) {
+    move_forward_macro();
+}
+unsigned char is_front_inside(void) {
+    return is_front_inside_macro();
+}
+unsigned char is_back_inside(void) {
+    return is_back_inside_macro();
+}
+unsigned char is_right_inside(void) {
+    return is_right_inside_macro();
+}
+unsigned char is_left_inside(void) {
+    return is_left_inside_macro();
+}
+unsigned char is_front_left_inside(void) {
+    return is_front_left_inside_macro();
+}
+unsigned char is_back_left_inside(void) {
+    return is_back_left_inside_macro();
+}
+#else
+#define reverse_direction() reverse_direction_macro()
+#define turn_right() turn_right_macro()
+#define turn_left() turn_left_macro()
+
+#define move_forward() move_forward_macro()
+
+#define is_front_inside() is_front_inside_macro()
+#define is_back_inside() is_back_inside_macro()
+#define is_right_inside() is_right_inside_macro()
+#define is_left_inside() is_left_inside_macro()
+#define is_front_left_inside() is_front_left_inside_macro()
+#define is_back_left_inside() is_back_left_inside_macro()
+#endif
 
 // Uses a constant-memory usage implementation of the painters algorithm to walk
 // the playfield starting at the playfield tile returned via
