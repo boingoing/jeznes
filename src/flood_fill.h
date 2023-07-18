@@ -65,7 +65,7 @@ const unsigned char turn_left_table[] = {
 #define get_mark2() (temp_int_1)
 #define set_mark2(a) (temp_int_1 = (a))
 #define get_cur_dir() (temp_byte_1)
-#define set_cur_dir(a) (temp_byte_1 = (a))
+#define set_cur_dir_macro(a) (temp_byte_1 = (a))
 #define get_mark_dir() (temp_byte_4)
 #define set_mark_dir(a) (temp_byte_4 = (a))
 #define get_mark2_dir() (temp_byte_5)
@@ -85,8 +85,7 @@ const unsigned char turn_left_table[] = {
 
 #define paint_current_position() (set_playfield_tile_type_uncleared_marked_from_byte_index(get_current_playfield_byte_index(), get_current_playfield_in_byte_index()))
 
-#define reverse_direction_macro() \
-  (set_cur_dir(reverse_direction_table[get_cur_dir()]))
+#define reverse_direction_macro() (set_cur_dir(reverse_direction_table[get_cur_dir()]))
 #define turn_right_macro() (set_cur_dir(turn_right_table[get_cur_dir()]))
 #define turn_left_macro() (set_cur_dir(turn_left_table[get_cur_dir()]))
 
@@ -112,44 +111,92 @@ const unsigned char turn_left_table[] = {
   case MOVE_DIRECTION_RIGHT:                   \
        move_to_right_tile(); \
        break; \
-   case MOVE_DIRECTION_LEFT:                   \
-       move_to_left_tile(); \
-       break;  \
    case MOVE_DIRECTION_DOWN:                   \
        move_to_below_tile(); \
        break; \
+   case MOVE_DIRECTION_LEFT:                   \
+       move_to_left_tile(); \
+       break;  \
     case MOVE_DIRECTION_UP:  \
        move_to_above_tile(); \
        break; \
   }
 
 // Returns true when tile at position |byte_index, in_byte_index| is uncleared and unmarked.
-#define is_inside(byte_index, in_byte_index) (is_playfield_tile_type_uncleared_unmarked_from_byte_index((byte_index), (in_byte_index)))
-#define is_current_offset_inside(byte_index_offset, in_byte_index_offset) (is_inside(get_current_playfield_byte_index()+(byte_index_offset), get_current_playfield_in_byte_index()+(in_byte_index_offset)))
-#define is_current_inside() (is_inside(get_current_playfield_byte_index(), get_current_playfield_in_byte_index()))
+#define is_inside_macro(byte_index, in_byte_index) (is_playfield_tile_type_uncleared_unmarked_from_byte_index((byte_index), (in_byte_index)))
+#define is_current_inside_with_byte_index_and_in_byte_index_offset_macro(byte_index_offset, in_byte_index_offset) (is_inside(get_current_playfield_byte_index()+(byte_index_offset), get_current_playfield_in_byte_index()+(in_byte_index_offset)))
+#define is_current_inside_with_byte_index_offset_macro(byte_index_offset) (is_inside(get_current_playfield_byte_index()+(byte_index_offset), get_current_playfield_in_byte_index()))
+#define is_current_inside_with_in_byte_index_offset_macro(in_byte_index_offset) (is_inside(get_current_playfield_byte_index(), get_current_playfield_in_byte_index()+(in_byte_index_offset)))
+#define is_current_inside_macro() (is_inside(get_current_playfield_byte_index(), get_current_playfield_in_byte_index()))
 
-#define is_above_tile_inside() (is_current_offset_inside(-8, 0))
-#define is_below_tile_inside() (is_current_offset_inside(8, 0))
-#define is_right_tile_inside() (get_current_playfield_in_byte_index() == 3 ? \
+unsigned char is_right_tile_inside_table[] = {
+    0b001,
+    0b010,
+    0b011,
+    0b100,
+};
+unsigned char is_left_tile_inside_table[] = {
+    0b011,
+    0b000,
+    0b001,
+    0b010,
+};
+
+#define is_above_tile_inside_macro() (is_current_inside_with_byte_index_offset(-8))
+#define is_below_tile_inside_macro() (is_current_inside_with_byte_index_offset(8))
+#define is_right_tile_inside_macro() (is_inside(get_current_playfield_byte_index()+((set_temp_byte_10(is_right_tile_inside_table[get_current_playfield_in_byte_index()])) >> 2), get_temp_byte_10() & 0b11))
+#define is_left_tile_inside_macro() (is_inside(get_current_playfield_in_byte_index() == 0 ? (get_current_playfield_byte_index()-1) : get_current_playfield_byte_index(), is_left_tile_inside_table[get_current_playfield_in_byte_index()]))
+
+#define is_left_tile_inside_macro3() (is_inside(get_current_playfield_byte_index()-((set_temp_byte_10(is_left_tile_inside_table[get_current_playfield_in_byte_index()])) >> 2), get_temp_byte_10() & 0b11))
+
+#define is_right_tile_inside_macro2() (get_current_playfield_in_byte_index() == 3 ? \
     is_inside(get_current_playfield_byte_index()+1, 0) : \
-    is_current_offset_inside(0, 1))
-#define is_left_tile_inside() (get_current_playfield_in_byte_index() == 0 ? \
+    is_current_inside_with_in_byte_index_offset(1))
+#define is_left_tile_inside_macro2() (get_current_playfield_in_byte_index() == 0 ? \
     is_inside(get_current_playfield_byte_index()-1, 3) : \
-    is_current_offset_inside(0, -1))
+    is_current_inside_with_in_byte_index_offset(-1))
 
-#define is_above_right_tile_inside() (get_current_playfield_in_byte_index() == 3 ? \
+#define is_above_right_tile_inside_macro() (get_current_playfield_in_byte_index() == 3 ? \
     is_inside(get_current_playfield_byte_index()-7, 0) : \
-    is_current_offset_inside(-8, 1))
-#define is_above_left_tile_inside() (get_current_playfield_in_byte_index() == 0 ? \
+    is_current_inside_with_byte_index_and_in_byte_index_offset(-8, 1))
+#define is_above_left_tile_inside_macro() (get_current_playfield_in_byte_index() == 0 ? \
     is_inside(get_current_playfield_byte_index()-9, 3) : \
-    is_current_offset_inside(-8, -1))
-#define is_below_right_tile_inside() (get_current_playfield_in_byte_index() == 3 ? \
+    is_current_inside_with_byte_index_and_in_byte_index_offset(-8, -1))
+#define is_below_right_tile_inside_macro() (get_current_playfield_in_byte_index() == 3 ? \
     is_inside(get_current_playfield_byte_index()+9, 0) : \
-    is_current_offset_inside(8, 1))
-#define is_below_left_tile_inside() (get_current_playfield_in_byte_index() == 0 ? \
+    is_current_inside_with_byte_index_and_in_byte_index_offset(8, 1))
+#define is_below_left_tile_inside_macro() (get_current_playfield_in_byte_index() == 0 ? \
     is_inside(get_current_playfield_byte_index()+7, 3) : \
-    is_current_offset_inside(8, -1))
+    is_current_inside_with_byte_index_and_in_byte_index_offset(8, -1))
 
+#define get_temp_byte_10() (*((unsigned char*)&temp_ptr_1))
+#define set_temp_byte_10(a) (get_temp_byte_10() = a)
+#define get_temp_byte_11() (*(((unsigned char*)&temp_ptr_1)+1))
+#define set_temp_byte_11(a) (get_temp_byte_11() = a)
+
+#define is_current_offset_inside_2(byte_index_table, in_byte_index_table) \
+    set_temp_byte_11(in_byte_index_table[get_cur_dir()]); \
+    set_temp_byte_10(get_current_playfield_in_byte_index()+get_temp_byte_11()); \
+    return ((get_temp_byte_10() > 3) ? \
+    (get_temp_byte_10() == 4) ? \
+    is_inside(get_current_playfield_byte_index()+byte_index_table[get_cur_dir()]+1, 0) : \
+    is_inside(get_current_playfield_byte_index()+byte_index_table[get_cur_dir()]-1, 3) : \
+    is_inside(get_current_playfield_byte_index()+byte_index_table[get_cur_dir()], get_temp_byte_10()));
+
+const signed char is_front_inside_byte_index_offset_table[] = {
+    0, // MOVE_DIRECTION_RIGHT
+    8, // MOVE_DIRECTION_DOWN
+    0, // MOVE_DIRECTION_LEFT
+    -8, // MOVE_DIRECTION_UP
+};
+const signed char is_front_inside_in_byte_index_offset_table[] = {
+    1, // MOVE_DIRECTION_RIGHT
+    0, // MOVE_DIRECTION_DOWN
+    -1, // MOVE_DIRECTION_LEFT
+    0, // MOVE_DIRECTION_UP
+};
+
+#define is_front_inside_macro2() is_current_offset_inside_2(is_front_inside_byte_index_offset_table, is_front_inside_in_byte_index_offset_table)
 #define is_front_inside_macro()                                          \
   (get_cur_dir() == MOVE_DIRECTION_RIGHT                    \
        ? is_right_tile_inside() \
@@ -200,6 +247,9 @@ const unsigned char turn_left_table[] = {
        : is_below_left_tile_inside())
 
 #if PUT_CRITICAL_CODE_IN_FUNCTIONS
+void set_cur_dir(unsigned char a) {
+    set_cur_dir_macro(a);
+}
 void reverse_direction(void) {
     reverse_direction_macro();
 }
@@ -211,6 +261,45 @@ void turn_left(void) {
 }
 void move_forward(void) {
     move_forward_macro();
+}
+unsigned char is_inside(unsigned char byte_index, unsigned char in_byte_index) {
+    return is_inside_macro(byte_index, in_byte_index);
+}
+unsigned char is_current_inside_with_byte_index_and_in_byte_index_offset(signed char byte_index_offset, signed char in_byte_index_offset) {
+    return is_current_inside_with_byte_index_and_in_byte_index_offset_macro(byte_index_offset, in_byte_index_offset);
+}
+unsigned char is_current_inside_with_byte_index_offset(signed char byte_index_offset) {
+    return is_current_inside_with_byte_index_offset_macro(byte_index_offset);
+}
+unsigned char is_current_inside_with_in_byte_index_offset(signed char in_byte_index_offset) {
+    return is_current_inside_with_in_byte_index_offset_macro(in_byte_index_offset);
+}
+unsigned char is_current_inside(void) { 
+    return is_current_inside_macro();
+}
+unsigned char is_above_tile_inside(void) {
+    return is_above_tile_inside_macro();
+}
+unsigned char is_below_tile_inside(void) {
+    return is_below_tile_inside_macro();
+}
+unsigned char is_right_tile_inside(void) {
+    return is_right_tile_inside_macro();
+}
+unsigned char is_left_tile_inside(void) {
+    return is_left_tile_inside_macro();
+}
+unsigned char is_above_right_tile_inside(void) {
+    return is_above_right_tile_inside_macro();
+}
+unsigned char is_above_left_tile_inside(void) {
+    return is_above_left_tile_inside_macro();
+}
+unsigned char is_below_right_tile_inside(void) {
+    return is_below_right_tile_inside_macro();
+}
+unsigned char is_below_left_tile_inside(void) {
+    return is_below_left_tile_inside_macro();
 }
 unsigned char is_front_inside(void) {
     return is_front_inside_macro();
@@ -231,11 +320,29 @@ unsigned char is_back_left_inside(void) {
     return is_back_left_inside_macro();
 }
 #else
+#define set_cur_dir(a) set_cur_dir_macro(a)
+
 #define reverse_direction() reverse_direction_macro()
 #define turn_right() turn_right_macro()
 #define turn_left() turn_left_macro()
 
 #define move_forward() move_forward_macro()
+
+#define is_inside(byte_index, in_byte_index) is_inside_macro(byte_index, in_byte_index)
+#define is_current_inside_with_byte_index_and_in_byte_index_offset(byte_index_offset, in_byte_index_offset) is_current_inside_with_byte_index_and_in_byte_index_offset_macro(byte_index_offset, in_byte_index_offset)
+#define is_current_inside_with_byte_index_offset(byte_index_offset) is_current_inside_with_byte_index_offset_macro(byte_index_offset)
+#define is_current_inside_with_in_byte_index_offset(in_byte_index_offset) is_current_inside_with_in_byte_index_offset_macro(in_byte_index_offset)
+#define is_current_inside() is_current_inside_macro()
+
+#define is_above_tile_inside() is_above_tile_inside_macro()
+#define is_below_tile_inside() is_below_tile_inside_macro()
+#define is_right_tile_inside() is_right_tile_inside_macro()
+#define is_left_tile_inside() is_left_tile_inside_macro()
+
+#define is_above_right_tile_inside() is_above_right_tile_inside_macro()
+#define is_above_left_tile_inside() is_above_left_tile_inside_macro()
+#define is_below_right_tile_inside() is_below_right_tile_inside_macro()
+#define is_below_left_tile_inside() is_below_left_tile_inside_macro()
 
 #define is_front_inside() is_front_inside_macro()
 #define is_back_inside() is_back_inside_macro()
