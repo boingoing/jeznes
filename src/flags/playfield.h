@@ -8,112 +8,120 @@
 #define __JEZNES_FLAGS_PLAYFIELD_H__
 
 #include "base.h"
+#include "lib/nesdoug.h"
 
-#define PLAYFIELD_BIT_LINE_ORIENTATION 7
-#define PLAYFIELD_BITMASK_LINE_ORIENTATION (1 << PLAYFIELD_BIT_LINE_ORIENTATION)
-#define PLAYFIELD_BIT_LINE_INDEX 6
+#define PLAYFIELD_BITMASK_ALL 0b11
+
+#define PLAYFIELD_TILE_TABLE(name, base_value) \
+const unsigned char name##_table[] = { \
+  base_value << 0, \
+  base_value << 2, \
+  base_value << 4, \
+  base_value << 6, \
+};
+
+#define PLAYFIELD_TILE_TYPE_TABLE(name, base_value) PLAYFIELD_TILE_TABLE(playfield_tile_type_##name, base_value)
+
+PLAYFIELD_TILE_TABLE(playfield_bitmask_tile, PLAYFIELD_BITMASK_ALL)
+
+#define PLAYFIELD_TILE_TYPE_UNCLEARED_UNMARKED 0b00
+#define PLAYFIELD_TILE_TYPE_UNCLEARED_MARKED 0b01
+#define PLAYFIELD_TILE_TYPE_LINE 0b10
+#define PLAYFIELD_TILE_TYPE_WALL 0b11
+
+PLAYFIELD_TILE_TYPE_TABLE(uncleared_unmarked, PLAYFIELD_TILE_TYPE_UNCLEARED_UNMARKED)
+PLAYFIELD_TILE_TYPE_TABLE(uncleared_marked, PLAYFIELD_TILE_TYPE_UNCLEARED_MARKED)
+PLAYFIELD_TILE_TYPE_TABLE(line, PLAYFIELD_TILE_TYPE_LINE)
+PLAYFIELD_TILE_TYPE_TABLE(wall, PLAYFIELD_TILE_TYPE_WALL)
+
+#define PLAYFIELD_BIT_LINE_INDEX 0
 #define PLAYFIELD_BITMASK_LINE_INDEX (1 << PLAYFIELD_BIT_LINE_INDEX)
-#define PLAYFIELD_BIT_LINE_DIRECTION 5
+#define PLAYFIELD_BIT_LINE_DIRECTION 1
 #define PLAYFIELD_BITMASK_LINE_DIRECTION (1 << PLAYFIELD_BIT_LINE_DIRECTION)
-#define PLAYFIELD_BIT_MARK 4
-#define PLAYFIELD_BITMASK_MARK (1 << PLAYFIELD_BIT_MARK)
 
-// Bitmask for playfield byte which separates only the flag bits.
-#define PLAYFIELD_BITMASK_ALL                                          \
-  (PLAYFIELD_BITMASK_LINE_ORIENTATION | PLAYFIELD_BITMASK_LINE_INDEX | \
-   PLAYFIELD_BITMASK_LINE_DIRECTION | PLAYFIELD_BITMASK_MARK)
+#define PLAYFIELD_TILE_LINE_FLAG_TABLE(name, base_value) PLAYFIELD_TILE_TABLE(playfield_tile_line_##name, base_value)
 
-// Bitmask for playfield byte which removes the flag bits.
-#define PLAYFIELD_BITMASK_NONE (~PLAYFIELD_BITMASK_ALL)
+PLAYFIELD_TILE_LINE_FLAG_TABLE(index, PLAYFIELD_BITMASK_LINE_INDEX)
+PLAYFIELD_TILE_LINE_FLAG_TABLE(direction, PLAYFIELD_BITMASK_LINE_DIRECTION)
 
-#define get_playfield_flag(playfield_index, bitmask) \
-  get_flag(playfield[(playfield_index)], (bitmask))
-#define set_playfield_flag(playfield_index, bitmask) \
-  set_flag(playfield[(playfield_index)], (bitmask))
-#define unset_playfield_flag(playfield_index, bitmask) \
-  unset_flag(playfield[(playfield_index)], (bitmask))
+#define get_playfield_tile_byte_index(playfield_tile_index) ((unsigned char)((playfield_tile_index) >> 2))
+#define get_playfield_tile_in_byte_index(playfield_tile_index) (((unsigned char)(playfield_tile_index)) & 0b11)
 
-#define get_playfield_is_marked_flag_from_byte(flags_byte) \
-  get_flag((flags_byte), PLAYFIELD_BITMASK_MARK)
+#define get_playfield_tile_position(playfield_tile_index) (make_word(get_playfield_tile_byte_index(get_current_position()), get_playfield_tile_in_byte_index(get_current_position())))
 
-#define unset_playfield_is_marked_flag_in_byte(flags_byte) \
-  unset_flag((flags_byte), PLAYFIELD_BITMASK_MARK)
+// Playfield tile accessor macros
 
-#define get_playfield_is_marked_flag(playfield_index) \
-  get_playfield_flag((playfield_index), PLAYFIELD_BITMASK_MARK)
-#define set_playfield_is_marked_flag(playfield_index) \
-  set_playfield_flag((playfield_index), PLAYFIELD_BITMASK_MARK)
-#define unset_playfield_is_marked_flag(playfield_index) \
-  unset_playfield_flag((playfield_index), PLAYFIELD_BITMASK_MARK)
+#define get_playfield_tile_raw_value_from_byte_index(playfield_tile_byte_index, playfield_tiles_array) (playfield_tiles_array[(playfield_tile_byte_index)])
+#define get_playfield_tile_raw_value(playfield_tile_index, playfield_tiles_array) (get_playfield_tile_raw_value_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), (playfield_tiles_array)))
 
-// Returns the line direction for a playfield byte which will be either
-// LINE_DIRECTION_POSITIVE or LINE_DIRECTION_NEGATIVE
-#define get_playfield_line_direction_flag_from_byte(flags_byte) \
-  (((flags_byte)&PLAYFIELD_BITMASK_LINE_DIRECTION) >>           \
-   PLAYFIELD_BIT_LINE_DIRECTION)
+#define get_playfield_tile_masked_value_from_raw_byte_and_bitmask(raw_byte, bitmask) ((raw_byte) & (bitmask))
+#define get_playfield_tile_masked_value_from_raw_byte(raw_byte, playfield_tile_in_byte_index) (get_playfield_tile_masked_value_from_raw_byte_and_bitmask((raw_byte), playfield_bitmask_tile_table[(playfield_tile_in_byte_index)]))
+#define get_playfield_tile_masked_value_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array) (get_playfield_tile_masked_value_from_raw_byte(get_playfield_tile_raw_value_from_byte_index((playfield_tile_byte_index), (playfield_tiles_array)), (playfield_tile_in_byte_index)))
+#define get_playfield_tile_masked_value(playfield_tile_index, playfield_tiles_array) (get_playfield_tile_masked_value_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array)))
 
-// Returns the line direction for a playfield tile at |playfield_index| which
-// will be either LINE_DIRECTION_POSITIVE or LINE_DIRECTION_NEGATIVE
-#define get_playfield_line_direction_flag(playfield_index) \
-  get_playfield_line_direction_flag_from_byte((playfield_index))
+#define get_playfield_tile_value_from_masked_byte(masked_byte, playfield_tile_in_byte_index) ((masked_byte) >> ((playfield_tile_in_byte_index) << 1))
+#define get_playfield_tile_value_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array) (get_playfield_tile_value_from_masked_byte(get_playfield_tile_masked_value_from_byte_index((playfield_tile_byte_index), (playfield_tile_in_byte_index), (playfield_tiles_array)), (playfield_tile_in_byte_index)))
+#define get_playfield_tile_value(playfield_tile_index, playfield_tiles_array) (get_playfield_tile_value_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array)))
 
-// Returns the line orientation for a playfield byte which will be either
-// ORIENTATION_HORIZ or ORIENTATION_VERT
-#define get_playfield_line_orientation_flag_from_byte(flags_byte) \
-  (((flags_byte)&PLAYFIELD_BITMASK_LINE_ORIENTATION) >>           \
-   PLAYFIELD_BIT_LINE_ORIENTATION)
+#define is_playfield_tile_mask_set_from_masked_byte(masked_byte, bitmask) ((masked_byte) == (bitmask))
+#define is_playfield_tile_mask_set_from_masked_byte_table(masked_byte, playfield_tile_in_byte_index, bitmask_table) (is_playfield_tile_mask_set_from_masked_byte((masked_byte), (bitmask_table)[(playfield_tile_in_byte_index)]))
+#define is_playfield_tile_mask_set_from_raw_byte(raw_byte, playfield_tile_in_byte_index, bitmask) (get_playfield_tile_masked_value_from_raw_byte((raw_byte), (playfield_tile_in_byte_index)) == (bitmask))
+#define is_playfield_tile_mask_set_from_raw_byte_table(raw_byte, playfield_tile_in_byte_index, bitmask_table) (is_playfield_tile_mask_set_from_raw_byte((raw_byte), (playfield_tile_in_byte_index), (bitmask_table)[(playfield_tile_in_byte_index)]))
+#define is_playfield_tile_mask_set_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array, bitmask) (is_playfield_tile_mask_set_from_raw_byte(get_playfield_tile_raw_value_from_byte_index((playfield_tile_byte_index), (playfield_tiles_array)), (playfield_tile_in_byte_index), (bitmask)))
+#define is_playfield_tile_mask_set_from_byte_index_table(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array, bitmask_table) (is_playfield_tile_mask_set_from_byte_index((playfield_tile_byte_index), (playfield_tile_in_byte_index), (playfield_tiles_array), (bitmask_table)[(playfield_tile_in_byte_index)]))
+#define is_playfield_tile_mask_set(playfield_tile_index, playfield_tiles_array, bitmask) (is_playfield_tile_mask_set_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array), (bitmask)))
+#define is_playfield_tile_mask_set_table(playfield_tile_index, playfield_tiles_array, bitmask_table) (is_playfield_tile_mask_set_from_byte_index_table(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array), (bitmask_table)))
 
-// Returns the line orientation for a playfield tile at |playfield_index| which
-// will be either ORIENTATION_HORIZ or ORIENTATION_VERT
-#define get_playfield_line_orientation_flag(playfield_index) \
-  (get_playfield_line_orientation_flag_from_byte(playfield[(playfield_index)]))
+#define set_playfield_tile_value_in_raw_byte(raw_byte, playfield_tile_in_byte_index, value_bitmask) ((raw_byte) = (raw_byte & ~(playfield_bitmask_tile_table[(playfield_tile_in_byte_index)])) | (value_bitmask))
+#define set_playfield_tile_value_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array, value_bitmask) (set_playfield_tile_value_in_raw_byte(get_playfield_tile_raw_value_from_byte_index((playfield_tile_byte_index), (playfield_tiles_array)), (playfield_tile_in_byte_index), (value_bitmask)))
+#define set_playfield_tile_value_from_byte_index_table(playfield_tile_byte_index, playfield_tile_in_byte_index, playfield_tiles_array, value_bitmask_table) (set_playfield_tile_value_from_byte_index((playfield_tile_byte_index), (playfield_tile_in_byte_index), (playfield_tiles_array), (value_bitmask_table)[(playfield_tile_in_byte_index)]))
+#define set_playfield_tile_value(playfield_tile_index, playfield_tiles_array, value_bitmask) (set_playfield_tile_value_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array), (value_bitmask)))
+#define set_playfield_tile_value_table(playfield_tile_index, playfield_tiles_array, value_bitmask_table) (set_playfield_tile_value_from_byte_index_table(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (playfield_tiles_array), (value_bitmask_table)))
 
-// Sets the line orientation for |playfield_index| to |orientation| which must
-// be either ORIENTATION_HORIZ or ORIENTATION_VERT
-#define set_playfield_line_orientation_flag(playfield_index, orientation)   \
-  (playfield[(playfield_index)] =                                           \
-       playfield[(playfield_index)] & ~PLAYFIELD_BITMASK_LINE_ORIENTATION | \
-       ((orientation) << PLAYFIELD_BIT_LINE_ORIENTATION))
+// Playfield tile type accessor macros
 
-// Returns the line index from a playfield byte which will be either 0 or 1
-#define get_playfield_line_index_flag_from_byte(flags_byte) \
-  (((flags_byte)&PLAYFIELD_BITMASK_LINE_INDEX) >> PLAYFIELD_BIT_LINE_INDEX)
+#define is_playfield_tile_type_uncleared_unmarked_from_masked_byte(masked_byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_masked_byte_table((masked_byte), (playfield_tile_in_byte_index), playfield_tile_type_uncleared_unmarked_table))
+#define is_playfield_tile_type_uncleared_unmarked_from_raw_byte(raw_byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_raw_byte_table((raw_byte), (playfield_tile_in_byte_index), playfield_tile_type_uncleared_unmarked_table))
+#define is_playfield_tile_type_uncleared_unmarked_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tiles, playfield_tile_type_uncleared_unmarked_table))
+#define is_playfield_tile_type_uncleared_unmarked(playfield_tile_index) (is_playfield_tile_mask_set_table((playfield_tile_index), playfield_tiles, playfield_tile_type_uncleared_unmarked_table))
 
-// Returns the line index for a playfield tile at |playfield_index| which will
-// be either 0 or 1
-#define get_playfield_line_index_flag(playfield_index) \
-  (get_playfield_line_index_flag_from_byte(playfield[(playfield_index)]))
+#define is_playfield_tile_type_uncleared_marked_from_masked_byte(masked_byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_masked_byte_table((masked_byte), (playfield_tile_in_byte_index), playfield_tile_type_uncleared_marked_table))
+#define is_playfield_tile_type_uncleared_marked_from_raw_byte(raw_byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_raw_byte_table((raw_byte), (playfield_tile_in_byte_index), playfield_tile_type_uncleared_marked_table))
+#define is_playfield_tile_type_uncleared_marked_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tiles, playfield_tile_type_uncleared_marked_table))
+#define is_playfield_tile_type_uncleared_marked(playfield_tile_index) (is_playfield_tile_mask_set_table((playfield_tile_index), playfield_tiles, playfield_tile_type_uncleared_marked_table))
 
-// Sets the line index for |playfield_index| to |index| which must be either 0
-// or 1
-#define set_playfield_line_index_flag(playfield_index, index)         \
-  (playfield[(playfield_index)] =                                     \
-       playfield[(playfield_index)] & ~PLAYFIELD_BITMASK_LINE_INDEX | \
-       ((index) << PLAYFIELD_BIT_LINE_INDEX))
+#define is_playfield_tile_type_wall_from_masked_byte(masked_byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_masked_byte_table((masked_byte), (playfield_tile_in_byte_index), playfield_tile_type_wall_table))
+#define is_playfield_tile_type_wall_from_raw_byte(raw_byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_raw_byte_table((raw_byte), (playfield_tile_in_byte_index), playfield_tile_type_wall_table))
+#define is_playfield_tile_type_wall_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tiles, playfield_tile_type_wall_table))
+#define is_playfield_tile_type_wall(playfield_tile_index) (is_playfield_tile_mask_set_table((playfield_tile_index), playfield_tiles, playfield_tile_type_wall_table))
 
-// Returns the playfield tile type from a playfield byte |flags_byte| by
-// removing the bit-flags from the playfield byte
-#define get_playfield_tile_type_from_byte(flags_byte) \
-  ((flags_byte)&PLAYFIELD_BITMASK_NONE)
+#define is_playfield_tile_type_line_from_masked_byte(masked_byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_masked_byte_table((masked_byte), (playfield_tile_in_byte_index), playfield_tile_type_line_table))
+#define is_playfield_tile_type_line_from_raw_byte(raw_byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_raw_byte_table((raw_byte), (playfield_tile_in_byte_index), playfield_tile_type_line_table))
+#define is_playfield_tile_type_line_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tiles, playfield_tile_type_line_table))
+#define is_playfield_tile_type_line(playfield_tile_index) (is_playfield_tile_mask_set_table((playfield_tile_index), playfield_tiles, playfield_tile_type_line_table))
 
-// Returns the playfield tile type for |playfield_index| by removing the
-// bit-flags from the playfield byte
-#define get_playfield_tile_type(playfield_index) \
-  get_playfield_tile_type_from_byte(playfield[(playfield_index)])
+#define set_playfield_tile_type_uncleared_unmarked_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (playfield_tiles[(playfield_tile_byte_index)] &= ~(playfield_bitmask_tile_table[(playfield_tile_in_byte_index)]))
+#define set_playfield_tile_type_wall_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (playfield_tiles[(playfield_tile_byte_index)] |= playfield_bitmask_tile_table[(playfield_tile_in_byte_index)])
+#define set_playfield_tile_type_uncleared_marked_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (set_playfield_tile_value_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tiles, playfield_tile_type_uncleared_marked_table))
+#define set_playfield_tile_type_line_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (set_playfield_tile_value_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_tiles, playfield_tile_type_line_table))
 
-// Update the playfield in-memory structure.
-#define set_playfield_tile_type(playfield_index, tile_type) \
-  (playfield[(playfield_index)] = (tile_type))
+#define set_playfield_tile_type_uncleared_unmarked(playfield_tile_index) (set_playfield_tile_type_uncleared_unmarked_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index))))
+#define set_playfield_tile_type_wall(playfield_tile_index) (set_playfield_tile_type_wall_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index))))
+#define set_playfield_tile_type_uncleared_marked(playfield_tile_index) (set_playfield_tile_type_uncleared_marked_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index))))
+#define set_playfield_tile_type_line(playfield_tile_index) (set_playfield_tile_type_line_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index))))
 
-// Get the playfield tile type for lines.
-// Indicate horizontal or vertical via |orientation| which should be
-// ORIENTATION_HORIZ or ORIENTATION_VERT. Indicate the line index via
-// |line_index| which must be 0 or 1. Indicate the line direction via
-// |line_direction| which should be LINE_DIRECTION_POSITIVE or
-// LINE_DIRECTION_NEGATIVE.
-#define get_playfield_tile_type_line(orientation, line_index, line_direction) \
-  (PLAYFIELD_LINE | ((orientation) << PLAYFIELD_BIT_LINE_ORIENTATION) |       \
-   ((line_index) << PLAYFIELD_BIT_LINE_INDEX) |                               \
-   ((line_direction) << PLAYFIELD_BIT_LINE_DIRECTION))
+// Playfield tile line flags accessor macros
+
+#define is_playfield_tile_line_index_from_byte(byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_raw_byte_table((byte), (playfield_tile_in_byte_index), playfield_tile_line_index_table))
+#define is_playfield_tile_line_index_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_line_flags, playfield_tile_line_index_table))
+#define is_playfield_tile_line_index(playfield_tile_index) (is_playfield_tile_mask_set_table((playfield_tile_index), playfield_line_flags, playfield_tile_line_index_table))
+
+#define is_playfield_tile_line_direction_from_byte(byte, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_raw_byte_table((byte), (playfield_tile_in_byte_index), playfield_tile_line_direction_table))
+#define is_playfield_tile_line_direction_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index) (is_playfield_tile_mask_set_from_byte_index_table((playfield_tile_byte_index), (playfield_tile_in_byte_index), playfield_line_flags, playfield_tile_line_direction_table))
+#define is_playfield_tile_line_direction(playfield_tile_index) (is_playfield_tile_mask_set_table((playfield_tile_index), playfield_line_flags, playfield_tile_line_direction_table))
+
+#define set_playfield_tile_line_flags_in_byte(byte, playfield_tile_in_byte_index, line_index, line_direction) (set_playfield_tile_value_in_raw_byte((byte), (playfield_tile_in_byte_index), ((line_index) ? playfield_tile_line_index_table[(playfield_tile_in_byte_index)] : 0x0) | ((line_direction) ? playfield_tile_line_direction_table[(playfield_tile_in_byte_index)] : 0x0)))
+#define set_playfield_tile_line_flags_from_byte_index(playfield_tile_byte_index, playfield_tile_in_byte_index, line_index, line_direction) (set_playfield_tile_line_flags_in_byte(playfield_line_flags[(playfield_tile_byte_index)], (playfield_tile_in_byte_index), (line_index), (line_direction)))
+#define set_playfield_tile_line_flags(playfield_tile_index, line_index, line_direction) (set_playfield_tile_line_flags_from_byte_index(get_playfield_tile_byte_index((playfield_tile_index)), get_playfield_tile_in_byte_index((playfield_tile_index)), (line_index), (line_direction)))
 
 #endif  // __JEZNES_FLAGS_PLAYFIELD_H__

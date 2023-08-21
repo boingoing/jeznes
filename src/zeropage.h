@@ -76,7 +76,9 @@ unsigned char temp_byte_9;
 
 unsigned int temp_int_1;
 unsigned int temp_int_2;
-unsigned int temp_int_3;
+
+unsigned int temp_int_3_byte_1;
+unsigned int temp_int_3_byte_2;
 
 unsigned char* temp_ptr_1;
 

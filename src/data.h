@@ -27,10 +27,6 @@
 #define set_temp_ptr(p) (temp_ptr_1 = (unsigned char*)(p))
 #define get_temp_ptr(type) ((type*)temp_ptr_1)
 
-#define get_playfield_index() (temp_int_3)
-#define set_playfield_index(a) (temp_int_3 = (a))
-#define inc_playfield_index() (++temp_int_3)
-
 #define get_should_initialize_clear_sweep() (temp_byte_6)
 #define set_should_initialize_clear_sweep(a) (temp_byte_6 = (a))
 
@@ -89,8 +85,5 @@
 #define set_x_compare_pixel_coord(a) (temp_byte_4 = (a))
 #define get_y_compare_pixel_coord() (temp_byte_4)
 #define set_y_compare_pixel_coord(a) (temp_byte_4 = (a))
-
-#define get_playfield_tile_value() (temp_byte_4)
-#define set_playfield_tile_value(a) (temp_byte_4 = (a))
 
 #endif  // __JEZNES_DATA_H__
