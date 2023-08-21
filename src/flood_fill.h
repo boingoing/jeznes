@@ -8,6 +8,7 @@
 #define __JEZNES_FLOOD_FILL_H__
 
 #include "debug.h"
+#include "flags/base.h"
 #include "zeropage.h"
 
 enum {
@@ -60,24 +61,51 @@ const unsigned char turn_left_table[] = {
 #define inc_current_playfield_in_byte_index() (++temp_int_3_byte_2)
 #define dec_current_playfield_in_byte_index() (--temp_int_3_byte_2)
 
-#define get_mark() (temp_int_2)
-#define set_mark(a) (temp_int_2 = (a))
+#define FLOOD_FILL_BIT_BACKTRACK 0
+#define FLOOD_FILL_BITMASK_BACKTRACK (1 << FLOOD_FILL_BIT_BACKTRACK)
+#define FLOOD_FILL_BIT_FINDLOOP 1
+#define FLOOD_FILL_BITMASK_FINDLOOP (1 << FLOOD_FILL_BIT_FINDLOOP)
+#define FLOOD_FILL_BIT_MARK1_NULL 2
+#define FLOOD_FILL_BITMASK_MARK1_NULL (1 << FLOOD_FILL_BIT_MARK1_NULL)
+#define FLOOD_FILL_BIT_MARK2_NULL 3
+#define FLOOD_FILL_BITMASK_MARK2_NULL (1 << FLOOD_FILL_BIT_MARK2_NULL)
+
+#define get_flood_fill_flags_byte() (temp_byte_2)
+
+#define get_backtrack_macro() (get_flag(get_flood_fill_flags_byte(), FLOOD_FILL_BITMASK_BACKTRACK))
+#define set_backtrack_macro() (set_flag(get_flood_fill_flags_byte(), FLOOD_FILL_BITMASK_BACKTRACK))
+#define unset_backtrack_macro() (unset_flag(get_flood_fill_flags_byte(), FLOOD_FILL_BITMASK_BACKTRACK))
+
+#define get_findloop_macro() (get_flag(get_flood_fill_flags_byte(), FLOOD_FILL_BITMASK_FINDLOOP))
+#define set_findloop_macro() (set_flag(get_flood_fill_flags_byte(), FLOOD_FILL_BITMASK_FINDLOOP))
+#define unset_findloop_macro() (unset_flag(get_flood_fill_flags_byte(), FLOOD_FILL_BITMASK_FINDLOOP))
+
+#define get_mark1_null_macro() (get_flag(get_flood_fill_flags_byte(), FLOOD_FILL_BITMASK_MARK1_NULL))
+#define set_mark1_null_macro() (set_flag(get_flood_fill_flags_byte(), FLOOD_FILL_BITMASK_MARK1_NULL))
+#define unset_mark1_null_macro() (unset_flag(get_flood_fill_flags_byte(), FLOOD_FILL_BITMASK_MARK1_NULL))
+
+#define get_mark2_null_macro() (get_flag(get_flood_fill_flags_byte(), FLOOD_FILL_BITMASK_MARK2_NULL))
+#define set_mark2_null_macro() (set_flag(get_flood_fill_flags_byte(), FLOOD_FILL_BITMASK_MARK2_NULL))
+#define unset_mark2_null_macro() (unset_flag(get_flood_fill_flags_byte(), FLOOD_FILL_BITMASK_MARK2_NULL))
+
+#define get_mark1() (temp_int_2)
+#define set_mark1(a) (temp_int_2 = (a))
 #define get_mark2() (temp_int_1)
 #define set_mark2(a) (temp_int_1 = (a))
 #define get_cur_dir() (temp_byte_1)
 #define set_cur_dir_macro(a) (temp_byte_1 = (a))
-#define get_mark_dir() (temp_byte_4)
-#define set_mark_dir(a) (temp_byte_4 = (a))
+#define get_mark1_dir() (temp_byte_4)
+#define set_mark1_dir(a) (temp_byte_4 = (a))
 #define get_mark2_dir() (temp_byte_5)
 #define set_mark2_dir(a) (temp_byte_5 = (a))
-#define get_backtrack() (temp_byte_2)
-#define set_backtrack(a) (temp_byte_2 = (a))
-#define get_findloop() (temp_byte_3)
-#define set_findloop(a) (temp_byte_3 = (a))
-#define get_mark_null() (temp_byte_7)
-#define set_mark_null(a) (temp_byte_7 = (a))
-#define get_mark2_null() (temp_byte_8)
-#define set_mark2_null(a) (temp_byte_8 = (a))
+// #define get_backtrack() (temp_byte_2)
+// #define set_backtrack(a) (temp_byte_2 = (a))
+// #define get_findloop() (temp_byte_3)
+// #define set_findloop(a) (temp_byte_3 = (a))
+// #define get_mark_null() (temp_byte_7)
+// #define set_mark_null(a) (temp_byte_7 = (a))
+// #define get_mark2_null() (temp_byte_8)
+// #define set_mark2_null(a) (temp_byte_8 = (a))
 
 #define set_adjacent_marked_tile_count(a) (temp_byte_6 = (a))
 #define get_adjacent_marked_tile_count() (temp_byte_6)
@@ -250,6 +278,42 @@ const signed char is_front_inside_in_byte_index_offset_table[] = {
 void set_cur_dir(unsigned char a) {
     set_cur_dir_macro(a);
 }
+unsigned char get_backtrack(void) {
+    return get_backtrack_macro();
+}
+void set_backtrack(void) {
+    set_backtrack_macro();
+}
+void unset_backtrack(void) {
+    unset_backtrack_macro();
+}
+unsigned char get_findloop(void) {
+    return get_findloop_macro();
+}
+void set_findloop(void) {
+    set_findloop_macro();
+}
+void unset_findloop(void) {
+    unset_findloop_macro();
+}
+unsigned char get_mark1_null(void) {
+    return get_mark1_null_macro();
+}
+void set_mark1_null(void) {
+    set_mark1_null_macro();
+}
+void unset_mark1_null(void) {
+    unset_mark1_null_macro();
+}
+unsigned char get_mark2_null(void) {
+    return get_mark2_null_macro();
+}
+void set_mark2_null(void) {
+    set_mark2_null_macro();
+}
+void unset_mark2_null(void) {
+    unset_mark2_null_macro();
+}
 void reverse_direction(void) {
     reverse_direction_macro();
 }
@@ -321,6 +385,22 @@ unsigned char is_back_left_inside(void) {
 }
 #else
 #define set_cur_dir(a) set_cur_dir_macro(a)
+
+#define get_backtrack() get_backtrack_macro()
+#define set_backtrack() set_backtrack_macro()
+#define unset_backtrack() unset_backtrack_macro()
+
+#define get_findloop() get_findloop_macro()
+#define set_findloop() set_findloop_macro()
+#define unset_findloop() unset_findloop_macro()
+
+#define get_mark1_null() get_mark1_null_macro()
+#define set_mark1_null() set_mark1_null_macro()
+#define unset_mark1_null() unset_mark1_null_macro()
+
+#define get_mark2_null() get_mark2_null_macro()
+#define set_mark2_null() set_mark2_null_macro()
+#define unset_mark2_null() unset_mark2_null_macro()
 
 #define reverse_direction() reverse_direction_macro()
 #define turn_right() turn_right_macro()

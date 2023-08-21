@@ -25,11 +25,11 @@ void compute_playfield_mark_bit_one_region(void) {
   // Set cur-dir to default direction
   set_cur_dir(MOVE_DIRECTION_DEFAULT);
   // Clear mark and mark2 (set values to null)
-  set_mark_null(TRUE);
-  set_mark2_null(TRUE);
+  set_mark1_null();
+  set_mark2_null();
   // Set backtrack and findloop to false
-  set_backtrack(FALSE);
-  set_findloop(FALSE);
+  unset_backtrack();
+  unset_findloop();
 
   // Move forward until the playfield tile in front is marked or not uncleared
   // (ie: it is not inside).
@@ -45,9 +45,9 @@ void compute_playfield_mark_bit_one_region(void) {
     move_forward();
 
     if (is_right_inside()) {
-      if (get_backtrack() == TRUE && get_findloop() == FALSE &&
+      if (get_backtrack() && !get_findloop() &&
           (is_front_inside() || is_left_inside())) {
-        set_findloop(TRUE);
+        set_findloop();
       }
       turn_right();
 
@@ -82,14 +82,14 @@ void compute_playfield_mark_bit_one_region(void) {
 
     switch (get_adjacent_marked_tile_count()) {
       case 1:
-        if (get_backtrack() == TRUE) {
-          set_findloop(TRUE);
-        } else if (get_findloop() == TRUE) {
-          if (get_mark_null() == TRUE) {
-            set_mark_null(FALSE);
+        if (get_backtrack()) {
+          set_findloop();
+        } else if (get_findloop()) {
+          if (get_mark1_null()) {
+            unset_mark1_null();
           }
         } else if (is_front_left_inside() && is_back_left_inside()) {
-          set_mark_null(TRUE);
+          set_mark1_null();
           paint_current_position();
           goto PAINTER_ALGORITHM_PAINT;
         }
@@ -97,57 +97,57 @@ void compute_playfield_mark_bit_one_region(void) {
       case 2:
         if (!is_back_inside()) {
           if (is_front_left_inside()) {
-            set_mark_null(TRUE);
+            set_mark1_null();
             paint_current_position();
             goto PAINTER_ALGORITHM_PAINT;
           }
-        } else if (get_mark_null() == TRUE) {
-          set_mark(get_current_position());
-          set_mark_null(FALSE);
-          set_mark_dir(get_cur_dir());
-          set_mark2_null(TRUE);
-          set_findloop(FALSE);
-          set_backtrack(FALSE);
+        } else if (get_mark1_null()) {
+          set_mark1(get_current_position());
+          unset_mark1_null();
+          set_mark1_dir(get_cur_dir());
+          set_mark2_null();
+          unset_findloop();
+          unset_backtrack();
         } else {
-          if (get_mark2_null() == TRUE) {
-            if (get_current_position() == get_mark()) {
-              if (get_cur_dir() == get_mark_dir()) {
-                set_mark_null(TRUE);
+          if (get_mark2_null()) {
+            if (get_current_position() == get_mark1()) {
+              if (get_cur_dir() == get_mark1_dir()) {
+                set_mark1_null();
                 reverse_direction();
                 paint_current_position();
                 goto PAINTER_ALGORITHM_PAINT;
               } else {
-                set_backtrack(TRUE);
-                set_findloop(FALSE);
-                set_cur_dir(get_mark_dir());
+                set_backtrack();
+                unset_findloop();
+                set_cur_dir(get_mark1_dir());
               }
-            } else if (get_findloop() == TRUE) {
+            } else if (get_findloop()) {
               set_mark2(get_current_position());
-              set_mark2_null(FALSE);
+              unset_mark2_null();
               set_mark2_dir(get_cur_dir());
             }
           } else {
-            if (get_current_position() == get_mark()) {
+            if (get_current_position() == get_mark1()) {
               set_current_position(get_mark2());
               set_cur_dir(get_mark2_dir());
-              set_mark_null(TRUE);
-              set_mark2_null(TRUE);
-              set_backtrack(FALSE);
+              set_mark1_null();
+              set_mark2_null();
+              unset_backtrack();
               reverse_direction();
               paint_current_position();
               goto PAINTER_ALGORITHM_PAINT;
             } else if (get_current_position() == get_mark2()) {
-              set_mark(get_current_position());
-              set_mark_null(FALSE);
+              set_mark1(get_current_position());
+              unset_mark1_null();
               set_cur_dir(get_mark2_dir());
-              set_mark_dir(get_mark2_dir());
-              set_mark2_null(TRUE);
+              set_mark1_dir(get_mark2_dir());
+              set_mark2_null();
             }
           }
         }
         break;
       case 3:
-        set_mark_null(TRUE);
+        set_mark1_null();
         paint_current_position();
         goto PAINTER_ALGORITHM_PAINT;
         break;
