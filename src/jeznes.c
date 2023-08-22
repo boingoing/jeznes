@@ -896,7 +896,7 @@ void draw_player(void) {
   temp_byte_2 = get_frame_count();
 
   // Default to horizontal sprite.
-  temp_byte_2 = temp_byte_2 >> 3 & 1;
+  temp_byte_2 = (temp_byte_2 >> 4) & 1;
 
   // Add 2 to get the vertical sprite.
   if (get_player_orientation_flag_from_byte(
