@@ -1499,6 +1499,10 @@ void set_playfield_tile(unsigned int tile_index,
                                playfield_index_pixel_coord_y(tile_index)));
 }
 
+// Use these to skip scanning the first and last blocks of continuous wall playfield tiles.
+#define FIRST_NON_WALL_PLAYFIELD_TILE_INDEX 34
+#define LAST_NON_WALL_PLAYFIELD_TILE_INDEX 670
+
 // Update uncleared, unmarked playfield tiles to be cleared. Returns TRUE when
 // all uncleared tiles have been updated. Note: This function can potentially
 // queue more vram updates than are allowed during the next v-blank.
@@ -1513,7 +1517,7 @@ unsigned char update_cleared_playfield_tiles(void) {
   // counters.
   if (get_should_initialize_clear_sweep() == TRUE) {
     // Keep pointer to the playfield in-memory structure.
-    set_temp_ptr(playfield);
+    set_temp_ptr(playfield + FIRST_NON_WALL_PLAYFIELD_TILE_INDEX);
     // First ppu address of the playfield tiles.
     set_temp_ppu_address(get_ppu_addr(0, playfield_pixel_coord_x[0],
                                       playfield_pixel_coord_y[0]));
@@ -1527,7 +1531,7 @@ unsigned char update_cleared_playfield_tiles(void) {
   // Look over all tiles in the playfield and for each uncleared, unmarked tile
   // change it to cleared.
   for (; get_temp_ptr(unsigned char) !=
-         (unsigned char*)(playfield + PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT);
+         (unsigned char*)(playfield + LAST_NON_WALL_PLAYFIELD_TILE_INDEX);
        ++temp_ptr_1) {
     set_playfield_tile_value(*get_temp_ptr(unsigned char));
 
